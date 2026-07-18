@@ -169,6 +169,17 @@ function App() {
           </div>
         </div>
       </section>
+      <section className="adr-section">
+        <div className="eyebrow">Architecture Decisions</div>
+        <div className="adr-item">
+          <h4><span className="adr-tag">ADR-01</span>Self-hosted Postgres + Jenkins over managed warehouses</h4>
+          <p>Chose a self-hosted Docker stack over Snowflake/Databricks free tiers to keep the live demo genuinely cost-free and always-on, rather than time-boxed.</p>
+        </div>
+        <div className="adr-item">
+          <h4><span className="adr-tag">ADR-02</span>Databricks + dbt vs. GCP-native</h4>
+          <p>Chose Databricks + dbt over a fully GCP-native approach, citing SAP's Databricks partnership and long-term flexibility.</p>
+        </div>
+      </section>
     </>
   )
 }
