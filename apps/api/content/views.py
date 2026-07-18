@@ -1,3 +1,10 @@
-from django.shortcuts import render
+from rest_framework import generics
+from .models import CaseStudy
+from .serializers import CaseStudySerializer
 
-# Create your views here.
+
+class CaseStudyListView(generics.ListAPIView):
+    serializer_class = CaseStudySerializer
+
+    def get_queryset(self):
+        return CaseStudy.objects.filter(is_published=True)
