@@ -45,3 +45,35 @@ resource "docker_container" "postgres" {
     container_path = "/var/lib/postgresql/data"
   }
 }
+
+resource "docker_volume" "jenkins_home" {
+  name = "portfolio_jenkins_home"
+}
+
+resource "docker_image" "jenkins" {
+  name = "jenkins/jenkins:lts-jdk17"
+}
+
+resource "docker_container" "jenkins" {
+  name  = "portfolio_jenkins"
+  image = docker_image.jenkins.image_id
+
+  networks_advanced {
+    name = docker_network.portfolio_net.name
+  }
+
+  ports {
+    internal = 8080
+    external = 8080
+  }
+
+  ports {
+    internal = 50000
+    external = 50000
+  }
+
+  volumes {
+    volume_name    = docker_volume.jenkins_home.name
+    container_path = "/var/jenkins_home"
+  }
+}
