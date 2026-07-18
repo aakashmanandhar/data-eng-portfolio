@@ -160,3 +160,27 @@ h1 {
   border-color: currentColor;
   font-weight: 700;
 }
+.mini-skills {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.mini-skills img {
+  width: 22px;
+  height: 22px;
+  opacity: .85;
+}
+.text-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent1);
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid var(--accent1);
+  border-radius: 6px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  height: 22px;
+}
