@@ -180,6 +180,26 @@ function App() {
           <p>Chose Databricks + dbt over a fully GCP-native approach, citing SAP's Databricks partnership and long-term flexibility.</p>
         </div>
       </section>
+      <section className="about-section">
+        <div className="eyebrow">About</div>
+        <div className="about-row">
+          <p>Data engineer based in Germany, working across Azure/Fabric and GCP, currently building a live tools-and-salary explorer to practice the full modern ELT stack end to end.</p>
+          <button className="resume-btn">⬇ Download Resume</button>
+        </div>
+      </section>
+      <section className="contact-section">
+        <div className="eyebrow">Contact</div>
+        <div className="contact-form">
+          <input type="text" placeholder="Name" />
+          <input type="email" placeholder="Email" />
+          <textarea rows="4" placeholder="Message"></textarea>
+          <button>Send Message</button>
+        </div>
+      </section>
+
+      <footer>
+        github.com/aakashmanandhar &nbsp;·&nbsp; LinkedIn &nbsp;·&nbsp; Contact
+      </footer>
     </>
   )
 }
