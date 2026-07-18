@@ -87,10 +87,8 @@ resource "docker_container" "jenkins" {
 
 # --- Django ---
 resource "docker_image" "django" {
-  name = "portfolio-django:latest"
-  build {
-    context = "../../apps/api"
-  }
+  name         = "portfolio-django:latest"
+  keep_locally = true
 }
 
 resource "docker_container" "django" {
