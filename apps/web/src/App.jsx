@@ -1,8 +1,17 @@
 import './App.css'
 import { useState } from 'react'
 
+const explorerData = {
+  Germany: { tools: [["Python",88],["dbt",72],["Airflow",64],["Snowflake",41],["Databricks",55]], salary: {Entry:52000, Mid:72000, Senior:95000} },
+  USA:     { tools: [["Python",91],["dbt",68],["Airflow",70],["Snowflake",58],["Databricks",62]], salary: {Entry:78000, Mid:110000, Senior:155000} },
+  India:   { tools: [["Python",85],["SQL",80],["Airflow",55],["Databricks",48],["dbt",39]], salary: {Entry:12000, Mid:22000, Senior:38000} },
+  UK:      { tools: [["Python",83],["dbt",60],["Airflow",58],["Snowflake",50],["Databricks",44]], salary: {Entry:45000, Mid:65000, Senior:88000} },
+  Netherlands: { tools: [["Python",80],["dbt",65],["Airflow",52],["Databricks",47],["Snowflake",36]], salary: {Entry:48000, Mid:68000, Senior:90000} }
+}
+
 function App() {
   const [status, setStatus] = useState('active')
+  const [country, setCountry] = useState('Germany')
 
   return (
     <>
@@ -68,6 +77,52 @@ function App() {
           </div>
         </div>
       </div>
+
+      <section className="explorer-section">
+        <div className="eyebrow">Featured · Live Explorer</div>
+        <div className="explorer-box">
+          <select value={country} onChange={(e) => setCountry(e.target.value)}>
+            <option value="Germany">🇩🇪 Germany</option>
+            <option value="USA">🇺🇸 USA</option>
+            <option value="India">🇮🇳 India</option>
+            <option value="UK">🇬🇧 UK</option>
+            <option value="Netherlands">🇳🇱 Netherlands</option>
+          </select>
+
+          <div className="explorer-grid">
+            <div className="explorer-panel">
+              <h4>TOP TOOLS BY USAGE</h4>
+              {explorerData[country].tools.map(([name, pct]) => (
+                <div className="tool-row" key={name}>
+                  <span className="tool-name">{name}</span>
+                  <div className="tool-bar-bg">
+                    <div className="tool-bar-fill" style={{ width: pct + '%' }}></div>
+                  </div>
+                  <span className="tool-pct">{pct}%</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="explorer-panel">
+              <h4>AVG. SALARY BY SENIORITY (USD/yr)</h4>
+              <div className="sal-row">
+                {Object.entries(explorerData[country].salary).map(([level, val]) => {
+                  const max = Math.max(...Object.values(explorerData[country].salary))
+                  return (
+                    <div className="sal-bar-wrap" key={level}>
+                      <div className="sal-value">${(val / 1000).toFixed(0)}k</div>
+                      <div className="sal-bar" style={{ height: (val / max * 100) + 'px' }}></div>
+                      <div className="sal-label">{level}</div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="explorer-note">🔧 Sample data shown — live version pulls from PostgreSQL marts built via dbt.</div>
+        </div>
+      </section>
     </>
   )
 }
