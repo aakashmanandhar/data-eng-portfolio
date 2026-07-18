@@ -106,5 +106,10 @@ resource "docker_container" "django" {
     external = 8000
   }
 
+  volumes {
+    host_path      = "${abspath(path.module)}/../../apps/api"
+    container_path = "/app"
+  }
+
   depends_on = [docker_container.postgres]
 }
