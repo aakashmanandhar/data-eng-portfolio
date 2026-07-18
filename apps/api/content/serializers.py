@@ -8,6 +8,7 @@ class CaseStudySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'slug', 'summary', 'problem',
             'architecture', 'outcome', 'tech_stack',
+            'readme_content', 'pdf_document',
             'is_featured', 'created_at', 'updated_at'
         ]
 

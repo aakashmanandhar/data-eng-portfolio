@@ -8,6 +8,13 @@ class CaseStudyListView(generics.ListAPIView):
 
     def get_queryset(self):
         return CaseStudy.objects.filter(is_published=True)
+    
+class CaseStudyDetailView(generics.RetrieveAPIView):
+    serializer_class = CaseStudySerializer
+    lookup_field = 'slug'
+
+    def get_queryset(self):
+        return CaseStudy.objects.filter(is_published=True)
 
 
 class BlogPostListView(generics.ListAPIView):

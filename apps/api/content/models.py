@@ -11,6 +11,7 @@ class CaseStudy(models.Model):
     tech_stack = models.CharField(max_length=300, help_text="Comma-separated, e.g. dbt, Airflow, Terraform")
     github_url = models.URLField(blank=True, help_text="GitHub repo URL to import metadata/README from")
     readme_content = models.TextField(blank=True, help_text="Auto-fetched from GitHub — raw README, not editable here")
+    pdf_document = models.FileField(upload_to='case_study_pdfs/', blank=True, null=True, help_text="Full case study write-up as a PDF")
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

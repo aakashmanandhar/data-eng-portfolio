@@ -17,3 +17,6 @@ db.sqlite3
 # Node
 node_modules/
 dist/
+
+# Django media uploads
+apps/api/media/
