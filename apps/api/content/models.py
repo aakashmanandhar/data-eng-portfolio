@@ -34,3 +34,21 @@ class BlogPost(models.Model):
 
     def __str__(self):
         return self.title
+    
+class ADR(models.Model):
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=200, unique=True)
+    context = models.TextField(help_text="What situation led to this decision")
+    decision = models.TextField(help_text="What was decided")
+    consequences = models.TextField(help_text="Trade-offs and results")
+    is_published = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "ADR"
+        verbose_name_plural = "ADRs"
+
+    def __str__(self):
+        return self.title
