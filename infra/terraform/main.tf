@@ -77,3 +77,34 @@ resource "docker_container" "jenkins" {
     container_path = "/var/jenkins_home"
   }
 }
+
+resource "docker_image" "django" {
+  name = "portfolio-django:latest"
+  build {
+    context = "../../apps/api"
+  }
+}
+
+resource "docker_container" "django" {
+  name  = "portfolio_django"
+  image = docker_image.django.image_id
+
+  networks_advanced {
+    name = docker_network.portfolio_net.name
+  }
+
+  env = [
+    "POSTGRES_HOST=portfolio_postgres",
+    "POSTGRES_PORT=5432",
+    "POSTGRES_DB=portfolio",
+    "POSTGRES_USER=postgres",
+    "POSTGRES_PASSWORD=localdevpassword"
+  ]
+
+  ports {
+    internal = 8000
+    external = 8000
+  }
+
+  depends_on = [docker_container.postgres]
+}
