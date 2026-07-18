@@ -1,5 +1,6 @@
 import '../App.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 
 const explorerData = {
   Germany: { tools: [["Python",88],["dbt",72],["Airflow",64],["Snowflake",41],["Databricks",55]], salary: {Entry:52000, Mid:72000, Senior:95000} },
@@ -12,6 +13,14 @@ const explorerData = {
 function HomePage() {
   const [status, setStatus] = useState('active')
   const [country, setCountry] = useState('Germany')
+  const [caseStudies, setCaseStudies] = useState([])
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/case-studies/')
+      .then((res) => res.json())
+      .then((data) => setCaseStudies(data))
+      .catch((err) => console.error('Failed to load case studies:', err))
+  }, [])
 
   return (
     <>
@@ -126,47 +135,20 @@ function HomePage() {
       <section className="case-studies-section">
         <div className="eyebrow">Case Studies</div>
         <div className="card-row">
-          <div className="case-card featured">
-            <div>
-              <h3>Data Eng. Tools & Salary Explorer</h3>
-              <p>End-to-end ELT pipeline collecting job market and tool-usage data by country, modeled in Postgres via dbt, orchestrated with Jenkins, deployed with Terraform.</p>
-              <div className="pills">
-                <span className="pill">Python</span>
-                <span className="pill">PostgreSQL</span>
-                <span className="pill">dbt</span>
-                <span className="pill">Jenkins</span>
-                <span className="pill">Terraform</span>
+              {caseStudies.map((cs) => (
+              <div className={cs.is_featured ? "case-card featured" : "case-card"} key={cs.id}>
+                <div>
+                  <h3>{cs.title}</h3>
+                  <p>{cs.summary}</p>
+                  <div className="pills">
+                    {cs.tech_stack.split(',').map((tech) => (
+                      <span className="pill" key={tech}>{tech.trim()}</span>
+                    ))}
+                  </div>
+                </div>
+                <Link to={`/case-studies/${cs.slug}`} className="case-link">Read case study →</Link>
               </div>
-            </div>
-            <div className="case-link">Read case study →</div>
-          </div>
-
-          <div className="case-card">
-            <div>
-              <h3>SAP → GCP Medallion Pipeline</h3>
-              <p>PostgreSQL → BigQuery via Bronze/Silver/Gold layers, orchestrated with Airflow, modeled with dbt, provisioned with Terraform.</p>
-              <div className="pills">
-                <span className="pill">dbt</span>
-                <span className="pill">Airflow</span>
-                <span className="pill">Terraform</span>
-                <span className="pill">BigQuery</span>
-              </div>
-            </div>
-            <div className="case-link">Read case study →</div>
-          </div>
-
-          <div className="case-card">
-            <div>
-              <h3>Text-to-SQL + RAG Assistant</h3>
-              <p>Natural-language querying over the pipeline's own data and documentation, routed between analytics queries and project docs.</p>
-              <div className="pills">
-                <span className="pill">Django</span>
-                <span className="pill">pgvector</span>
-                <span className="pill">LLM API</span>
-              </div>
-            </div>
-            <div className="case-link">Read case study →</div>
-          </div>
+            ))}
         </div>
       </section>
       <section className="adr-section">
