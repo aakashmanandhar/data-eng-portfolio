@@ -123,6 +123,52 @@ function App() {
           <div className="explorer-note">🔧 Sample data shown — live version pulls from PostgreSQL marts built via dbt.</div>
         </div>
       </section>
+      <section className="case-studies-section">
+        <div className="eyebrow">Case Studies</div>
+        <div className="card-row">
+          <div className="case-card featured">
+            <div>
+              <h3>Data Eng. Tools & Salary Explorer</h3>
+              <p>End-to-end ELT pipeline collecting job market and tool-usage data by country, modeled in Postgres via dbt, orchestrated with Jenkins, deployed with Terraform.</p>
+              <div className="pills">
+                <span className="pill">Python</span>
+                <span className="pill">PostgreSQL</span>
+                <span className="pill">dbt</span>
+                <span className="pill">Jenkins</span>
+                <span className="pill">Terraform</span>
+              </div>
+            </div>
+            <div className="case-link">Read case study →</div>
+          </div>
+
+          <div className="case-card">
+            <div>
+              <h3>SAP → GCP Medallion Pipeline</h3>
+              <p>PostgreSQL → BigQuery via Bronze/Silver/Gold layers, orchestrated with Airflow, modeled with dbt, provisioned with Terraform.</p>
+              <div className="pills">
+                <span className="pill">dbt</span>
+                <span className="pill">Airflow</span>
+                <span className="pill">Terraform</span>
+                <span className="pill">BigQuery</span>
+              </div>
+            </div>
+            <div className="case-link">Read case study →</div>
+          </div>
+
+          <div className="case-card">
+            <div>
+              <h3>Text-to-SQL + RAG Assistant</h3>
+              <p>Natural-language querying over the pipeline's own data and documentation, routed between analytics queries and project docs.</p>
+              <div className="pills">
+                <span className="pill">Django</span>
+                <span className="pill">pgvector</span>
+                <span className="pill">LLM API</span>
+              </div>
+            </div>
+            <div className="case-link">Read case study →</div>
+          </div>
+        </div>
+      </section>
     </>
   )
 }

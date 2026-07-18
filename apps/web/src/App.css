@@ -290,3 +290,55 @@ h1 {
   padding-top: 14px;
   border-top: 1px solid var(--border);
 }
+.case-studies-section {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px;
+}
+.card-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.case-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.case-card.featured {
+  border: 1.5px solid var(--accent1);
+}
+.case-card h3 {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.case-card p {
+  color: var(--muted);
+  font-size: 13.5px;
+  max-width: 520px;
+}
+.case-link {
+  font-size: 13px;
+  color: var(--accent1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.pill {
+  font-size: 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 3px 9px;
+  border-radius: 10px;
+  color: var(--muted);
+}
