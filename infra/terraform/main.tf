@@ -13,6 +13,7 @@ resource "docker_network" "portfolio_net" {
   name = "portfolio_net"
 }
 
+# --- Postgres (with pgvector) ---
 resource "docker_volume" "pgdata" {
   name = "portfolio_pgdata"
 }
@@ -44,8 +45,14 @@ resource "docker_container" "postgres" {
     volume_name    = docker_volume.pgdata.name
     container_path = "/var/lib/postgresql/data"
   }
+
+  volumes {
+    host_path      = "${abspath(path.module)}/../postgres-init"
+    container_path = "/docker-entrypoint-initdb.d"
+  }
 }
 
+# --- Jenkins ---
 resource "docker_volume" "jenkins_home" {
   name = "portfolio_jenkins_home"
 }
@@ -78,6 +85,7 @@ resource "docker_container" "jenkins" {
   }
 }
 
+# --- Django ---
 resource "docker_image" "django" {
   name = "portfolio-django:latest"
   build {
