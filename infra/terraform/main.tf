@@ -143,3 +143,24 @@ resource "docker_container" "react" {
     container_path = "/app"
   }
 }
+
+resource "docker_image" "dbt" {
+  name         = "portfolio-dbt:latest"
+  keep_locally = true
+}
+
+resource "docker_container" "dbt" {
+  name  = "portfolio_dbt"
+  image = docker_image.dbt.image_id
+
+  networks_advanced {
+    name = docker_network.portfolio_net.name
+  }
+
+  volumes {
+    host_path      = "${abspath(path.module)}/../../pipeline/dbt"
+    container_path = "/dbt"
+  }
+
+  depends_on = [docker_container.postgres]
+}
