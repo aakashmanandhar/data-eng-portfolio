@@ -23,3 +23,6 @@ apps/api/media/
 
 # Secrets
 .env
+
+# Raw survey data (large, downloaded separately)
+pipeline/extraction/data/
