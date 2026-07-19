@@ -1,0 +1,23 @@
+name: 'data_eng_portfolio'
+version: '1.0.0'
+config-version: 2
+
+profile: 'data_eng_portfolio'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  data_eng_portfolio:
+    silver:
+      +schema: silver
+      +materialized: table
+    gold:
+      +schema: gold
+      +materialized: table

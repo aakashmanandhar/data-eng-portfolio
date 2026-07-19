@@ -26,3 +26,10 @@ apps/api/media/
 
 # Raw survey data (large, downloaded separately)
 pipeline/extraction/data/
+
+# dbt
+pipeline/dbt/profiles.yml
+pipeline/dbt/target/
+pipeline/dbt/dbt_packages/
+pipeline/dbt/.user.yml
+pipeline/dbt/logs/
