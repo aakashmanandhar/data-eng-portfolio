@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: dim_country
+    columns:
+      - name: country_code
+        tests:
+          - unique
+      - name: country_name
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_tool
+    columns:
+      - name: tool_name
+        tests:
+          - unique
+          - not_null
+
+  - name: fact_job_market
+    columns:
+      - name: country_name
+        tests:
+          - not_null
+      - name: seniority_level
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['entry', 'mid', 'senior']
+      - name: job_count
+        tests:
+          - not_null
