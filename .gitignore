@@ -20,3 +20,6 @@ dist/
 
 # Django media uploads
 apps/api/media/
+
+# Secrets
+.env
