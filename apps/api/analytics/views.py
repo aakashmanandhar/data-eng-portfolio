@@ -41,4 +41,17 @@ class ToolUsageView(APIView):
         rows = cur.fetchall()
         cur.close()
         conn.close()
+        
+class ToolPreferenceGlobalView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT tool_name, preference_count
+            FROM dbt_dev_gold.fact_tool_preference_global
+            ORDER BY preference_count DESC
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
         return Response(rows)

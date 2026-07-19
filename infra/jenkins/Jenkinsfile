@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+
+    triggers {
+        cron('H */6 * * *')
+    }
+
+    stages {
+        stage('Extract Adzuna') {
+            steps {
+                sh 'docker cp ${WORKSPACE}/pipeline/extraction/extract_adzuna.py portfolio_django:/tmp/extract_adzuna.py'
+                sh 'docker cp /secrets/.env portfolio_django:/tmp/.env'
+                sh 'docker exec -w /tmp portfolio_django python extract_adzuna.py'
+                sh 'docker cp portfolio_django:/tmp/adzuna_raw_output.json ${WORKSPACE}/pipeline/extraction/adzuna_raw_output.json'
+            }
+        }
+        stage('Load Bronze') {
+            steps {
+                sh 'docker cp ${WORKSPACE}/pipeline/extraction/load_bronze.py portfolio_django:/tmp/load_bronze.py'
+                sh 'docker cp ${WORKSPACE}/pipeline/extraction/adzuna_raw_output.json portfolio_django:/tmp/adzuna_raw_output.json'
+                sh 'docker cp ${WORKSPACE}/pipeline/extraction/so_survey_extracted.json portfolio_django:/tmp/so_survey_extracted.json'
+                sh 'docker exec -w /tmp portfolio_django python load_bronze.py'
+            }
+        }
+        stage('dbt run') {
+            steps {
+                sh 'docker exec portfolio_dbt dbt run'
+            }
+        }
+        stage('dbt test') {
+            steps {
+                sh 'docker exec portfolio_dbt dbt test'
+            }
+        }
+    }
+}

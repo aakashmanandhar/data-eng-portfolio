@@ -12,7 +12,7 @@ const explorerData = {
 
 function HomePage() {
   const [status, setStatus] = useState('active')
-  const [country, setCountry] = useState('Germany')
+  const [country, setCountry] = useState('Australia')
   const [caseStudies, setCaseStudies] = useState([])
 
   useEffect(() => {
@@ -20,6 +20,49 @@ function HomePage() {
       .then((res) => res.json())
       .then((data) => setCaseStudies(data))
       .catch((err) => console.error('Failed to load case studies:', err))
+  }, [])
+
+  const [jobMarketData, setJobMarketData] = useState({})
+  const [toolUsageData, setToolUsageData] = useState({})
+  const [jobCountsByCountry, setJobCountsByCountry] = useState({})
+  const [preferredGlobal, setPreferredGlobal] = useState([])
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/job-market/')
+      .then((res) => res.json())
+      .then((rows) => {
+        const grouped = {}
+        const totals = {}
+        rows.forEach((row) => {
+          if (!grouped[row.country_name]) grouped[row.country_name] = {}
+          grouped[row.country_name][row.seniority_level] = row.adzuna_salary_usd
+          totals[row.country_name] = (totals[row.country_name] || 0) + (row.job_count || 0)
+        })
+        setJobMarketData(grouped)
+        setJobCountsByCountry(totals)
+      })
+      .catch((err) => console.error('Failed to load job market data:', err))
+
+    fetch('http://localhost:8000/api/tool-usage/')
+      .then((res) => res.json())
+      .then((rows) => {
+        const grouped = {}
+        rows.forEach((row) => {
+          if (!grouped[row.country]) grouped[row.country] = []
+          if (grouped[row.country].length < 5) {
+            grouped[row.country].push([row.tool_name, row.usage_count])
+          }
+        })
+        setToolUsageData(grouped)
+      })
+      .catch((err) => console.error('Failed to load tool usage data:', err))
+  }, [])
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/tool-preference-global/')
+      .then((res) => res.json())
+      .then((rows) => setPreferredGlobal(rows.slice(0, 10)))
+      .catch((err) => console.error('Failed to load global tool preferences:', err))
   }, [])
 
   return (
@@ -91,36 +134,41 @@ function HomePage() {
         <div className="eyebrow">Featured · Live Explorer</div>
         <div className="explorer-box">
           <select value={country} onChange={(e) => setCountry(e.target.value)}>
-            <option value="Germany">🇩🇪 Germany</option>
-            <option value="USA">🇺🇸 USA</option>
-            <option value="India">🇮🇳 India</option>
-            <option value="UK">🇬🇧 UK</option>
-            <option value="Netherlands">🇳🇱 Netherlands</option>
+            {Object.keys(jobMarketData).sort().map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
           </select>
 
           <div className="explorer-grid">
             <div className="explorer-panel">
               <h4>TOP TOOLS BY USAGE</h4>
-              {explorerData[country].tools.map(([name, pct]) => (
-                <div className="tool-row" key={name}>
-                  <span className="tool-name">{name}</span>
-                  <div className="tool-bar-bg">
-                    <div className="tool-bar-fill" style={{ width: pct + '%' }}></div>
+              {toolUsageData[country] && toolUsageData[country].length > 0 ? (
+                toolUsageData[country].map(([name, pct]) => (
+                  <div className="tool-row" key={name}>
+                    <span className="tool-name">{name}</span>
+                    <div className="tool-bar-bg">
+                      <div className="tool-bar-fill" style={{ width: pct + '%' }}></div>
+                    </div>
+                    <span className="tool-pct">{pct}</span>
                   </div>
-                  <span className="tool-pct">{pct}%</span>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p style={{ color: 'var(--muted)', fontSize: '13px' }}>Not enough survey responses yet for this country's tool data.</p>
+              )}
             </div>
 
             <div className="explorer-panel">
               <h4>AVG. SALARY BY SENIORITY (USD/yr)</h4>
               <div className="sal-row">
-                {Object.entries(explorerData[country].salary).map(([level, val]) => {
-                  const max = Math.max(...Object.values(explorerData[country].salary))
+                {Object.entries(jobMarketData[country] || {}).filter(([, val]) => val !== null).map(([level, val]) => {
+                  const values = Object.values(jobMarketData[country] || {}).filter((v) => v !== null)
+                  const max = values.length ? Math.max(...values) : 1
                   return (
                     <div className="sal-bar-wrap" key={level}>
                       <div className="sal-value">${(val / 1000).toFixed(0)}k</div>
-                      <div className="sal-bar" style={{ height: (val / max * 100) + 'px' }}></div>
+                      <div className="sal-bar-track">
+                        <div className="sal-bar" style={{ height: (val / max * 100) + '%' }}></div>
+                      </div>
                       <div className="sal-label">{level}</div>
                     </div>
                   )
@@ -130,6 +178,42 @@ function HomePage() {
           </div>
 
           <div className="explorer-note">🔧 Sample data shown — live version pulls from PostgreSQL marts built via dbt.</div>
+        </div>
+      </section>
+     <section className="dual-charts-section">
+        <div className="dual-col">
+          <div className="eyebrow">Job Postings by Country</div>
+          <div className="explorer-box">
+            {Object.entries(jobCountsByCountry)
+              .sort((a, b) => b[1] - a[1])
+              .map(([country, count]) => {
+                const max = Math.max(...Object.values(jobCountsByCountry), 1)
+                return (
+                  <div className="postings-row" key={country}>
+                    <span className="postings-country">{country}</span>
+                    <div className="postings-bar-bg">
+                      <div className="postings-bar-fill" style={{ width: (count / max * 100) + '%' }}></div>
+                    </div>
+                    <span className="postings-count">{count.toLocaleString()}</span>
+                  </div>
+                )
+              })}
+          </div>
+        </div>
+
+        <div className="dual-col">
+          <div className="eyebrow">Most Desired Tools Globally</div>
+          <div className="explorer-box">
+            <div className="preferred-grid">
+              {preferredGlobal.map(({ tool_name, preference_count }, i) => (
+                <div className="preferred-chip" key={tool_name}>
+                  <span className="preferred-rank">#{i + 1}</span>
+                  <span className="preferred-name">{tool_name}</span>
+                  <span className="preferred-count">{preference_count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
       <section className="case-studies-section">
