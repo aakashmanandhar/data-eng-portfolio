@@ -14,6 +14,7 @@ function HomePage() {
   const [status, setStatus] = useState('active')
   const [country, setCountry] = useState('Australia')
   const [caseStudies, setCaseStudies] = useState([])
+  const [lastRefreshed, setLastRefreshed] = useState(null)
 
   useEffect(() => {
     fetch('http://localhost:8000/api/case-studies/')
@@ -22,10 +23,18 @@ function HomePage() {
       .catch((err) => console.error('Failed to load case studies:', err))
   }, [])
 
+  useEffect(() => {
+    fetch('http://localhost:8000/api/last-refreshed/')
+      .then((res) => res.json())
+      .then((data) => setLastRefreshed(data.last_refreshed))
+      .catch((err) => console.error('Failed to load last refreshed time:', err))
+  }, [])
+
   const [jobMarketData, setJobMarketData] = useState({})
   const [toolUsageData, setToolUsageData] = useState({})
   const [jobCountsByCountry, setJobCountsByCountry] = useState({})
   const [preferredGlobal, setPreferredGlobal] = useState([])
+  const [toolRespondentCounts, setToolRespondentCounts] = useState({})
 
   useEffect(() => {
     fetch('http://localhost:8000/api/job-market/')
@@ -47,13 +56,16 @@ function HomePage() {
       .then((res) => res.json())
       .then((rows) => {
         const grouped = {}
+        const respondentCounts = {}
         rows.forEach((row) => {
           if (!grouped[row.country]) grouped[row.country] = []
           if (grouped[row.country].length < 5) {
             grouped[row.country].push([row.tool_name, row.usage_count])
           }
+          respondentCounts[row.country] = row.respondent_count
         })
         setToolUsageData(grouped)
+        setToolRespondentCounts(respondentCounts)
       })
       .catch((err) => console.error('Failed to load tool usage data:', err))
   }, [])
@@ -142,6 +154,11 @@ function HomePage() {
           <div className="explorer-grid">
             <div className="explorer-panel">
               <h4>TOP TOOLS BY USAGE</h4>
+                {toolRespondentCounts[country] && (
+                  <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '-8px', marginBottom: '12px' }}>
+                    Based on {toolRespondentCounts[country]} data professionals (engineers, analysts, scientists, DBAs) surveyed in this country
+                  </p>
+                )}
               {toolUsageData[country] && toolUsageData[country].length > 0 ? (
                 toolUsageData[country].map(([name, pct]) => (
                   <div className="tool-row" key={name}>
@@ -149,7 +166,7 @@ function HomePage() {
                     <div className="tool-bar-bg">
                       <div className="tool-bar-fill" style={{ width: pct + '%' }}></div>
                     </div>
-                    <span className="tool-pct">{pct}</span>
+                    <span className="tool-pct">{pct}/{toolRespondentCounts[country]}</span>
                   </div>
                 ))
               ) : (
@@ -158,49 +175,55 @@ function HomePage() {
             </div>
 
             <div className="explorer-panel">
-              <h4>AVG. SALARY BY SENIORITY (USD/yr)</h4>
-              <div className="sal-row">
-                {Object.entries(jobMarketData[country] || {}).filter(([, val]) => val !== null).map(([level, val]) => {
-                  const values = Object.values(jobMarketData[country] || {}).filter((v) => v !== null)
-                  const max = values.length ? Math.max(...values) : 1
+            <h4>AVG. SALARY BY SENIORITY (USD/yr)</h4>
+            <div className="salary-cards">
+              {(() => {
+                const entries = Object.entries(jobMarketData[country] || {}).filter(([, val]) => val !== null)
+                return entries.map(([level, val], i) => {
+                  const prevVal = i > 0 ? entries[i - 1][1] : null
+                  const growth = prevVal ? Math.round(((val - prevVal) / prevVal) * 100) : null
                   return (
-                    <div className="sal-bar-wrap" key={level}>
-                      <div className="sal-value">${(val / 1000).toFixed(0)}k</div>
-                      <div className="sal-bar-track">
-                        <div className="sal-bar" style={{ height: (val / max * 100) + '%' }}></div>
+                    <div className="salary-card" key={level}>
+                      <div className="salary-card-label">{level}</div>
+                      <div className="salary-card-value">${(val / 1000).toFixed(0)}k</div>
+                      <div className={"salary-card-growth" + (growth === null ? " empty" : "")}>
+                        {growth !== null ? `+${growth}%` : ''}
                       </div>
-                      <div className="sal-label">{level}</div>
                     </div>
                   )
-                })}
-              </div>
+                })
+              })()}
             </div>
           </div>
+          </div>
 
-          <div className="explorer-note">🔧 Sample data shown — live version pulls from PostgreSQL marts built via dbt.</div>
+          <div className="explorer-note">
+            🔧 Live data from PostgreSQL marts built via dbt.
+            {lastRefreshed && ` Last refreshed: ${new Date(lastRefreshed).toLocaleString()}`}
+          </div>
         </div>
       </section>
      <section className="dual-charts-section">
         <div className="dual-col">
           <div className="eyebrow">Job Postings by Country</div>
           <div className="explorer-box">
-            {Object.entries(jobCountsByCountry)
-              .sort((a, b) => b[1] - a[1])
-              .map(([country, count]) => {
-                const max = Math.max(...Object.values(jobCountsByCountry), 1)
-                return (
-                  <div className="postings-row" key={country}>
-                    <span className="postings-country">{country}</span>
-                    <div className="postings-bar-bg">
-                      <div className="postings-bar-fill" style={{ width: (count / max * 100) + '%' }}></div>
-                    </div>
-                    <span className="postings-count">{count.toLocaleString()}</span>
-                  </div>
-                )
-              })}
+  <div className="postings-chip-scroll">
+    <div className="preferred-grid">
+      {Object.entries(jobCountsByCountry)
+        .sort((a, b) => b[1] - a[1])
+        .map(([country, count], i) => (
+          <div className="preferred-chip" key={country}>
+            <span className="preferred-rank">#{i + 1}</span>
+            <span className="preferred-name">{country}</span>
+            <span className="preferred-count">{count.toLocaleString()}</span>
+          </div>
+        ))}
+    </div>
+  </div>
+  </div>
+  <div className="explorer-note">
           </div>
         </div>
-
         <div className="dual-col">
           <div className="eyebrow">Most Desired Tools Globally</div>
           <div className="explorer-box">
@@ -213,6 +236,10 @@ function HomePage() {
                 </div>
               ))}
             </div>
+            <div className="explorer-note">
+            🔧 Live data from PostgreSQL marts built via dbt.
+            {lastRefreshed && ` Last refreshed: ${new Date(lastRefreshed).toLocaleString()}`}
+          </div>
           </div>
         </div>
       </section>

@@ -34,13 +34,16 @@ class ToolUsageView(APIView):
         conn = get_readonly_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("""
-            SELECT country, tool_name, usage_count
-            FROM dbt_dev_silver.silver_tool_usage
-            ORDER BY country, usage_count DESC
+            SELECT t.country, t.tool_name, t.usage_count,
+                   (b.raw_data->>'respondent_count')::INTEGER AS respondent_count
+            FROM dbt_dev_silver.silver_tool_usage t
+            JOIN bronze.so_survey_by_country b ON b.country = t.country
+            ORDER BY t.country, t.usage_count DESC
         """)
         rows = cur.fetchall()
         cur.close()
         conn.close()
+        return Response(rows)
         
 class ToolPreferenceGlobalView(APIView):
     def get(self, request):
@@ -55,3 +58,13 @@ class ToolPreferenceGlobalView(APIView):
         cur.close()
         conn.close()
         return Response(rows)
+    
+class LastRefreshedView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT MAX(loaded_at) FROM bronze.adzuna_job_market;")
+        result = cur.fetchone()
+        cur.close()
+        conn.close()
+        return Response({"last_refreshed": result[0]})

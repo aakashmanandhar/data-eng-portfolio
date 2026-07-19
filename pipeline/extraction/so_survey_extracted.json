@@ -1,313 +1,176 @@
 {
   "by_country": {
     "Ukraine": {
-      "respondent_count": 22,
+      "respondent_count": 48,
       "top_tools": [
         [
           "Python",
-          16
+          31
+        ],
+        [
+          "SQL",
+          29
         ],
         [
           "Amazon Web Services (AWS)",
-          15
-        ],
-        [
-          "Docker",
-          15
-        ],
-        [
-          "SQL",
-          15
-        ],
-        [
-          "PostgreSQL",
-          11
-        ],
-        [
-          "Bash/Shell (all shells)",
-          11
-        ],
-        [
-          "Pip",
-          8
-        ],
-        [
-          "Snowflake",
-          7
-        ],
-        [
-          "Terraform",
-          7
-        ],
-        [
-          "Google Cloud",
-          7
-        ]
-      ],
-      "avg_salary_usd": 40760,
-      "salary_sample_size": 16
-    },
-    "United States of America": {
-      "respondent_count": 141,
-      "top_tools": [
-        [
-          "Python",
-          120
-        ],
-        [
-          "SQL",
-          119
-        ],
-        [
-          "Bash/Shell (all shells)",
-          74
-        ],
-        [
-          "Amazon Web Services (AWS)",
-          71
-        ],
-        [
-          "PostgreSQL",
-          71
-        ],
-        [
-          "Pip",
-          61
-        ],
-        [
-          "Docker",
-          61
-        ],
-        [
-          "JavaScript",
-          60
-        ],
-        [
-          "Microsoft SQL Server",
-          58
-        ],
-        [
-          "HTML/CSS",
-          52
-        ]
-      ],
-      "avg_salary_usd": 177168,
-      "salary_sample_size": 120
-    },
-    "France": {
-      "respondent_count": 31,
-      "top_tools": [
-        [
-          "Python",
-          28
-        ],
-        [
-          "Docker",
-          26
-        ],
-        [
-          "SQL",
-          24
-        ],
-        [
-          "PostgreSQL",
           23
         ],
         [
-          "Bash/Shell (all shells)",
-          18
+          "Docker",
+          21
         ],
         [
-          "Pip",
-          18
-        ],
-        [
-          "Amazon Web Services (AWS)",
-          15
-        ],
-        [
-          "JavaScript",
-          14
-        ],
-        [
-          "HTML/CSS",
-          14
-        ],
-        [
-          "Kubernetes",
-          13
-        ]
-      ],
-      "avg_salary_usd": 85846,
-      "salary_sample_size": 28
-    },
-    "Spain": {
-      "respondent_count": 23,
-      "top_tools": [
-        [
-          "Python",
-          22
-        ],
-        [
-          "SQL",
+          "PostgreSQL",
           20
         ],
         [
-          "Amazon Web Services (AWS)",
-          17
-        ],
-        [
-          "Docker",
-          16
-        ],
-        [
           "Pip",
           16
         ],
         [
-          "PostgreSQL",
-          15
-        ],
-        [
-          "JavaScript",
+          "Bash/Shell (all shells)",
           14
         ],
         [
-          "HTML/CSS",
+          "MySQL",
           13
         ],
         [
-          "Bash/Shell (all shells)",
-          13
+          "Google Cloud",
+          12
         ],
         [
-          "MongoDB",
-          9
+          "BigQuery",
+          11
         ]
       ],
-      "avg_salary_usd": 69259,
-      "salary_sample_size": 22
+      "avg_salary_usd": 27710,
+      "salary_sample_size": 35
     },
-    "United Kingdom of Great Britain and Northern Ireland": {
-      "respondent_count": 32,
+    "United States of America": {
+      "respondent_count": 354,
       "top_tools": [
         [
           "Python",
-          26
+          286
         ],
         [
           "SQL",
-          25
+          275
+        ],
+        [
+          "Bash/Shell (all shells)",
+          177
         ],
         [
           "Amazon Web Services (AWS)",
-          19
-        ],
-        [
-          "Docker",
-          19
-        ],
-        [
-          "Bash/Shell (all shells)",
-          18
-        ],
-        [
-          "PostgreSQL",
-          18
-        ],
-        [
-          "Pip",
-          17
-        ],
-        [
-          "JavaScript",
-          13
+          151
         ],
         [
           "Microsoft SQL Server",
-          13
+          148
         ],
         [
           "HTML/CSS",
-          12
-        ]
-      ],
-      "avg_salary_usd": 265103,
-      "salary_sample_size": 28
-    },
-    "India": {
-      "respondent_count": 47,
-      "top_tools": [
-        [
-          "Python",
-          37
-        ],
-        [
-          "SQL",
-          32
+          147
         ],
         [
           "PostgreSQL",
+          145
+        ],
+        [
+          "JavaScript",
+          140
+        ],
+        [
+          "Pip",
+          137
+        ],
+        [
+          "Docker",
+          135
+        ]
+      ],
+      "avg_salary_usd": 166372,
+      "salary_sample_size": 287
+    },
+    "France": {
+      "respondent_count": 68,
+      "top_tools": [
+        [
+          "Python",
+          58
+        ],
+        [
+          "SQL",
+          47
+        ],
+        [
+          "Docker",
+          44
+        ],
+        [
+          "PostgreSQL",
+          42
+        ],
+        [
+          "Pip",
+          36
+        ],
+        [
+          "Bash/Shell (all shells)",
+          30
+        ],
+        [
+          "JavaScript",
+          25
+        ],
+        [
+          "HTML/CSS",
+          24
+        ],
+        [
+          "Amazon Web Services (AWS)",
+          24
+        ],
+        [
+          "Kubernetes",
+          23
+        ]
+      ],
+      "avg_salary_usd": 82869,
+      "salary_sample_size": 60
+    },
+    "Spain": {
+      "respondent_count": 38,
+      "top_tools": [
+        [
+          "Python",
+          34
+        ],
+        [
+          "SQL",
+          30
+        ],
+        [
+          "Docker",
           22
+        ],
+        [
+          "Amazon Web Services (AWS)",
+          21
         ],
         [
           "Pip",
           21
         ],
         [
-          "Amazon Web Services (AWS)",
-          20
-        ],
-        [
-          "Docker",
+          "PostgreSQL",
           19
         ],
         [
-          "Microsoft SQL Server",
-          17
-        ],
-        [
-          "MySQL",
-          16
-        ],
-        [
           "Bash/Shell (all shells)",
-          16
-        ],
-        [
-          "Databricks SQL",
-          15
-        ]
-      ],
-      "avg_salary_usd": 29516,
-      "salary_sample_size": 27
-    },
-    "Germany": {
-      "respondent_count": 47,
-      "top_tools": [
-        [
-          "Python",
-          38
-        ],
-        [
-          "SQL",
-          31
-        ],
-        [
-          "PostgreSQL",
-          29
-        ],
-        [
-          "Docker",
-          27
-        ],
-        [
-          "Pip",
-          24
-        ],
-        [
-          "Bash/Shell (all shells)",
-          24
+          18
         ],
         [
           "HTML/CSS",
@@ -318,18 +181,61 @@
           16
         ],
         [
-          "Make",
-          15
+          "MySQL",
+          12
+        ]
+      ],
+      "avg_salary_usd": 69075,
+      "salary_sample_size": 32
+    },
+    "India": {
+      "respondent_count": 108,
+      "top_tools": [
+        [
+          "Python",
+          79
+        ],
+        [
+          "SQL",
+          63
+        ],
+        [
+          "PostgreSQL",
+          41
+        ],
+        [
+          "Pip",
+          36
         ],
         [
           "MySQL",
-          13
+          36
+        ],
+        [
+          "Docker",
+          34
+        ],
+        [
+          "HTML/CSS",
+          34
+        ],
+        [
+          "Microsoft SQL Server",
+          33
+        ],
+        [
+          "Amazon Web Services (AWS)",
+          32
+        ],
+        [
+          "JavaScript",
+          31
         ]
       ],
-      "avg_salary_usd": 97812,
-      "salary_sample_size": 34
+      "avg_salary_usd": 22221,
+      "salary_sample_size": 57
     },
-    "Brazil": {
+    "Switzerland": {
       "respondent_count": 20,
       "top_tools": [
         [
@@ -338,65 +244,241 @@
         ],
         [
           "SQL",
-          15
+          14
+        ],
+        [
+          "HTML/CSS",
+          12
+        ],
+        [
+          "JavaScript",
+          12
         ],
         [
           "Docker",
+          11
+        ],
+        [
+          "Microsoft SQL Server",
+          11
+        ],
+        [
+          "Pip",
+          11
+        ],
+        [
+          "Bash/Shell (all shells)",
+          10
+        ],
+        [
+          "SQLite",
+          10
+        ],
+        [
+          "Microsoft Azure",
+          10
+        ]
+      ],
+      "avg_salary_usd": 142258,
+      "salary_sample_size": 13
+    },
+    "United Kingdom of Great Britain and Northern Ireland": {
+      "respondent_count": 89,
+      "top_tools": [
+        [
+          "Python",
+          72
+        ],
+        [
+          "SQL",
+          66
+        ],
+        [
+          "Bash/Shell (all shells)",
+          43
+        ],
+        [
+          "HTML/CSS",
+          38
+        ],
+        [
+          "Pip",
+          37
+        ],
+        [
+          "Microsoft SQL Server",
+          36
+        ],
+        [
+          "JavaScript",
+          35
+        ],
+        [
+          "PostgreSQL",
+          33
+        ],
+        [
+          "Docker",
+          33
+        ],
+        [
+          "Amazon Web Services (AWS)",
+          31
+        ]
+      ],
+      "avg_salary_usd": 154182,
+      "salary_sample_size": 73
+    },
+    "Canada": {
+      "respondent_count": 54,
+      "top_tools": [
+        [
+          "SQL",
+          38
+        ],
+        [
+          "Python",
+          36
+        ],
+        [
+          "Microsoft SQL Server",
+          25
+        ],
+        [
+          "HTML/CSS",
+          20
+        ],
+        [
+          "Bash/Shell (all shells)",
+          19
+        ],
+        [
+          "JavaScript",
+          18
+        ],
+        [
+          "PostgreSQL",
+          17
+        ],
+        [
+          "Docker",
+          17
+        ],
+        [
+          "MySQL",
+          16
+        ],
+        [
+          "PowerShell",
+          15
+        ]
+      ],
+      "avg_salary_usd": 91442,
+      "salary_sample_size": 38
+    },
+    "Italy": {
+      "respondent_count": 29,
+      "top_tools": [
+        [
+          "Python",
+          25
+        ],
+        [
+          "SQL",
+          20
+        ],
+        [
+          "Docker",
+          18
+        ],
+        [
+          "PostgreSQL",
+          17
+        ],
+        [
+          "MySQL",
           13
         ],
         [
           "Bash/Shell (all shells)",
-          11
-        ],
-        [
-          "JavaScript",
-          11
-        ],
-        [
-          "PostgreSQL",
-          11
-        ],
-        [
-          "Pip",
-          10
+          12
         ],
         [
           "HTML/CSS",
-          9
+          12
         ],
         [
-          "MySQL",
-          8
+          "JavaScript",
+          12
+        ],
+        [
+          "Microsoft SQL Server",
+          12
         ],
         [
           "Amazon Web Services (AWS)",
-          8
+          11
         ]
       ],
-      "avg_salary_usd": 41365,
-      "salary_sample_size": 17
+      "avg_salary_usd": 48992,
+      "salary_sample_size": 24
     },
-    "Poland": {
-      "respondent_count": 21,
+    "Germany": {
+      "respondent_count": 119,
       "top_tools": [
         [
           "Python",
-          19
+          92
         ],
         [
           "SQL",
-          19
+          74
         ],
         [
           "Docker",
-          15
+          62
         ],
         [
           "PostgreSQL",
-          15
+          61
         ],
         [
           "Pip",
+          50
+        ],
+        [
+          "Bash/Shell (all shells)",
+          48
+        ],
+        [
+          "HTML/CSS",
+          42
+        ],
+        [
+          "JavaScript",
+          42
+        ],
+        [
+          "SQLite",
+          36
+        ],
+        [
+          "MySQL",
+          35
+        ]
+      ],
+      "avg_salary_usd": 91177,
+      "salary_sample_size": 90
+    },
+    "Sweden": {
+      "respondent_count": 20,
+      "top_tools": [
+        [
+          "Python",
+          16
+        ],
+        [
+          "Docker",
           14
         ],
         [
@@ -404,86 +486,333 @@
           12
         ],
         [
-          "Amazon Web Services (AWS)",
-          10
+          "SQL",
+          12
         ],
         [
-          "Java",
+          "Pip",
+          12
+        ],
+        [
+          "PostgreSQL",
+          11
+        ],
+        [
+          "Make",
           9
         ],
         [
-          "Terraform",
+          "HTML/CSS",
+          8
+        ],
+        [
+          "Microsoft SQL Server",
+          7
+        ],
+        [
+          "Amazon Web Services (AWS)",
+          7
+        ]
+      ],
+      "avg_salary_usd": 70356,
+      "salary_sample_size": 16
+    },
+    "Brazil": {
+      "respondent_count": 46,
+      "top_tools": [
+        [
+          "SQL",
+          33
+        ],
+        [
+          "Python",
+          32
+        ],
+        [
+          "JavaScript",
+          25
+        ],
+        [
+          "PostgreSQL",
+          22
+        ],
+        [
+          "Docker",
+          21
+        ],
+        [
+          "HTML/CSS",
+          20
+        ],
+        [
+          "Pip",
+          19
+        ],
+        [
+          "Bash/Shell (all shells)",
+          18
+        ],
+        [
+          "SQLite",
+          15
+        ],
+        [
+          "Microsoft SQL Server",
+          14
+        ]
+      ],
+      "avg_salary_usd": 29434,
+      "salary_sample_size": 40
+    },
+    "Poland": {
+      "respondent_count": 38,
+      "top_tools": [
+        [
+          "SQL",
+          30
+        ],
+        [
+          "Python",
+          29
+        ],
+        [
+          "Docker",
+          22
+        ],
+        [
+          "Bash/Shell (all shells)",
+          21
+        ],
+        [
+          "Pip",
+          20
+        ],
+        [
+          "PostgreSQL",
+          20
+        ],
+        [
+          "JavaScript",
+          13
+        ],
+        [
+          "Microsoft SQL Server",
+          13
+        ],
+        [
+          "SQLite",
+          13
+        ],
+        [
+          "Amazon Web Services (AWS)",
+          13
+        ]
+      ],
+      "avg_salary_usd": 68463,
+      "salary_sample_size": 23
+    },
+    "Mexico": {
+      "respondent_count": 23,
+      "top_tools": [
+        [
+          "Python",
+          16
+        ],
+        [
+          "SQL",
+          15
+        ],
+        [
+          "Bash/Shell (all shells)",
+          12
+        ],
+        [
+          "HTML/CSS",
           8
         ],
         [
           "JavaScript",
           7
+        ],
+        [
+          "Pip",
+          7
+        ],
+        [
+          "PostgreSQL",
+          6
+        ],
+        [
+          "Docker",
+          6
+        ],
+        [
+          "R",
+          6
+        ],
+        [
+          "Microsoft SQL Server",
+          5
         ]
       ],
-      "avg_salary_usd": 64818,
+      "avg_salary_usd": 50042,
       "salary_sample_size": 15
+    },
+    "Netherlands": {
+      "respondent_count": 30,
+      "top_tools": [
+        [
+          "Python",
+          27
+        ],
+        [
+          "SQL",
+          23
+        ],
+        [
+          "Bash/Shell (all shells)",
+          16
+        ],
+        [
+          "Docker",
+          15
+        ],
+        [
+          "PostgreSQL",
+          14
+        ],
+        [
+          "MySQL",
+          12
+        ],
+        [
+          "Pip",
+          12
+        ],
+        [
+          "JavaScript",
+          12
+        ],
+        [
+          "Microsoft SQL Server",
+          11
+        ],
+        [
+          "HTML/CSS",
+          8
+        ]
+      ],
+      "avg_salary_usd": 124528,
+      "salary_sample_size": 20
+    },
+    "Australia": {
+      "respondent_count": 39,
+      "top_tools": [
+        [
+          "SQL",
+          26
+        ],
+        [
+          "Python",
+          24
+        ],
+        [
+          "Bash/Shell (all shells)",
+          20
+        ],
+        [
+          "PostgreSQL",
+          17
+        ],
+        [
+          "JavaScript",
+          16
+        ],
+        [
+          "Amazon Web Services (AWS)",
+          16
+        ],
+        [
+          "Docker",
+          16
+        ],
+        [
+          "Microsoft SQL Server",
+          15
+        ],
+        [
+          "Pip",
+          14
+        ],
+        [
+          "HTML/CSS",
+          13
+        ]
+      ],
+      "avg_salary_usd": 97757,
+      "salary_sample_size": 25
     }
   },
   "most_preferred_global": [
     [
       "Python",
-      362
+      822
     ],
     [
       "SQL",
-      310
+      693
     ],
     [
       "PostgreSQL",
-      275
+      542
     ],
     [
       "Docker",
-      261
-    ],
-    [
-      "Amazon Web Services (AWS)",
-      200
+      492
     ],
     [
       "Bash/Shell (all shells)",
-      190
+      392
+    ],
+    [
+      "Amazon Web Services (AWS)",
+      355
     ],
     [
       "Rust",
-      182
+      343
     ],
     [
       "Pip",
-      178
+      335
     ],
     [
-      "Terraform",
-      158
+      "JavaScript",
+      299
+    ],
+    [
+      "HTML/CSS",
+      282
     ],
     [
       "Kubernetes",
-      153
+      271
     ],
     [
       "DuckDB",
-      148
+      271
+    ],
+    [
+      "SQLite",
+      263
     ],
     [
       "Google Cloud",
-      136
+      263
     ],
     [
-      "Go",
-      130
-    ],
-    [
-      "Snowflake",
-      129
-    ],
-    [
-      "Databricks SQL",
-      126
+      "R",
+      248
     ]
   ]
 }

@@ -188,7 +188,7 @@ h1 {
 .explorer-section {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 40px;
+  padding: 24px 40px;
 }
 .eyebrow {
   font-size: 12.5px;
@@ -215,7 +215,7 @@ h1 {
 }
 .explorer-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.3fr 0.7fr;
   gap: 24px;
 }
 .explorer-panel h4 {
@@ -253,49 +253,44 @@ h1 {
   width: 32px;
   text-align: right;
 }
-.sal-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 28px;
-  height: 120px;
-  margin-top: 4px;
-  padding: 0 10px;
-}
-.sal-bar-wrap {
-  flex: 1;
+.salary-cards {
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+.salary-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: 55px 1fr 48px;
   align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  max-width: 60px;
+  gap: 8px;
 }
-.sal-bar-track {
-  width: 34px;
-  height: 100%;
-  background: var(--border);
-  border-radius: 17px;
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
-}
-.sal-bar {
-  width: 100%;
-  background: linear-gradient(180deg, var(--accent2), var(--accent1));
-  border-radius: 17px;
-  transition: height 0.4s ease;
-}
-.sal-label {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 8px;
-  font-weight: 500;
-}
-.sal-value {
+.salary-card-label {
   font-size: 12px;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+.salary-card-value {
+  font-size: 18px;
   font-weight: 700;
-  margin-bottom: 8px;
-  color: var(--text);
+  color: var(--accent1);
+  text-align: center;
+}
+.salary-card-growth {
+  font-size: 11px;
+  font-weight: 700;
+  color: #16A34A;
+  background: rgba(22, 163, 74, 0.1);
+  padding: 3px 8px;
+  border-radius: 10px;
+  text-align: center;
+  min-height: 16px;
+}
+.salary-card-growth.empty {
+  background: transparent;
 }
 .explorer-note {
   font-size: 11.5px;
@@ -505,50 +500,13 @@ footer {
 .dual-charts-section {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 40px;
+  padding: 24px 40px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  align-items: start;
 }
 .dual-col .eyebrow {
   margin-bottom: 16px;
-}
-.postings-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 10px;
-  height: 20px;
-}
-.postings-country {
-  width: 100px;
-  font-size: 11.5px;
-  color: var(--text);
-  flex-shrink: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.postings-bar-bg {
-  flex: 1;
-  height: 10px;
-  background: var(--bg);
-  border-radius: 5px;
-  overflow: hidden;
-}
-.postings-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent2), var(--accent1));
-  border-radius: 5px;
-  transition: width 0.4s ease;
-}
-.postings-count {
-  width: 70px;
-  text-align: right;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
 }
 .preferred-grid {
   display: grid;
@@ -563,6 +521,7 @@ footer {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 14px;
+  min-width: 0;
 }
 .preferred-rank {
   font-size: 11px;
@@ -575,6 +534,7 @@ footer {
   font-size: 13px;
   color: var(--text);
   flex: 1;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -588,4 +548,32 @@ footer {
   .dual-charts-section {
     grid-template-columns: 1fr;
   }
+}
+.dual-col .explorer-note {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+}
+.dual-col {
+  display: flex;
+  flex-direction: column;
+}
+.dual-col .explorer-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.postings-chip-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.postings-chip-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.postings-chip-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
 }

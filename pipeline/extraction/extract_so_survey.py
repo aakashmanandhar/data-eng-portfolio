@@ -16,7 +16,8 @@ global_preferred_counts = defaultdict(int)
 with open(INPUT_PATH) as f:
     reader = csv.DictReader(f)
     for row in reader:
-        if row.get('DevType') != 'Data engineer':
+        DATA_ROLES = ['Data engineer', 'Data scientist', 'Database administrator or engineer', 'Data or business analyst']
+        if row.get('DevType') not in DATA_ROLES:
             continue
 
         country = row.get('Country', '').strip()
