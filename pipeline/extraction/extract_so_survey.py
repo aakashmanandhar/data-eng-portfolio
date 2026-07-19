@@ -26,6 +26,15 @@ with open(INPUT_PATH) as f:
         country_respondent_counts[country] += 1
 
         # Combine tools across languages, databases, and platforms
+        # Combine tools across languages, databases, and platforms
+        for field in ['LanguageHaveWorkedWith', 'DatabaseHaveWorkedWith', 'PlatformHaveWorkedWith']:
+            raw = row.get(field, '')
+            if raw:
+                for tool in raw.split(';'):
+                    tool = tool.strip()
+                    if tool and tool != 'NA':
+                        country_tool_counts[country][tool] += 1
+
         for field in ['LanguageWantToWorkWith', 'DatabaseWantToWorkWith', 'PlatformWantToWorkWith']:
             raw = row.get(field, '')
             if raw:

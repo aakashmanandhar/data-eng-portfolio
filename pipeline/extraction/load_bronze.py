@@ -14,6 +14,8 @@ conn = psycopg2.connect(
 )
 cur = conn.cursor()
 
+cur.execute("TRUNCATE bronze.adzuna_job_market, bronze.so_survey_by_country, bronze.so_survey_preferred_global;")
+
 # --- Load Adzuna data ---
 with open("adzuna_raw_output.json") as f:
     adzuna_data = json.load(f)
