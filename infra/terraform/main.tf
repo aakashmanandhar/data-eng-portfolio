@@ -111,6 +111,11 @@ resource "docker_container" "django" {
     name = docker_network.portfolio_net.name
   }
 
+  volumes {
+    host_path      = "${abspath(path.module)}/../../.env"
+    container_path = "/secrets/.env"
+  }
+
   env = [
     "POSTGRES_HOST=portfolio_postgres",
     "POSTGRES_PORT=5432",
