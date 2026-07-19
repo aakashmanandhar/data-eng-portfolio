@@ -115,3 +115,58 @@ Phrase a short, clear, plain-language answer to the question based on this resul
     )
 
     return {"answer": format_response.text.strip(), "sql": sql, "source": "analytics"}
+
+def embed_query(question):
+    response = client.models.embed_content(
+        model="gemini-embedding-001",
+        contents=question,
+        config={"output_dimensionality": 1536}
+    )
+    return response.embeddings[0].values
+
+
+def answer_project_question(question, top_k=4):
+    query_embedding = embed_query(question)
+
+    conn = get_readonly_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        cur.execute(
+            """
+            SELECT source_type, source_id, chunk_text,
+                   embedding <-> %s::vector AS distance
+            FROM rag_embedding
+            ORDER BY distance
+            LIMIT %s
+            """,
+            (query_embedding, top_k)
+        )
+        chunks = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
+
+    if not chunks:
+        return {"answer": "I don't have any project documentation embedded yet.", "sources": [], "source": "project (empty)"}
+
+    context = "\n\n---\n\n".join([c['chunk_text'] for c in chunks])
+
+    prompt = f"""Answer this question using ONLY the context below. If the context doesn't contain a clear answer, say you don't have that information rather than guessing.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+    response = client.models.generate_content(
+        model="gemini-flash-latest",
+        contents=prompt
+    )
+
+    return {
+        "answer": response.text.strip(),
+        "sources": [{"source_type": c['source_type'], "source_id": c['source_id']} for c in chunks],
+        "source": "project"
+    }
