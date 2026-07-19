@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'content',
     'rag',
+    'analytics',
 ]
 
 MIDDLEWARE = [
