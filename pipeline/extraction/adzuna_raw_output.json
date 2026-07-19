@@ -1,271 +1,847 @@
 {
   "at": {
-    "histogram_status": 200,
-    "histogram": {
-      "40000": 0,
-      "20000": 3,
-      "10000": 0,
-      "60000": 1,
-      "70000": 6,
-      "30000": 0,
-      "50000": 1
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 6,
+      "avg_salary_estimate": 50000,
+      "histogram": {
+        "50000": 1,
+        "70000": 0,
+        "40000": 0,
+        "10000": 0,
+        "60000": 0,
+        "30000": 0,
+        "20000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 126
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 126,
+      "avg_salary_estimate": 53636,
+      "histogram": {
+        "20000": 3,
+        "30000": 0,
+        "60000": 1,
+        "10000": 0,
+        "40000": 0,
+        "70000": 6,
+        "50000": 1
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 16,
+      "avg_salary_estimate": null,
+      "histogram": {
+        "70000": 0,
+        "30000": 0,
+        "50000": 0,
+        "40000": 0,
+        "20000": 0,
+        "10000": 0,
+        "60000": 0
+      }
+    }
   },
   "au": {
-    "histogram_status": 200,
-    "histogram": {
-      "80000": 6,
-      "60000": 1,
-      "40000": 0,
-      "120000": 7,
-      "140000": 57,
-      "100000": 9,
-      "20000": 0
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 7,
+      "avg_salary_estimate": null,
+      "histogram": {
+        "60000": 0,
+        "40000": 0,
+        "20000": 0,
+        "80000": 0,
+        "140000": 0,
+        "120000": 0,
+        "100000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 1836
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 1837,
+      "avg_salary_estimate": 128250,
+      "histogram": {
+        "40000": 0,
+        "20000": 0,
+        "140000": 57,
+        "100000": 9,
+        "120000": 7,
+        "60000": 1,
+        "80000": 6
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 132,
+      "avg_salary_estimate": 133333,
+      "histogram": {
+        "120000": 0,
+        "100000": 0,
+        "60000": 0,
+        "40000": 0,
+        "20000": 0,
+        "80000": 1,
+        "140000": 8
+      }
+    }
   },
   "be": {
-    "histogram_status": 200,
-    "histogram": {
-      "40000": 0,
-      "20000": 0,
-      "30000": 0,
-      "50000": 0,
-      "10000": 0,
-      "70000": 1,
-      "60000": 0
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 6,
+      "avg_salary_estimate": null,
+      "histogram": {
+        "30000": 0,
+        "70000": 0,
+        "10000": 0,
+        "40000": 0,
+        "50000": 0,
+        "20000": 0,
+        "60000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 154
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 154,
+      "avg_salary_estimate": 70000,
+      "histogram": {
+        "50000": 0,
+        "70000": 1,
+        "10000": 0,
+        "60000": 0,
+        "40000": 0,
+        "20000": 0,
+        "30000": 0
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 26,
+      "avg_salary_estimate": null,
+      "histogram": {
+        "60000": 0,
+        "10000": 0,
+        "40000": 0,
+        "30000": 0,
+        "70000": 0,
+        "50000": 0,
+        "20000": 0
+      }
+    }
   },
   "br": {
-    "histogram_status": 200,
-    "histogram": {
-      "30000": 0,
-      "40000": 3,
-      "5000": 0,
-      "25000": 0,
-      "20000": 0,
-      "35000": 0,
-      "10000": 0,
-      "15000": 1
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 1,
+      "avg_salary_estimate": null,
+      "histogram": {
+        "15000": 0,
+        "35000": 0,
+        "20000": 0,
+        "10000": 0,
+        "5000": 0,
+        "25000": 0,
+        "30000": 0,
+        "40000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 430
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 430,
+      "avg_salary_estimate": 33750,
+      "histogram": {
+        "15000": 1,
+        "10000": 0,
+        "20000": 0,
+        "35000": 0,
+        "25000": 0,
+        "5000": 0,
+        "40000": 3,
+        "30000": 0
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 130,
+      "avg_salary_estimate": 15000,
+      "histogram": {
+        "40000": 0,
+        "25000": 0,
+        "15000": 1,
+        "35000": 0,
+        "20000": 0,
+        "30000": 0,
+        "10000": 0,
+        "5000": 0
+      }
+    }
   },
   "ca": {
-    "histogram_status": 200,
-    "histogram": {
-      "40000": 18,
-      "80000": 93,
-      "60000": 37,
-      "120000": 160,
-      "140000": 319,
-      "100000": 133,
-      "20000": 0
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 79,
+      "avg_salary_estimate": 97143,
+      "histogram": {
+        "120000": 1,
+        "60000": 2,
+        "20000": 0,
+        "80000": 0,
+        "100000": 3,
+        "140000": 1,
+        "40000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 4664
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 4671,
+      "avg_salary_estimate": 115184,
+      "histogram": {
+        "140000": 319,
+        "100000": 133,
+        "80000": 93,
+        "40000": 18,
+        "60000": 37,
+        "120000": 160,
+        "20000": 0
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 364,
+      "avg_salary_estimate": 124308,
+      "histogram": {
+        "100000": 9,
+        "120000": 21,
+        "80000": 4,
+        "140000": 31,
+        "20000": 0,
+        "40000": 0,
+        "60000": 0
+      }
+    }
   },
   "ch": {
-    "histogram_status": 200,
-    "histogram": {
-      "70000": 2,
-      "60000": 0,
-      "20000": 0,
-      "40000": 0,
-      "30000": 0,
-      "50000": 0,
-      "10000": 0
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 9,
+      "avg_salary_estimate": null,
+      "histogram": {
+        "40000": 0,
+        "20000": 0,
+        "10000": 0,
+        "60000": 0,
+        "70000": 0,
+        "50000": 0,
+        "30000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 195
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 195,
+      "avg_salary_estimate": 70000,
+      "histogram": {
+        "60000": 0,
+        "10000": 0,
+        "20000": 0,
+        "40000": 0,
+        "50000": 0,
+        "30000": 0,
+        "70000": 2
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 45,
+      "avg_salary_estimate": 70000,
+      "histogram": {
+        "40000": 0,
+        "20000": 0,
+        "10000": 0,
+        "60000": 0,
+        "70000": 1,
+        "30000": 0,
+        "50000": 0
+      }
+    }
   },
   "de": {
-    "histogram_status": 200,
-    "histogram": {
-      "70000": 52,
-      "50000": 5,
-      "30000": 6,
-      "40000": 1,
-      "20000": 1,
-      "10000": 1,
-      "60000": 15
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 39,
+      "avg_salary_estimate": null,
+      "histogram": {
+        "20000": 0,
+        "60000": 0,
+        "40000": 0,
+        "50000": 0,
+        "10000": 0,
+        "70000": 0,
+        "30000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 2001
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 2000,
+      "avg_salary_estimate": 62222,
+      "histogram": {
+        "30000": 6,
+        "50000": 5,
+        "40000": 1,
+        "20000": 1,
+        "10000": 1,
+        "70000": 52,
+        "60000": 15
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 446,
+      "avg_salary_estimate": 67647,
+      "histogram": {
+        "60000": 2,
+        "10000": 0,
+        "20000": 0,
+        "40000": 0,
+        "50000": 1,
+        "30000": 0,
+        "70000": 14
+      }
+    }
   },
   "es": {
-    "histogram_status": 200,
-    "histogram": {
-      "40000": 1,
-      "50000": 1,
-      "60000": 4,
-      "20000": 0,
-      "30000": 0,
-      "70000": 20,
-      "10000": 0
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 9,
+      "avg_salary_estimate": 60000,
+      "histogram": {
+        "70000": 0,
+        "30000": 0,
+        "50000": 0,
+        "10000": 0,
+        "60000": 1,
+        "40000": 0,
+        "20000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 503
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 503,
+      "avg_salary_estimate": 66538,
+      "histogram": {
+        "10000": 0,
+        "60000": 4,
+        "40000": 1,
+        "20000": 0,
+        "70000": 20,
+        "30000": 0,
+        "50000": 1
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 116,
+      "avg_salary_estimate": 66250,
+      "histogram": {
+        "40000": 0,
+        "10000": 0,
+        "60000": 1,
+        "30000": 0,
+        "20000": 0,
+        "50000": 1,
+        "70000": 6
+      }
+    }
   },
   "fr": {
-    "histogram_status": 200,
-    "histogram": {
-      "50000": 112,
-      "70000": 66,
-      "40000": 227,
-      "60000": 53,
-      "10000": 2,
-      "30000": 46,
-      "20000": 3
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 19,
+      "avg_salary_estimate": 40000,
+      "histogram": {
+        "20000": 0,
+        "40000": 2,
+        "60000": 0,
+        "10000": 0,
+        "50000": 1,
+        "30000": 1,
+        "70000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 2073
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 2073,
+      "avg_salary_estimate": 47033,
+      "histogram": {
+        "30000": 46,
+        "10000": 2,
+        "40000": 227,
+        "60000": 53,
+        "20000": 3,
+        "70000": 66,
+        "50000": 112
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 189,
+      "avg_salary_estimate": 52000,
+      "histogram": {
+        "60000": 4,
+        "10000": 0,
+        "20000": 0,
+        "40000": 6,
+        "50000": 7,
+        "30000": 0,
+        "70000": 3
+      }
+    }
   },
   "gb": {
-    "histogram_status": 200,
-    "histogram": {
-      "10000": 5,
-      "60000": 172,
-      "40000": 180,
-      "30000": 208,
-      "70000": 784,
-      "20000": 47,
-      "50000": 186
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 59,
+      "avg_salary_estimate": 43333,
+      "histogram": {
+        "40000": 5,
+        "20000": 0,
+        "10000": 0,
+        "60000": 3,
+        "70000": 0,
+        "50000": 1,
+        "30000": 3
+      }
     },
-    "count_status": 200,
-    "job_count": 6986
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 6987,
+      "avg_salary_estimate": 56214,
+      "histogram": {
+        "10000": 5,
+        "30000": 208,
+        "70000": 784,
+        "20000": 47,
+        "60000": 172,
+        "50000": 186,
+        "40000": 180
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 558,
+      "avg_salary_estimate": 63972,
+      "histogram": {
+        "70000": 94,
+        "50000": 10,
+        "30000": 3,
+        "20000": 2,
+        "40000": 3,
+        "60000": 28,
+        "10000": 1
+      }
+    }
   },
   "in": {
-    "histogram_status": 200,
-    "histogram": {
-      "1000000": 571,
-      "5000000": 7,
-      "6000000": 0,
-      "3000000": 107,
-      "0": 303,
-      "2000000": 322,
-      "4000000": 50
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 181,
+      "avg_salary_estimate": 1000000,
+      "histogram": {
+        "6000000": 0,
+        "0": 8,
+        "3000000": 2,
+        "4000000": 0,
+        "2000000": 4,
+        "5000000": 0,
+        "1000000": 5
+      }
     },
-    "count_status": 200,
-    "job_count": 12797
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 12798,
+      "avg_salary_estimate": 1302206,
+      "histogram": {
+        "1000000": 571,
+        "2000000": 322,
+        "3000000": 107,
+        "0": 303,
+        "6000000": 0,
+        "5000000": 7,
+        "4000000": 50
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 1098,
+      "avg_salary_estimate": 1580153,
+      "histogram": {
+        "1000000": 52,
+        "5000000": 1,
+        "2000000": 44,
+        "4000000": 5,
+        "3000000": 14,
+        "6000000": 0,
+        "0": 15
+      }
+    }
   },
   "it": {
-    "histogram_status": 200,
-    "histogram": {
-      "20000": 6,
-      "60000": 6,
-      "50000": 4,
-      "40000": 2,
-      "10000": 0,
-      "70000": 4,
-      "30000": 6
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 13,
+      "avg_salary_estimate": 70000,
+      "histogram": {
+        "20000": 0,
+        "30000": 0,
+        "10000": 0,
+        "60000": 0,
+        "40000": 0,
+        "70000": 1,
+        "50000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 310
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 310,
+      "avg_salary_estimate": 43571,
+      "histogram": {
+        "10000": 0,
+        "30000": 6,
+        "50000": 4,
+        "40000": 2,
+        "20000": 6,
+        "60000": 6,
+        "70000": 4
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 38,
+      "avg_salary_estimate": 56000,
+      "histogram": {
+        "10000": 0,
+        "30000": 1,
+        "40000": 0,
+        "60000": 1,
+        "50000": 1,
+        "20000": 0,
+        "70000": 2
+      }
+    }
   },
   "mx": {
-    "histogram_status": 200,
-    "histogram": {
-      "90000": 0,
-      "30000": 0,
-      "130000": 12,
-      "110000": 1,
-      "10000": 0,
-      "70000": 1,
-      "50000": 2
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 0,
+      "avg_salary_estimate": null,
+      "histogram": {
+        "110000": 0,
+        "10000": 0,
+        "70000": 0,
+        "90000": 0,
+        "30000": 0,
+        "50000": 0,
+        "130000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 332
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 332,
+      "avg_salary_estimate": 115000,
+      "histogram": {
+        "110000": 1,
+        "90000": 0,
+        "30000": 0,
+        "10000": 0,
+        "50000": 2,
+        "70000": 1,
+        "130000": 12
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 75,
+      "avg_salary_estimate": 130000,
+      "histogram": {
+        "50000": 0,
+        "30000": 0,
+        "10000": 0,
+        "90000": 0,
+        "70000": 0,
+        "130000": 1,
+        "110000": 0
+      }
+    }
   },
   "nl": {
-    "histogram_status": 200,
-    "histogram": {
-      "10000": 1,
-      "60000": 26,
-      "40000": 16,
-      "20000": 2,
-      "70000": 69,
-      "30000": 5,
-      "50000": 24
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 19,
+      "avg_salary_estimate": 42000,
+      "histogram": {
+        "20000": 0,
+        "40000": 2,
+        "60000": 0,
+        "10000": 0,
+        "50000": 0,
+        "30000": 2,
+        "70000": 1
+      }
     },
-    "count_status": 200,
-    "job_count": 1076
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 1076,
+      "avg_salary_estimate": 58951,
+      "histogram": {
+        "20000": 2,
+        "30000": 5,
+        "10000": 1,
+        "60000": 26,
+        "40000": 16,
+        "70000": 69,
+        "50000": 24
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 157,
+      "avg_salary_estimate": 60588,
+      "histogram": {
+        "40000": 2,
+        "60000": 8,
+        "10000": 0,
+        "30000": 0,
+        "20000": 0,
+        "50000": 9,
+        "70000": 15
+      }
+    }
   },
   "nz": {
-    "histogram_status": 200,
-    "histogram": {
-      "25000": 0,
-      "150000": 6,
-      "75000": 1,
-      "175000": 2,
-      "100000": 1,
-      "50000": 0,
-      "200000": 1,
-      "125000": 7
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 2,
+      "avg_salary_estimate": null,
+      "histogram": {
+        "200000": 0,
+        "150000": 0,
+        "125000": 0,
+        "75000": 0,
+        "50000": 0,
+        "100000": 0,
+        "175000": 0,
+        "25000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 129
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 129,
+      "avg_salary_estimate": 138889,
+      "histogram": {
+        "25000": 0,
+        "75000": 1,
+        "175000": 2,
+        "50000": 0,
+        "150000": 6,
+        "125000": 7,
+        "100000": 1,
+        "200000": 1
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 14,
+      "avg_salary_estimate": 143750,
+      "histogram": {
+        "125000": 2,
+        "150000": 1,
+        "200000": 0,
+        "50000": 0,
+        "175000": 1,
+        "75000": 0,
+        "100000": 0,
+        "25000": 0
+      }
+    }
   },
   "pl": {
-    "histogram_status": 200,
-    "histogram": {
-      "160000": 6,
-      "60000": 0,
-      "80000": 0,
-      "100000": 1,
-      "180000": 547,
-      "40000": 6,
-      "120000": 2,
-      "140000": 4
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 27,
+      "avg_salary_estimate": 180000,
+      "histogram": {
+        "40000": 0,
+        "160000": 0,
+        "180000": 2,
+        "140000": 0,
+        "100000": 0,
+        "60000": 0,
+        "120000": 0,
+        "80000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 1990
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 1990,
+      "avg_salary_estimate": 177668,
+      "histogram": {
+        "160000": 6,
+        "80000": 0,
+        "140000": 4,
+        "40000": 6,
+        "180000": 547,
+        "120000": 2,
+        "60000": 0,
+        "100000": 1
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 591,
+      "avg_salary_estimate": 176588,
+      "histogram": {
+        "140000": 0,
+        "40000": 5,
+        "180000": 205,
+        "160000": 1,
+        "100000": 0,
+        "60000": 0,
+        "120000": 0,
+        "80000": 0
+      }
+    }
   },
   "sg": {
-    "histogram_status": 200,
-    "histogram": {
-      "24000": 19,
-      "8000": 1,
-      "12000": 0,
-      "16000": 1,
-      "4000": 9,
-      "0": 605,
-      "20000": 3
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 13,
+      "avg_salary_estimate": 0,
+      "histogram": {
+        "12000": 0,
+        "8000": 0,
+        "16000": 0,
+        "0": 2,
+        "20000": 0,
+        "4000": 0,
+        "24000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 1903
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 1903,
+      "avg_salary_estimate": 903,
+      "histogram": {
+        "24000": 19,
+        "4000": 9,
+        "0": 605,
+        "8000": 1,
+        "20000": 3,
+        "16000": 1,
+        "12000": 0
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 124,
+      "avg_salary_estimate": 0,
+      "histogram": {
+        "8000": 0,
+        "16000": 0,
+        "12000": 0,
+        "4000": 0,
+        "0": 57,
+        "20000": 0,
+        "24000": 0
+      }
+    }
   },
   "us": {
-    "histogram_status": 200,
-    "histogram": {
-      "120000": 1763,
-      "140000": 8452,
-      "40000": 248,
-      "80000": 1103,
-      "20000": 41,
-      "100000": 1382,
-      "60000": 636
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 443,
+      "avg_salary_estimate": 123256,
+      "histogram": {
+        "120000": 6,
+        "140000": 26,
+        "80000": 4,
+        "40000": 0,
+        "20000": 0,
+        "100000": 5,
+        "60000": 2
+      }
     },
-    "count_status": 200,
-    "job_count": 91948
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 92180,
+      "avg_salary_estimate": 122581,
+      "histogram": {
+        "60000": 636,
+        "80000": 1103,
+        "40000": 248,
+        "120000": 1768,
+        "140000": 8462,
+        "100000": 1385,
+        "20000": 42
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 5683,
+      "avg_salary_estimate": 133088,
+      "histogram": {
+        "120000": 116,
+        "80000": 12,
+        "140000": 582,
+        "20000": 0,
+        "40000": 1,
+        "100000": 47,
+        "60000": 3
+      }
+    }
   },
   "za": {
-    "histogram_status": 200,
-    "histogram": {
-      "300000": 21,
-      "400000": 63,
-      "600000": 32,
-      "200000": 1,
-      "500000": 11,
-      "100000": 6,
-      "700000": 89
+    "entry": {
+      "search_title": "junior data engineer",
+      "job_count": 11,
+      "avg_salary_estimate": 350000,
+      "histogram": {
+        "600000": 0,
+        "300000": 1,
+        "400000": 1,
+        "700000": 0,
+        "100000": 0,
+        "500000": 0,
+        "200000": 0
+      }
     },
-    "count_status": 200,
-    "job_count": 1869
+    "mid": {
+      "search_title": "data engineer",
+      "job_count": 1869,
+      "avg_salary_estimate": 534978,
+      "histogram": {
+        "700000": 89,
+        "500000": 11,
+        "300000": 21,
+        "100000": 6,
+        "600000": 32,
+        "200000": 1,
+        "400000": 63
+      }
+    },
+    "senior": {
+      "search_title": "senior data engineer",
+      "job_count": 189,
+      "avg_salary_estimate": 562963,
+      "histogram": {
+        "300000": 3,
+        "700000": 13,
+        "200000": 0,
+        "500000": 0,
+        "600000": 4,
+        "100000": 0,
+        "400000": 7
+      }
+    }
   }
 }

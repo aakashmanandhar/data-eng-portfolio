@@ -11,6 +11,7 @@ MIN_RESPONSES_PER_COUNTRY = 20  # statistical reliability threshold
 country_tool_counts = defaultdict(lambda: defaultdict(int))
 country_respondent_counts = defaultdict(int)
 country_salaries = defaultdict(list)
+global_preferred_counts = defaultdict(int)
 
 with open(INPUT_PATH) as f:
     reader = csv.DictReader(f)
@@ -25,13 +26,13 @@ with open(INPUT_PATH) as f:
         country_respondent_counts[country] += 1
 
         # Combine tools across languages, databases, and platforms
-        for field in ['LanguageHaveWorkedWith', 'DatabaseHaveWorkedWith', 'PlatformHaveWorkedWith']:
+        for field in ['LanguageWantToWorkWith', 'DatabaseWantToWorkWith', 'PlatformWantToWorkWith']:
             raw = row.get(field, '')
             if raw:
                 for tool in raw.split(';'):
                     tool = tool.strip()
                     if tool and tool != 'NA':
-                        country_tool_counts[country][tool] += 1
+                        global_preferred_counts[tool] += 1
 
         comp = row.get('ConvertedCompYearly', '')
         if comp and comp.replace('.', '', 1).isdigit():
@@ -54,8 +55,10 @@ for country, respondent_count in country_respondent_counts.items():
         "salary_sample_size": len(salaries),
     }
 
+top_preferred_global = sorted(global_preferred_counts.items(), key=lambda x: -x[1])[:15]
+
 with open(OUTPUT_PATH, "w") as f:
-    json.dump(output, f, indent=2)
+    json.dump({"by_country": output, "most_preferred_global": top_preferred_global}, f, indent=2)
 
 print(f"Processed. {len(output)} countries meet the {MIN_RESPONSES_PER_COUNTRY}+ response threshold.")
 print(f"Countries excluded (insufficient data): {len(country_respondent_counts) - len(output)}")
