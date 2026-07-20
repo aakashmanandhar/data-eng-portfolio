@@ -1,8 +1,7 @@
 import os
-from google import genai
 import psycopg2
 import psycopg2.extras
-
+from google import genai
 
 client = genai.Client(api_key=os.environ.get('GEMINI_API_KEY'))
 
@@ -23,12 +22,11 @@ Question: {question}
 Respond with ONLY the single word "analytics" or "project", nothing else."""
 
     response = client.models.generate_content(
-        model="gemini-flash-latest",
+        model="gemini-flash-lite-latest",
         contents=prompt
     )
     result = response.text.strip().lower()
     return result if result in ('analytics', 'project') else 'project'
-
 
 
 SCHEMA_DESCRIPTION = """
@@ -69,7 +67,7 @@ Rules:
 SQL:"""
 
     response = client.models.generate_content(
-        model="gemini-flash-latest",
+        model="gemini-flash-lite-latest",
         contents=prompt
     )
     sql = response.text.strip()
@@ -104,17 +102,19 @@ def answer_analytics_question(question):
         conn.close()
 
     format_prompt = f"""Question: {question}
-SQL query used: {sql}
-Result: {rows}
+    SQL query used: {sql}
+    Result: {rows}
 
-Phrase a short, clear, plain-language answer to the question based on this result. If the result is empty, say the data isn't available."""
+    Phrase a short, clear, plain-language answer to the question based on this result. If the result is empty, say the data isn't available.
 
+    If listing multiple values, use bullet points in this style: "• Label → value". Never use tables."""
     format_response = client.models.generate_content(
-        model="gemini-flash-latest",
+        model="gemini-flash-lite-latest",
         contents=format_prompt
     )
 
     return {"answer": format_response.text.strip(), "sql": sql, "source": "analytics"}
+
 
 def embed_query(question):
     response = client.models.embed_content(
@@ -153,15 +153,20 @@ def answer_project_question(question, top_k=4):
 
     prompt = f"""Answer this question using ONLY the context below. If the context doesn't contain a clear answer, say you don't have that information rather than guessing.
 
-Context:
-{context}
+    Formatting rules:
+    - Never use tables.
+    - When listing multiple items or categories (like a tech stack), use bullet points in this exact style: "• Label → value, value, value"
+    - Keep it concise, no unnecessary preamble.
 
-Question: {question}
+    Context:
+    {context}
 
-Answer:"""
+    Question: {question}
+
+    Answer:"""
 
     response = client.models.generate_content(
-        model="gemini-flash-latest",
+        model="gemini-flash-lite-latest",
         contents=prompt
     )
 

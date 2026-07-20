@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.contrib import messages
 from .models import CaseStudy, BlogPost, ADR
 import re
+from .models import CaseStudy, BlogPost, ADR, ProfileStatus, ContactMessage
 
 
 def fetch_from_github(modeladmin, request, queryset):
@@ -76,3 +77,15 @@ class ADRAdmin(admin.ModelAdmin):
     list_display = ('title', 'is_published', 'updated_at')
     list_filter = ('is_published',)
     prepopulated_fields = {'slug': ('title',)}
+
+@admin.register(ProfileStatus)
+class ProfileStatusAdmin(admin.ModelAdmin):
+    list_display = ('status', 'now_building', 'updated_at')
+
+    def has_add_permission(self, request):
+        return not ProfileStatus.objects.exists()
+    
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'created_at', 'is_read')
+    list_filter = ('is_read',)

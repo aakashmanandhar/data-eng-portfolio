@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CaseStudy, BlogPost, ADR
+from .models import CaseStudy, BlogPost, ADR, ProfileStatus, ContactMessage
 
 
 class CaseStudySerializer(serializers.ModelSerializer):
@@ -21,7 +21,6 @@ class BlogPostSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
 
-
 class ADRSerializer(serializers.ModelSerializer):
     class Meta:
         model = ADR
@@ -29,3 +28,16 @@ class ADRSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'context', 'decision',
             'consequences', 'created_at', 'updated_at'
         ]
+
+class ProfileStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileStatus
+        fields = ['status', 'now_building', 'resume_pdf', 'about_text', 'profile_photo', 'headline_main', 'subtext', 'updated_at']
+        
+class ContactMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ['name', 'email', 'message']
+    class Meta:
+        model = ContactMessage
+        fields = ['id', 'name', 'email', 'message', 'created_at', 'is_read']

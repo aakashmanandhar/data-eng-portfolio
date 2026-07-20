@@ -1,7 +1,6 @@
 from rest_framework import generics
-from .models import CaseStudy, BlogPost, ADR
-from .serializers import CaseStudySerializer, BlogPostSerializer, ADRSerializer
-
+from .models import CaseStudy, BlogPost, ADR, ProfileStatus, ContactMessage
+from .serializers import CaseStudySerializer, BlogPostSerializer, ADRSerializer, ProfileStatusSerializer, ContactMessageSerializer
 
 class CaseStudyListView(generics.ListAPIView):
     serializer_class = CaseStudySerializer
@@ -29,3 +28,22 @@ class ADRListView(generics.ListAPIView):
 
     def get_queryset(self):
         return ADR.objects.filter(is_published=True)
+    
+class ProfileStatusView(generics.RetrieveAPIView):
+    serializer_class = ProfileStatusSerializer
+
+    def get_object(self):
+        obj, created = ProfileStatus.objects.get_or_create(
+            pk=1,
+            defaults={
+                'status': 'active',
+                'now_building': 'Live tools & salary explorer + RAG assistant — Django, React, PostgreSQL, Jenkins, dbt, Terraform, Docker.',
+                'headline_main': 'Architecting the data infrastructure behind reliable pipelines.',
+                'subtext': 'I build production-grade ETL/ELT pipelines, and I run a live end-to-end pipeline.',
+            }
+        )
+        return obj
+    
+class ContactMessageCreateView(generics.CreateAPIView):
+    serializer_class = ContactMessageSerializer
+    queryset = ContactMessage.objects.all()

@@ -2,19 +2,25 @@ import '../App.css'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 
-const explorerData = {
-  Germany: { tools: [["Python",88],["dbt",72],["Airflow",64],["Snowflake",41],["Databricks",55]], salary: {Entry:52000, Mid:72000, Senior:95000} },
-  USA:     { tools: [["Python",91],["dbt",68],["Airflow",70],["Snowflake",58],["Databricks",62]], salary: {Entry:78000, Mid:110000, Senior:155000} },
-  India:   { tools: [["Python",85],["SQL",80],["Airflow",55],["Databricks",48],["dbt",39]], salary: {Entry:12000, Mid:22000, Senior:38000} },
-  UK:      { tools: [["Python",83],["dbt",60],["Airflow",58],["Snowflake",50],["Databricks",44]], salary: {Entry:45000, Mid:65000, Senior:88000} },
-  Netherlands: { tools: [["Python",80],["dbt",65],["Airflow",52],["Databricks",47],["Snowflake",36]], salary: {Entry:48000, Mid:68000, Senior:90000} }
-}
-
 function HomePage() {
   const [status, setStatus] = useState('active')
+  const [nowBuilding, setNowBuilding] = useState('')
+  const [resumeUrl, setResumeUrl] = useState(null)
+  const [aboutText, setAboutText] = useState('')
+  const [headlineMain, setHeadlineMain] = useState('Architecting the data infrastructure behind reliable pipelines.')
+  const [subtext, setSubtext] = useState('I build production-grade ETL/ELT pipelines, and I run a live end-to-end pipeline.')
+  const [profilePhoto, setProfilePhoto] = useState(null)
   const [country, setCountry] = useState('Australia')
   const [caseStudies, setCaseStudies] = useState([])
+  const [adrs, setAdrs] = useState([])
+  const [jobMarketData, setJobMarketData] = useState({})
+  const [jobCountsByCountry, setJobCountsByCountry] = useState({})
+  const [toolUsageData, setToolUsageData] = useState({})
+  const [toolRespondentCounts, setToolRespondentCounts] = useState({})
+  const [preferredGlobal, setPreferredGlobal] = useState([])
   const [lastRefreshed, setLastRefreshed] = useState(null)
+  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' })
+  const [contactStatus, setContactStatus] = useState(null)
 
   useEffect(() => {
     fetch('http://localhost:8000/api/case-studies/')
@@ -24,17 +30,11 @@ function HomePage() {
   }, [])
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/last-refreshed/')
+    fetch('http://localhost:8000/api/adrs/')
       .then((res) => res.json())
-      .then((data) => setLastRefreshed(data.last_refreshed))
-      .catch((err) => console.error('Failed to load last refreshed time:', err))
+      .then((data) => setAdrs(data))
+      .catch((err) => console.error('Failed to load ADRs:', err))
   }, [])
-
-  const [jobMarketData, setJobMarketData] = useState({})
-  const [toolUsageData, setToolUsageData] = useState({})
-  const [jobCountsByCountry, setJobCountsByCountry] = useState({})
-  const [preferredGlobal, setPreferredGlobal] = useState([])
-  const [toolRespondentCounts, setToolRespondentCounts] = useState({})
 
   useEffect(() => {
     fetch('http://localhost:8000/api/job-market/')
@@ -77,40 +77,88 @@ function HomePage() {
       .catch((err) => console.error('Failed to load global tool preferences:', err))
   }, [])
 
+  useEffect(() => {
+    fetch('http://localhost:8000/api/last-refreshed/')
+      .then((res) => res.json())
+      .then((data) => setLastRefreshed(data.last_refreshed))
+      .catch((err) => console.error('Failed to load last refreshed time:', err))
+  }, [])
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/profile-status/')
+      .then((res) => res.json())
+      .then((data) => {
+        setStatus(data.status)
+        setNowBuilding(data.now_building)
+        setResumeUrl(data.resume_pdf)
+        setAboutText(data.about_text)
+        setProfilePhoto(data.profile_photo)
+        if (data.headline_main) setHeadlineMain(data.headline_main)
+        if (data.subtext) setSubtext(data.subtext)
+      })
+      .catch((err) => console.error('Failed to load profile status:', err))
+  }, [])
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      const res = await fetch('http://localhost:8000/api/contact/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contactForm),
+      })
+      if (res.ok) {
+        setContactStatus('success')
+        setContactForm({ name: '', email: '', message: '' })
+      } else {
+        setContactStatus('error')
+      }
+    } catch (err) {
+      setContactStatus('error')
+    }
+  }
+
   return (
     <>
       <nav className="nav">
         <strong>Aakash Manandhar</strong>
         <div className="nav-links">
-          <span>Projects</span>
-          <span>Explorer</span>
-          <span>ADRs</span>
-          <span>About</span>
-          <span>Contact</span>
+          <a href="#projects">Projects</a>
+          <a href="#explorer">Explorer</a>
+          <a href="#adrs">ADRs</a>
+          <a href="#about">About</a>
+          <a href="#contact">Contact</a>
         </div>
       </nav>
 
       <div className="hero">
         <div className="hero-left">
           <div className="badge">◆ Data Engineer · AI Data Engineer (WIP)</div>
-          <h1>
-            Turning messy data<br />
-            into <span className="grad">reliable pipelines.</span>
-          </h1>
-          <p className="hero-sub">
-            I build production-grade ETL/ELT pipelines, and I run a live end-to-end
-            pipeline that tracks data engineering tools and salaries worldwide.
-          </p>
+          {(() => {
+            const words = headlineMain.trim().split(' ')
+            const highlighted = words.slice(-2).join(' ')
+            const rest = words.slice(0, -2).join(' ')
+            return (
+              <h1>
+                {rest} <span className="grad">{highlighted}</span>
+              </h1>
+            )
+          })()}
+          <p className="hero-sub">{subtext}</p>
           <div className="hero-btns">
-            <button className="btn-primary">Explore the Data →</button>
-            <button className="btn-secondary">Contact Me</button>
+            <button className="btn-primary" onClick={() => window.dispatchEvent(new Event('open-chat-widget'))}>Talk to Assistant →</button>
+            <a href="#explorer" className="btn-secondary">Explore the Data</a>
           </div>
         </div>
 
         <div className="hero-right">
           <div className="profile-card">
             <div className="avatar-wrap">
-              <div className="avatar-circle">AM</div>
+              {profilePhoto ? (
+                <img src={profilePhoto} alt="Aakash Manandhar" className="avatar-circle avatar-photo" />
+              ) : (
+                <div className="avatar-circle">AM</div>
+              )}
               <div className={"status-dot status-" + status}></div>
             </div>
             <div className="profile-name">Aakash Manandhar</div>
@@ -118,11 +166,6 @@ function HomePage() {
             <div className={"status-label status-text-" + status}>
               <span className="txt-dot"></span>
               {status === 'active' ? 'Active' : status === 'offline' ? 'Offline' : 'Do Not Disturb'}
-            </div>
-            <div className="status-selector">
-              <button onClick={() => setStatus('active')} className={status === 'active' ? 'selected' : ''}>Active</button>
-              <button onClick={() => setStatus('offline')} className={status === 'offline' ? 'selected' : ''}>Offline</button>
-              <button onClick={() => setStatus('dnd')} className={status === 'dnd' ? 'selected' : ''}>Do Not Disturb</button>
             </div>
             <div className="mini-skills">
               <img src="https://cdn.simpleicons.org/python/3776AB" alt="Python" title="Python" />
@@ -142,7 +185,12 @@ function HomePage() {
         </div>
       </div>
 
-      <section className="explorer-section">
+      <div className="now-card">
+        <span className="now-dot"></span>
+        <span><span className="label">Now building</span>{nowBuilding}</span>
+      </div>
+
+      <section className="explorer-section" id="explorer">
         <div className="eyebrow">Featured · Live Explorer</div>
         <div className="explorer-box">
           <select value={country} onChange={(e) => setCountry(e.target.value)}>
@@ -154,11 +202,11 @@ function HomePage() {
           <div className="explorer-grid">
             <div className="explorer-panel">
               <h4>TOP TOOLS BY USAGE</h4>
-                {toolRespondentCounts[country] && (
-                  <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '-8px', marginBottom: '12px' }}>
-                    Based on {toolRespondentCounts[country]} data professionals (engineers, analysts, scientists, DBAs) surveyed in this country
-                  </p>
-                )}
+              {toolRespondentCounts[country] && (
+                <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '-8px', marginBottom: '12px' }}>
+                  Based on {toolRespondentCounts[country]} data professionals (engineers, analysts, scientists, DBAs) surveyed in this country
+                </p>
+              )}
               {toolUsageData[country] && toolUsageData[country].length > 0 ? (
                 toolUsageData[country].map(([name, pct]) => (
                   <div className="tool-row" key={name}>
@@ -175,26 +223,26 @@ function HomePage() {
             </div>
 
             <div className="explorer-panel">
-            <h4>AVG. SALARY BY SENIORITY (USD/yr)</h4>
-            <div className="salary-cards">
-              {(() => {
-                const entries = Object.entries(jobMarketData[country] || {}).filter(([, val]) => val !== null)
-                return entries.map(([level, val], i) => {
-                  const prevVal = i > 0 ? entries[i - 1][1] : null
-                  const growth = prevVal ? Math.round(((val - prevVal) / prevVal) * 100) : null
-                  return (
-                    <div className="salary-card" key={level}>
-                      <div className="salary-card-label">{level}</div>
-                      <div className="salary-card-value">${(val / 1000).toFixed(0)}k</div>
-                      <div className={"salary-card-growth" + (growth === null ? " empty" : "")}>
-                        {growth !== null ? `+${growth}%` : ''}
+              <h4>AVG. SALARY BY SENIORITY (USD/yr)</h4>
+              <div className="salary-cards">
+                {(() => {
+                  const entries = Object.entries(jobMarketData[country] || {}).filter(([, val]) => val !== null)
+                  return entries.map(([level, val], i) => {
+                    const prevVal = i > 0 ? entries[i - 1][1] : null
+                    const growth = prevVal ? Math.round(((val - prevVal) / prevVal) * 100) : null
+                    return (
+                      <div className="salary-card" key={level}>
+                        <div className="salary-card-label">{level}</div>
+                        <div className="salary-card-value">${(val / 1000).toFixed(0)}k</div>
+                        <div className={"salary-card-growth" + (growth === null ? " empty" : "")}>
+                          {growth !== null ? `+${growth}%` : ''}
+                        </div>
                       </div>
-                    </div>
-                  )
-                })
-              })()}
+                    )
+                  })
+                })()}
+              </div>
             </div>
-          </div>
           </div>
 
           <div className="explorer-note">
@@ -203,95 +251,131 @@ function HomePage() {
           </div>
         </div>
       </section>
-     <section className="dual-charts-section">
+
+      <section className="dual-charts-section">
         <div className="dual-col">
-          <div className="eyebrow">Job Postings by Country</div>
+          <div className="eyebrow">Data Engineering Jobs Posting by Country</div>
           <div className="explorer-box">
-  <div className="postings-chip-scroll">
-    <div className="preferred-grid">
-      {Object.entries(jobCountsByCountry)
-        .sort((a, b) => b[1] - a[1])
-        .map(([country, count], i) => (
-          <div className="preferred-chip" key={country}>
-            <span className="preferred-rank">#{i + 1}</span>
-            <span className="preferred-name">{country}</span>
-            <span className="preferred-count">{count.toLocaleString()}</span>
-          </div>
-        ))}
-    </div>
-  </div>
-  </div>
-  <div className="explorer-note">
-          </div>
-        </div>
-        <div className="dual-col">
-          <div className="eyebrow">Most Desired Tools Globally</div>
-          <div className="explorer-box">
-            <div className="preferred-grid">
-              {preferredGlobal.map(({ tool_name, preference_count }, i) => (
-                <div className="preferred-chip" key={tool_name}>
-                  <span className="preferred-rank">#{i + 1}</span>
-                  <span className="preferred-name">{tool_name}</span>
-                  <span className="preferred-count">{preference_count}</span>
-                </div>
-              ))}
+            <div className="chip-scroll-area">
+              <div className="preferred-grid">
+                {Object.entries(jobCountsByCountry)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([country, count], i) => (
+                    <div className="preferred-chip" key={country}>
+                      <span className="preferred-rank">#{i + 1}</span>
+                      <span className="preferred-name">{country}</span>
+                      <span className="preferred-count">{count.toLocaleString()}</span>
+                    </div>
+                  ))}
+              </div>
             </div>
             <div className="explorer-note">
-            🔧 Live data from PostgreSQL marts built via dbt.
-            {lastRefreshed && ` Last refreshed: ${new Date(lastRefreshed).toLocaleString()}`}
-          </div>
+              🔧 Live data from PostgreSQL marts built via dbt.
+              {lastRefreshed && ` Last refreshed: ${new Date(lastRefreshed).toLocaleString()}`}
+            </div>
           </div>
         </div>
-      </section>
-      <section className="case-studies-section">
-        <div className="eyebrow">Case Studies</div>
-        <div className="card-row">
-              {caseStudies.map((cs) => (
-              <div className={cs.is_featured ? "case-card featured" : "case-card"} key={cs.id}>
-                <div>
-                  <h3>{cs.title}</h3>
-                  <p>{cs.summary}</p>
-                  <div className="pills">
-                    {cs.tech_stack.split(',').map((tech) => (
-                      <span className="pill" key={tech}>{tech.trim()}</span>
-                    ))}
+
+        <div className="dual-col">
+          <div className="eyebrow">Most Desired Data Engineering Tools Globally</div>
+          <div className="explorer-box">
+            <div className="chip-scroll-area">
+              <div className="preferred-grid">
+                {preferredGlobal.map(({ tool_name, preference_count }, i) => (
+                  <div className="preferred-chip" key={tool_name}>
+                    <span className="preferred-rank">#{i + 1}</span>
+                    <span className="preferred-name">{tool_name}</span>
+                    <span className="preferred-count">{preference_count}</span>
                   </div>
-                </div>
-                <Link to={`/case-studies/${cs.slug}`} className="case-link">Read case study →</Link>
+                ))}
               </div>
-            ))}
-        </div>
-      </section>
-      <section className="adr-section">
-        <div className="eyebrow">Architecture Decisions</div>
-        <div className="adr-item">
-          <h4><span className="adr-tag">ADR-01</span>Self-hosted Postgres + Jenkins over managed warehouses</h4>
-          <p>Chose a self-hosted Docker stack over Snowflake/Databricks free tiers to keep the live demo genuinely cost-free and always-on, rather than time-boxed.</p>
-        </div>
-        <div className="adr-item">
-          <h4><span className="adr-tag">ADR-02</span>Databricks + dbt vs. GCP-native</h4>
-          <p>Chose Databricks + dbt over a fully GCP-native approach, citing SAP's Databricks partnership and long-term flexibility.</p>
-        </div>
-      </section>
-      <section className="about-section">
-        <div className="eyebrow">About</div>
-        <div className="about-row">
-          <p>Data engineer based in Germany, working across Azure/Fabric and GCP, currently building a live tools-and-salary explorer to practice the full modern ELT stack end to end.</p>
-          <button className="resume-btn">⬇ Download Resume</button>
-        </div>
-      </section>
-      <section className="contact-section">
-        <div className="eyebrow">Contact</div>
-        <div className="contact-form">
-          <input type="text" placeholder="Name" />
-          <input type="email" placeholder="Email" />
-          <textarea rows="4" placeholder="Message"></textarea>
-          <button>Send Message</button>
+            </div>
+            <div className="explorer-note">
+              🔧 Live data from PostgreSQL marts built via dbt.
+              {lastRefreshed && ` Last refreshed: ${new Date(lastRefreshed).toLocaleString()}`}
+            </div>
+          </div>
         </div>
       </section>
 
+      <section className="case-studies-section" id="projects">
+        <div className="eyebrow">Case Studies</div>
+        <div className="card-row">
+          {caseStudies.map((cs) => (
+            <div className={cs.is_featured ? "case-card featured" : "case-card"} key={cs.id}>
+              <div>
+                <h3>{cs.title}</h3>
+                <p>{cs.summary}</p>
+                <div className="pills">
+                  {cs.tech_stack.split(',').map((tech) => (
+                    <span className="pill" key={tech}>{tech.trim()}</span>
+                  ))}
+                </div>
+              </div>
+              <Link to={`/case-studies/${cs.slug}`} className="case-link">Read case study →</Link>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="adr-section" id="adrs">
+        <div className="eyebrow">Architecture Decisions</div>
+        {adrs.map((adr) => (
+          <div className="adr-item" key={adr.id}>
+            <h4><span className="adr-tag">ADR-{String(adr.id).padStart(2, '0')}</span>{adr.title}</h4>
+            <p>{adr.decision}</p>
+          </div>
+        ))}
+      </section>
+
+      <section className="about-section" id="about">
+        <div className="eyebrow">About</div>
+        <div className="about-row">
+          <p>{aboutText || 'Data engineer based in Germany, working across Azure/Fabric and GCP, currently building a live tools-and-salary explorer to practice the full modern ELT stack end to end.'}</p>
+          {resumeUrl ? (
+              <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="resume-btn">⬇ Download Resume</a>
+          ) : (
+              <button className="resume-btn" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>⬇ Resume Coming Soon</button>
+          )}
+        </div>
+      </section>
+
+      <section className="contact-section" id="contact">
+        <div className="eyebrow">Contact</div>
+        <form className="contact-form" onSubmit={handleContactSubmit}>
+          <input
+            type="text"
+            placeholder="Name"
+            value={contactForm.name}
+            onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+            required
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={contactForm.email}
+            onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+            required
+          />
+          <textarea
+            rows="4"
+            placeholder="Message"
+            value={contactForm.message}
+            onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+            required
+          ></textarea>
+          <button type="submit">Send Message</button>
+          {contactStatus === 'success' && <p style={{ color: '#16A34A', fontSize: '13px' }}>Message sent — thank you!</p>}
+          {contactStatus === 'error' && <p style={{ color: '#EF4444', fontSize: '13px' }}>Something went wrong — please try again.</p>}
+        </form>
+      </section>
+
       <footer>
-        github.com/aakashmanandhar &nbsp;·&nbsp; LinkedIn &nbsp;·&nbsp; Contact
+        <a href="https://github.com/aakashmanandhar" target="_blank" rel="noopener noreferrer">github.com/aakashmanandhar</a>
+        &nbsp;·&nbsp;
+        <a href="https://www.linkedin.com/in/aakashmanandhar/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        &nbsp;·&nbsp;
+        <a href="#contact">Contact</a>
       </footer>
     </>
   )

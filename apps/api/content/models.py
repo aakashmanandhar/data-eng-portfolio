@@ -55,3 +55,45 @@ class ADR(models.Model):
 
     def __str__(self):
         return self.title
+    
+class ProfileStatus(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('offline', 'Offline'),
+        ('dnd', 'Do Not Disturb'),
+    ]
+
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    now_building = models.CharField(max_length=300, help_text="Shown in the 'Now building' banner on the homepage")
+    resume_pdf = models.FileField(upload_to='resume/', blank=True, null=True, help_text="Your current CV/resume as a PDF")
+    profile_photo = models.FileField(upload_to='profile/', blank=True, null=True, help_text="Your profile photo (shown in the hero avatar circle)")
+    headline_main = models.CharField(max_length=300, help_text="Full hero headline text")    
+    subtext = models.TextField(blank=True, help_text="Paragraph shown below the hero headline")
+    about_text = models.TextField(blank=True, help_text="Shown in the About section on the homepage")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Profile status"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1  # enforce singleton — always one row
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass  # prevent deletion — there should always be exactly one row
+
+    def __str__(self):
+        return f"Status: {self.get_status_display()}"
+    
+class ContactMessage(models.Model):
+    name = models.CharField(max_length=200)
+    email = models.EmailField()
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.email}) - {self.created_at.strftime('%Y-%m-%d')}"

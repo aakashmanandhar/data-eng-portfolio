@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import ReactMarkdown from 'react-markdown'
 import '../App.css'
 
 function ChatWidget() {
@@ -8,6 +9,17 @@ function ChatWidget() {
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const messagesEndRef = useRef(null)
+
+  useEffect(() => {
+    const openHandler = () => setIsOpen(true)
+    window.addEventListener('open-chat-widget', openHandler)
+    return () => window.removeEventListener('open-chat-widget', openHandler)
+  }, [])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, loading])
 
   const examples = [
     'What is the average senior salary in Germany?',
@@ -57,10 +69,15 @@ function ChatWidget() {
             {messages.map((msg, i) => (
               <div className={'msg ' + msg.sender} key={i}>
                 {msg.tag && <div className="route-tag">{msg.tag}</div>}
-                {msg.text}
+                {msg.sender === 'bot' ? (
+                  <div className="msg-markdown"><ReactMarkdown>{msg.text}</ReactMarkdown></div>
+                ) : (
+                  msg.text
+                )}
               </div>
             ))}
             {loading && <div className="msg bot">Thinking...</div>}
+            <div ref={messagesEndRef} />
           </div>
 
           <div className="chat-examples">

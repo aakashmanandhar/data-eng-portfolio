@@ -46,7 +46,15 @@ function CaseStudyDetailPage() {
       )}
 
       <div className="readme-content">
-        <ReactMarkdown>{caseStudy.readme_content}</ReactMarkdown>
+        <ReactMarkdown
+          components={{
+            img: ({ src, alt }) => (
+              <a href={src} target="_blank" rel="noopener noreferrer">
+                <img src={src} alt={alt} style={{ cursor: 'zoom-in' }} />
+              </a>
+            )
+          }}
+        >{caseStudy.readme_content}</ReactMarkdown>
       </div>
     </div>
   )
