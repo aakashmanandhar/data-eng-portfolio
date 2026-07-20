@@ -14,3 +14,6 @@ echo ""
 echo "Site:          http://localhost:5173"
 echo "Django admin:  http://localhost:8000/admin"
 echo "Jenkins:       http://localhost:8080"
+echo ""
+echo "Opening site in browser..."
+open http://localhost:5173

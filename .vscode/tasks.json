@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Data Engineering Portfolio",
+      "label": "Start Data Engineering Portfolio",
       "type": "shell",
       "command": "./start.sh",
       "problemMatcher": [],
