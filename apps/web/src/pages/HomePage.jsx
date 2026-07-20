@@ -5,11 +5,6 @@ import { Link } from 'react-router-dom'
 function HomePage() {
   const [status, setStatus] = useState('active')
   const [nowBuilding, setNowBuilding] = useState('')
-  const [resumeUrl, setResumeUrl] = useState(null)
-  const [aboutText, setAboutText] = useState('')
-  const [headlineMain, setHeadlineMain] = useState('Architecting the data infrastructure behind reliable pipelines.')
-  const [subtext, setSubtext] = useState('I build production-grade ETL/ELT pipelines, and I run a live end-to-end pipeline.')
-  const [profilePhoto, setProfilePhoto] = useState(null)
   const [country, setCountry] = useState('Australia')
   const [caseStudies, setCaseStudies] = useState([])
   const [adrs, setAdrs] = useState([])
@@ -21,6 +16,19 @@ function HomePage() {
   const [lastRefreshed, setLastRefreshed] = useState(null)
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' })
   const [contactStatus, setContactStatus] = useState(null)
+  const [resumeUrl, setResumeUrl] = useState(null)
+  const [aboutText, setAboutText] = useState('')
+  const [profilePhoto, setProfilePhoto] = useState(null)
+  const [headlineMain, setHeadlineMain] = useState('Architecting the data infrastructure behind reliable pipelines.')
+  const [subtext, setSubtext] = useState('I build production-grade ETL/ELT pipelines, and I run a live end-to-end pipeline.')
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light')
 
   useEffect(() => {
     fetch('http://localhost:8000/api/case-studies/')
@@ -128,6 +136,7 @@ function HomePage() {
           <a href="#adrs">ADRs</a>
           <a href="#about">About</a>
           <a href="#contact">Contact</a>
+          <button className="theme-toggle" onClick={toggleTheme}>{theme === 'light' ? '🌙' : '☀️'}</button>
         </div>
       </nav>
 
@@ -331,11 +340,11 @@ function HomePage() {
       <section className="about-section" id="about">
         <div className="eyebrow">About</div>
         <div className="about-row">
-          <p>{aboutText || 'Data engineer based in Germany, working across Azure/Fabric and GCP, currently building a live tools-and-salary explorer to practice the full modern ELT stack end to end.'}</p>
+          <p>{aboutText}</p>
           {resumeUrl ? (
-              <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="resume-btn">⬇ Download Resume</a>
+            <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="resume-btn">⬇ Download Resume</a>
           ) : (
-              <button className="resume-btn" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>⬇ Resume Coming Soon</button>
+            <button className="resume-btn" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>⬇ Resume Coming Soon</button>
           )}
         </div>
       </section>
