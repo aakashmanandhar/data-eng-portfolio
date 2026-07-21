@@ -179,7 +179,7 @@ function HomePage() {
               {status === 'active' ? 'Active' : status === 'offline' ? 'Offline' : 'Do Not Disturb'}
             </div>
             <div className="mini-skills">
-              <img src="https://cdn.simpleicons.org/python/3776AB" alt="Python" title="Python" />
+              <img src="/icons/python.svg" alt="Python" title="Python" />
               <img src="/icons/sql.svg" alt="PostgreSQL" title="PostgreSQL" />
               <img src="/icons/azure.svg" alt="Azure" title="Microsoft Azure" />
               <img src="/icons/fabric.svg" alt="Fabric" title="Microsoft Fabric" />
@@ -188,7 +188,7 @@ function HomePage() {
               <img src="https://cdn.simpleicons.org/googlecloud/4285F4" alt="GCP" title="GCP" />
               <img src="https://cdn.simpleicons.org/terraform/844FBA" alt="Terraform" title="Terraform" />
               <img src="https://cdn.simpleicons.org/docker/2496ED" alt="Docker" title="Docker" />
-              <img src="/icons/airflow.png" alt="Airflow" title="Apache Airflow" />
+              <img src="/icons/airflow.svg" alt="Airflow" title="Apache Airflow" />
               <img src="https://cdn.simpleicons.org/snowflake/29B5E8" alt="Snowflake" title="Snowflake" />
               <img src="https://cdn.simpleicons.org/apachespark/E25A1C" alt="PySpark" title="PySpark (Apache Spark)" />
             </div>
