@@ -60,6 +60,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://142.91.101.89:5173",
 ]
 
 ROOT_URLCONF = 'config.urls'

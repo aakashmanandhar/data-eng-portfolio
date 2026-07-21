@@ -36,7 +36,7 @@ function ChatWidget() {
     setLoading(true)
 
     try {
-      const res = await fetch('http://localhost:8000/api/ask/', {
+      const res = await fetch('http://142.91.101.89:8000/api/ask/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question }),

@@ -31,21 +31,21 @@ function HomePage() {
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light')
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/case-studies/')
+    fetch('http://142.91.101.89:8000/api/case-studies/')
       .then((res) => res.json())
       .then((data) => setCaseStudies(data))
       .catch((err) => console.error('Failed to load case studies:', err))
   }, [])
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/adrs/')
+    fetch('http://142.91.101.89:8000/api/adrs/')
       .then((res) => res.json())
       .then((data) => setAdrs(data))
       .catch((err) => console.error('Failed to load ADRs:', err))
   }, [])
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/job-market/')
+    fetch('http://142.91.101.89:8000/api/job-market/')
       .then((res) => res.json())
       .then((rows) => {
         const grouped = {}
@@ -60,7 +60,7 @@ function HomePage() {
       })
       .catch((err) => console.error('Failed to load job market data:', err))
 
-    fetch('http://localhost:8000/api/tool-usage/')
+    fetch('http://142.91.101.89:8000/api/tool-usage/')
       .then((res) => res.json())
       .then((rows) => {
         const grouped = {}
@@ -79,21 +79,21 @@ function HomePage() {
   }, [])
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/tool-preference-global/')
+    fetch('http://142.91.101.89:8000/api/tool-preference-global/')
       .then((res) => res.json())
       .then((rows) => setPreferredGlobal(rows.slice(0, 10)))
       .catch((err) => console.error('Failed to load global tool preferences:', err))
   }, [])
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/last-refreshed/')
+    fetch('http://142.91.101.89:8000/api/last-refreshed/')
       .then((res) => res.json())
       .then((data) => setLastRefreshed(data.last_refreshed))
       .catch((err) => console.error('Failed to load last refreshed time:', err))
   }, [])
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/profile-status/')
+    fetch('http://142.91.101.89:8000/api/profile-status/')
       .then((res) => res.json())
       .then((data) => {
         setStatus(data.status)
@@ -110,7 +110,7 @@ function HomePage() {
   const handleContactSubmit = async (e) => {
     e.preventDefault()
     try {
-      const res = await fetch('http://localhost:8000/api/contact/', {
+      const res = await fetch('http://142.91.101.89:8000/api/contact/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(contactForm),

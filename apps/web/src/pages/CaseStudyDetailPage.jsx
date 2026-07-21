@@ -11,7 +11,7 @@ function CaseStudyDetailPage() {
 
   useEffect(() => {
     setLoading(true)
-    fetch(`http://localhost:8000/api/case-studies/${slug}/`)
+    fetch(`http://142.91.101.89:8000/api/case-studies/${slug}/`)
       .then((res) => {
         if (!res.ok) throw new Error('Case study not found')
         return res.json()
