@@ -190,7 +190,9 @@ h1 {
   opacity: .85;
 }
 .mini-skills img[alt="Airflow"] {
-  mix-blend-mode: multiply;
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 2px;
 }
 .text-badge {
   font-size: 11px;
