@@ -187,6 +187,7 @@ h1 {
 .mini-skills img {
   width: 26px;
   height: 26px;
+  object-fit: contain;
   opacity: .85;
 }
 .text-badge {
