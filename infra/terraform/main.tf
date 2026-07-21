@@ -155,10 +155,6 @@ resource "docker_container" "react" {
     external = 5173
   }
 
-  volumes {
-    host_path      = "${abspath(path.module)}/../../apps/web"
-    container_path = "/app"
-  }
 }
 
 resource "docker_image" "dbt" {
