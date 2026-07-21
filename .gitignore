@@ -36,3 +36,6 @@ pipeline/dbt/logs/
 
 # Database dumps (used for server migration, not source code)
 full_dump.sql
+
+apps/web/.env
+media.tar.gz

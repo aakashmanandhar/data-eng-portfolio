@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import '../App.css'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+
 function CaseStudyDetailPage() {
   const { slug } = useParams()
   const [caseStudy, setCaseStudy] = useState(null)
@@ -11,7 +13,7 @@ function CaseStudyDetailPage() {
 
   useEffect(() => {
     setLoading(true)
-    fetch(`http://142.91.101.89:8000/api/case-studies/${slug}/`)
+    fetch(`${API_BASE}/api/case-studies/${slug}/`)
       .then((res) => {
         if (!res.ok) throw new Error('Case study not found')
         return res.json()

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import '../App.css'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+
 function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState([
@@ -36,7 +38,7 @@ function ChatWidget() {
     setLoading(true)
 
     try {
-      const res = await fetch('http://142.91.101.89:8000/api/ask/', {
+      const res = await fetch(`${API_BASE}/api/ask/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question }),
