@@ -32,6 +32,8 @@ ALLOWED_HOSTS = ['aakashmanandhar.tech', 'www.aakashmanandhar.tech', '142.91.101
 
 CSRF_TRUSTED_ORIGINS = ['https://aakashmanandhar.tech', 'https://www.aakashmanandhar.tech']
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 # Application definition
 
