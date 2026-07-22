@@ -3,17 +3,7 @@ pipeline {
     triggers {
         cron('H */6 * * *')
     }
-    environment {
-        PIPELINE_STARTED_AT = ""
-    }
     stages {
-        stage('Record start') {
-            steps {
-                script {
-                    env.PIPELINE_STARTED_AT = sh(script: "date -u +%Y-%m-%dT%H:%M:%S", returnStdout: true).trim()
-                }
-            }
-        }
         stage('Extract Adzuna') {
             steps {
                 sh 'docker cp ${WORKSPACE}/pipeline/extraction/extract_adzuna.py portfolio_django:/tmp/extract_adzuna.py'
@@ -43,22 +33,28 @@ pipeline {
     }
     post {
         success {
-            sh """
-                docker exec portfolio_django python manage.py shell -c "
+            script {
+                def startedAt = new Date(currentBuild.startTimeInMillis).format("yyyy-MM-dd'T'HH:mm:ss")
+                sh """
+                    docker exec portfolio_django python manage.py shell -c "
 from analytics.models import PipelineRun
 from django.utils.dateparse import parse_datetime
-PipelineRun.objects.create(status='success', stage_reached='dbt test', started_at=parse_datetime('${env.PIPELINE_STARTED_AT}'))
+PipelineRun.objects.create(status='success', stage_reached='dbt test', started_at=parse_datetime('${startedAt}'))
 "
-            """
+                """
+            }
         }
         failure {
-            sh """
-                docker exec portfolio_django python manage.py shell -c "
+            script {
+                def startedAt = new Date(currentBuild.startTimeInMillis).format("yyyy-MM-dd'T'HH:mm:ss")
+                sh """
+                    docker exec portfolio_django python manage.py shell -c "
 from analytics.models import PipelineRun
 from django.utils.dateparse import parse_datetime
-PipelineRun.objects.create(status='failure', stage_reached='${env.STAGE_NAME}', started_at=parse_datetime('${env.PIPELINE_STARTED_AT}'))
+PipelineRun.objects.create(status='failure', stage_reached='pipeline', started_at=parse_datetime('${startedAt}'))
 "
-            """
+                """
+            }
         }
     }
 }
