@@ -234,15 +234,18 @@ function HomePage() {
                 </p>
               )}
               {toolUsageData[country] && toolUsageData[country].length > 0 ? (
-                toolUsageData[country].map(([name, pct]) => (
-                  <div className="tool-row" key={name}>
-                    <span className="tool-name">{name}</span>
-                    <div className="tool-bar-bg">
-                      <div className="tool-bar-fill" style={{ width: pct + '%' }}></div>
+                toolUsageData[country].map(([name, pct]) => {
+                  const widthPct = Math.min(100, Math.round((pct / toolRespondentCounts[country]) * 100))
+                  return (
+                    <div className="tool-row" key={name}>
+                      <span className="tool-name">{name}</span>
+                      <div className="tool-bar-bg">
+                        <div className="tool-bar-fill" style={{ width: widthPct + '%' }}></div>
+                      </div>
+                      <span className="tool-pct">{pct}/{toolRespondentCounts[country]}</span>
                     </div>
-                    <span className="tool-pct">{pct}/{toolRespondentCounts[country]}</span>
-                  </div>
-                ))
+                  )
+                })
               ) : (
                 <p style={{ color: 'var(--muted)', fontSize: '13px' }}>Not enough survey responses yet for this country's tool data.</p>
               )}
@@ -463,3 +466,4 @@ function HomePage() {
 }
 
 export default HomePage
+
