@@ -275,17 +275,28 @@ function HomePage() {
       <section className="explorer-section">
         <div className="eyebrow">Pipeline Health</div>
         <div className="explorer-box">
-          <div className="pipeline-runs">
-            {pipelineRuns.length > 0 ? (
-              pipelineRuns.map((run, i) => (
-                <div className="pipeline-run" key={i} title={`${run.status} — ${new Date(run.finished_at).toLocaleString()}`}>
-                  <span className={`run-dot run-${run.status}`}></span>
-                </div>
-              ))
-            ) : (
-              <p style={{ color: 'var(--muted)', fontSize: '13px' }}>No runs recorded yet.</p>
-            )}
-          </div>
+          {pipelineRuns.length > 0 ? (
+            <>
+              <p style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '14px' }}>
+                Every run of the ELT pipeline (extract → load → dbt) is recorded here automatically —
+                the same one you can watch trigger every 6 hours. Green means all dbt tests passed;
+                red means something (usually a data-quality check) caught an issue before it reached
+                the live dashboard.
+              </p>
+              <div className="pipeline-runs">
+                {pipelineRuns.map((run, i) => (
+                  <div className="pipeline-run" key={i} title={`${run.status} — ${new Date(run.finished_at).toLocaleString()}`}>
+                    <span className={`run-dot run-${run.status}`}></span>
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: '11.5px', color: 'var(--muted)', marginTop: '10px' }}>
+                {pipelineRuns.length} run{pipelineRuns.length !== 1 ? 's' : ''} recorded, most recent first.
+              </p>
+            </>
+          ) : (
+            <p style={{ color: 'var(--muted)', fontSize: '13px' }}>No runs recorded yet.</p>
+          )}
           {pipelineRuns.length > 0 && (
             <div className="explorer-note">
               🔧 Last run: {pipelineRuns[0].status === 'success' ? '✅ Success' : '❌ Failure'} at{' '}
