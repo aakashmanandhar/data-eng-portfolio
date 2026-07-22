@@ -21,7 +21,6 @@ jooble_normalized AS (
     SELECT
         CASE
             WHEN country = 'United States' THEN 'United States of America'
-            WHEN country = 'United Kingdom' THEN 'United Kingdom of Great Britain and Northern Ireland'
             ELSE country
         END AS country_name,
         job_count AS jooble_job_count
