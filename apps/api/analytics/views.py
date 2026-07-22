@@ -2,6 +2,9 @@ import psycopg2
 import psycopg2.extras
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import generics
+from .models import PipelineRun
+from .serializers import PipelineRunSerializer
 
 
 def get_readonly_connection():
@@ -68,3 +71,7 @@ class LastRefreshedView(APIView):
         cur.close()
         conn.close()
         return Response({"last_refreshed": result[0]})
+
+class PipelineRunListView(generics.ListAPIView):
+    serializer_class = PipelineRunSerializer
+    queryset = PipelineRun.objects.all()[:10]
