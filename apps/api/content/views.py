@@ -1,5 +1,7 @@
 from rest_framework import generics
 from django.core.mail import send_mail
+from rest_framework.permissions import AllowAny
+from rest_framework.authentication import SessionAuthentication
 from .models import CaseStudy, BlogPost, ADR, ProfileStatus, ContactMessage
 from .serializers import CaseStudySerializer, BlogPostSerializer, ADRSerializer, ProfileStatusSerializer, ContactMessageSerializer
 
@@ -45,9 +47,16 @@ class ProfileStatusView(generics.RetrieveAPIView):
         )
         return obj
     
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return
+
+
 class ContactMessageCreateView(generics.CreateAPIView):
     serializer_class = ContactMessageSerializer
     queryset = ContactMessage.objects.all()
+    authentication_classes = [CsrfExemptSessionAuthentication]
+    permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
         instance = serializer.save()
