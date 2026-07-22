@@ -1,4 +1,5 @@
 from rest_framework import generics
+from django.core.mail import send_mail
 from .models import CaseStudy, BlogPost, ADR, ProfileStatus, ContactMessage
 from .serializers import CaseStudySerializer, BlogPostSerializer, ADRSerializer, ProfileStatusSerializer, ContactMessageSerializer
 
@@ -47,3 +48,18 @@ class ProfileStatusView(generics.RetrieveAPIView):
 class ContactMessageCreateView(generics.CreateAPIView):
     serializer_class = ContactMessageSerializer
     queryset = ContactMessage.objects.all()
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        send_mail(
+            subject="Thanks for reaching out — Aakash Manandhar",
+            message=(
+                f"Hi {instance.name},\n\n"
+                "Thanks for your message! I've received it and will get back to you soon.\n\n"
+                f"Your message:\n\"{instance.message}\"\n\n"
+                "— Aakash"
+            ),
+            from_email=None,
+            recipient_list=[instance.email],
+            fail_silently=True,
+        )
