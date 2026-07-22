@@ -448,6 +448,33 @@ h1 {
   font-weight: 600;
   cursor: pointer;
 }
+.form-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  animation: fadeSlideIn 0.3s ease;
+}
+.form-status svg {
+  flex-shrink: 0;
+}
+.form-status.success {
+  background: rgba(22, 163, 74, 0.1);
+  border: 1px solid rgba(22, 163, 74, 0.3);
+  color: #16A34A;
+}
+.form-status.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #EF4444;
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 footer {
   text-align: center;
   padding: 36px;

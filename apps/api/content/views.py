@@ -70,5 +70,5 @@ class ContactMessageCreateView(generics.CreateAPIView):
             ),
             from_email=None,
             recipient_list=[instance.email],
-            fail_silently=False,
+            fail_silently=True,
         )
