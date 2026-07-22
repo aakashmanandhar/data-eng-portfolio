@@ -44,7 +44,8 @@ function ArchitecturePage() {
 
         <line x1="180" y1="45" x2="240" y2="75" stroke="var(--muted)" markerEnd="url(#arrow)" />
         <line x1="180" y1="115" x2="240" y2="85" stroke="var(--muted)" markerEnd="url(#arrow)" />
-        <line x1="180" y1="185" x2="455" y2="65" stroke="var(--muted)" strokeDasharray="4,3" markerEnd="url(#arrow)" />
+        <line x1="180" y1="185" x2="445" y2="185" stroke="var(--muted)" strokeDasharray="4,3" />
+        <line x1="445" y1="185" x2="445" y2="162" stroke="var(--muted)" strokeDasharray="4,3" markerEnd="url(#arrow)" />
         <text x="300" y="152" textAnchor="middle" fontSize="9.5" fill="var(--muted)" fontStyle="italic">manual, quota-conscious</text>
 
         {/* Postgres medallion */}
