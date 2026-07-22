@@ -78,13 +78,15 @@ function ArchitecturePage() {
         <text x="760" y="186" textAnchor="middle" fontSize="10" fill="var(--muted)">router · text-to-SQL · RAG</text>
         <line x1="620" y1="215" x2="680" y2="180" stroke="var(--muted)" markerEnd="url(#arrow)" />
         <line x1="760" y1="150" x2="760" y2="120" stroke="var(--muted)" markerEnd="url(#arrow)" />
+        
 
         {/* React */}
         <rect x="440" y="270" width="180" height="50" rx="8" fill="var(--bg-alt)" stroke="var(--border)" />
         <text x="530" y="290" textAnchor="middle" fontSize="12" fill="var(--text)" fontWeight="600">React (Vite)</text>
         <text x="530" y="306" textAnchor="middle" fontSize="10" fill="var(--muted)">production build</text>
-        <line x1="760" y1="120" x2="760" y2="295" stroke="var(--muted)" />
-        <line x1="760" y1="295" x2="620" y2="295" stroke="var(--muted)" markerEnd="url(#arrow)" />
+        <line x1="840" y1="95" x2="860" y2="95" stroke="var(--muted)" />
+        <line x1="860" y1="95" x2="860" y2="295" stroke="var(--muted)" />
+        <line x1="860" y1="295" x2="620" y2="295" stroke="var(--muted)" markerEnd="url(#arrow)" />
 
         {/* Infra row */}
         <rect x="20" y="380" width="140" height="46" rx="8" fill="var(--bg-alt)" stroke="var(--border)" />
