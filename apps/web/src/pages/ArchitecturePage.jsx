@@ -4,7 +4,7 @@ import '../App.css'
 const stack = [
   'Django', 'Django REST Framework', 'React', 'PostgreSQL', 'pgvector',
   'dbt', 'Terraform', 'Docker', 'Jenkins', 'Nginx', 'Cloudflare',
-  'Google Gemini API', 'Adzuna API', 'Stack Overflow Developer Survey'
+  'Google Gemini API', 'Adzuna API', 'Jooble API', 'Stack Overflow Developer Survey'
 ]
 
 function ArchitecturePage() {
@@ -17,7 +17,7 @@ function ArchitecturePage() {
         self-hosted data platform. Here's the architecture behind it, end to end.
       </p>
 
-      <svg viewBox="0 0 900 520" style={{ width: '100%', height: 'auto', marginBottom: '30px' }}>
+      <svg viewBox="0 0 900 580" style={{ width: '100%', height: 'auto', marginBottom: '30px' }}>
         <defs>
           <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted)" />
@@ -33,6 +33,10 @@ function ArchitecturePage() {
         <text x="100" y="110" textAnchor="middle" fontSize="12" fill="var(--text)" fontWeight="600">SO Developer Survey</text>
         <text x="100" y="126" textAnchor="middle" fontSize="10" fill="var(--muted)">tools, self-reported salary</text>
 
+        <rect x="20" y="160" width="160" height="50" rx="8" fill="var(--bg-alt)" stroke="var(--border)" strokeDasharray="4,3" />
+        <text x="100" y="180" textAnchor="middle" fontSize="12" fill="var(--text)" fontWeight="600">Jooble API</text>
+        <text x="100" y="196" textAnchor="middle" fontSize="10" fill="var(--muted)">job counts, 18 more countries</text>
+
         {/* Jenkins */}
         <rect x="240" y="55" width="150" height="50" rx="8" fill="var(--bg-alt)" stroke="var(--accent1)" strokeWidth="1.5" />
         <text x="315" y="75" textAnchor="middle" fontSize="12" fill="var(--accent1)" fontWeight="700">Jenkins</text>
@@ -40,6 +44,8 @@ function ArchitecturePage() {
 
         <line x1="180" y1="45" x2="240" y2="75" stroke="var(--muted)" markerEnd="url(#arrow)" />
         <line x1="180" y1="115" x2="240" y2="85" stroke="var(--muted)" markerEnd="url(#arrow)" />
+        <line x1="180" y1="185" x2="455" y2="65" stroke="var(--muted)" strokeDasharray="4,3" markerEnd="url(#arrow)" />
+        <text x="300" y="152" textAnchor="middle" fontSize="9.5" fill="var(--muted)" fontStyle="italic">manual, quota-conscious</text>
 
         {/* Postgres medallion */}
         <rect x="440" y="20" width="180" height="140" rx="8" fill="var(--bg-alt)" stroke="var(--border)" />
@@ -117,10 +123,19 @@ function ArchitecturePage() {
           React — runs in Docker on a single VPS I administer directly, giving full control over cost and configuration
           at the expense of the convenience managed services provide.
         </p>
-        <p>
+        <p style={{ marginBottom: '14px' }}>
           <strong style={{ color: 'var(--text)' }}>RAG grounded in real data:</strong> the chat assistant routes questions
           to either live SQL over the gold schema or vector retrieval over embedded case study content — it's built to say
           "I don't know" rather than hallucinate when source material doesn't cover something.
+        </p>
+        <p>
+          <strong style={{ color: 'var(--text)' }}>Handling a late-arriving source:</strong> Jooble was added after the star
+          schema already existed, covering 18 countries Adzuna doesn't reach. Rather than bolt it on awkwardly, the country
+          dimension was extended as a proper conformed dimension, and the gold-layer fact table moved from a simple
+          <code style={{ background: 'rgba(0,0,0,0.06)', padding: '1px 5px', borderRadius: '4px', fontSize: '12px' }}> LEFT JOIN</code> to
+          a <code style={{ background: 'rgba(0,0,0,0.06)', padding: '1px 5px', borderRadius: '4px', fontSize: '12px' }}>UNION ALL</code> so
+          Jooble-only countries surface honestly — with no fabricated salary data where none exists. It also runs on its own
+          manual cadence rather than the shared 6-hour schedule, out of respect for its far tighter free-tier quota.
         </p>
       </div>
 
