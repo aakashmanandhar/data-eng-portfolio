@@ -11,6 +11,7 @@ function ChatWidget() {
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showHook, setShowHook] = useState(false)
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
@@ -22,6 +23,17 @@ function ChatWidget() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
+
+  useEffect(() => {
+    const alreadyShown = sessionStorage.getItem('chat-hook-shown')
+    if (!alreadyShown) {
+      const timer = setTimeout(() => {
+        setShowHook(true)
+        sessionStorage.setItem('chat-hook-shown', 'true')
+      }, 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [])
 
   const examples = [
     'What is the average senior salary in Germany?',
@@ -55,7 +67,13 @@ function ChatWidget() {
 
   return (
     <>
-      <button className="chat-fab" onClick={() => setIsOpen(!isOpen)}>💬</button>
+      {showHook && !isOpen && (
+        <div className="chat-hook" onClick={() => { setIsOpen(true); setShowHook(false); }}>
+          <button className="chat-hook-close" onClick={(e) => { e.stopPropagation(); setShowHook(false); }}>✕</button>
+          👋 Curious why I chose Postgres over BigQuery for this? Ask me anything.
+        </div>
+      )}
+      <button className="chat-fab" onClick={() => { setIsOpen(!isOpen); setShowHook(false); }}>💬</button>
 
       {isOpen && (
         <div className="chat-panel">
