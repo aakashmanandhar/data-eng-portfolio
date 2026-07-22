@@ -47,7 +47,7 @@ pipeline {
                 docker exec portfolio_django python manage.py shell -c "
 from analytics.models import PipelineRun
 from django.utils.dateparse import parse_datetime
-PipelineRun.objects.create(status='success', stage_reached='dbt test', started_at=parse_datetime('${PIPELINE_STARTED_AT}'))
+PipelineRun.objects.create(status='success', stage_reached='dbt test', started_at=parse_datetime('${env.PIPELINE_STARTED_AT}'))
 "
             """
         }
@@ -56,7 +56,7 @@ PipelineRun.objects.create(status='success', stage_reached='dbt test', started_a
                 docker exec portfolio_django python manage.py shell -c "
 from analytics.models import PipelineRun
 from django.utils.dateparse import parse_datetime
-PipelineRun.objects.create(status='failure', stage_reached='${STAGE_NAME}', started_at=parse_datetime('${PIPELINE_STARTED_AT}'))
+PipelineRun.objects.create(status='failure', stage_reached='${env.STAGE_NAME}', started_at=parse_datetime('${env.PIPELINE_STARTED_AT}'))
 "
             """
         }
