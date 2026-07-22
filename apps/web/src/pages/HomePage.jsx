@@ -135,6 +135,7 @@ function HomePage() {
         <div className="nav-links">
           <a href="#projects">Projects</a>
           <a href="#explorer">Explorer</a>
+          <Link to="/architecture">Architecture</Link>
           <a href="#adrs">ADRs</a>
           <a href="#about">About</a>
           <a href="#contact">Contact</a>
