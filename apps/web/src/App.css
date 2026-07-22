@@ -833,6 +833,10 @@ footer {
   .detail-page {
     padding: 32px 20px;
   }
+  .now-card {
+    margin-left: 20px;
+    margin-right: 20px;
+  }
 }
 
 /* ===== Responsive: Phone (≤480px) ===== */
@@ -954,5 +958,9 @@ footer {
     gap: 10px;
     flex-wrap: wrap;
     text-align: center;
+  }
+  .now-card {
+    margin-left: 16px;
+    margin-right: 16px;
   }
 }
