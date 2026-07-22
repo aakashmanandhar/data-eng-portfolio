@@ -27,7 +27,7 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['entry', 'mid', 'senior']
+              values: ['entry', 'mid', 'senior', 'all']
       - name: job_count
         tests:
           - not_null

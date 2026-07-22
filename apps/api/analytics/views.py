@@ -22,7 +22,7 @@ class JobMarketView(APIView):
         conn = get_readonly_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("""
-            SELECT country_name, seniority_level, job_count, adzuna_salary_usd, so_survey_salary_usd
+            SELECT country_name, seniority_level, job_count, adzuna_salary_usd, so_survey_salary_usd, jooble_job_count
             FROM dbt_dev_gold.fact_job_market
             ORDER BY country_name, seniority_level
         """)

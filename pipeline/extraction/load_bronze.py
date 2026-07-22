@@ -14,8 +14,7 @@ conn = psycopg2.connect(
 )
 cur = conn.cursor()
 
-cur.execute("TRUNCATE bronze.adzuna_job_market, bronze.so_survey_by_country, bronze.so_survey_preferred_global;")
-
+cur.execute("TRUNCATE bronze.adzuna_job_market, bronze.so_survey_by_country, bronze.so_survey_preferred_global, bronze.jooble_job_market;")
 # --- Load Adzuna data ---
 with open("adzuna_raw_output.json") as f:
     adzuna_data = json.load(f)
@@ -51,6 +50,19 @@ cur.execute(
     (json.dumps(so_data["most_preferred_global"]),),
 )
 print("Loaded 1 row into bronze.so_survey_preferred_global")
+
+# --- Load Jooble data ---
+with open("jooble_raw_output.json") as f:
+    jooble_data = json.load(f)
+
+jooble_rows = 0
+for country, payload in jooble_data.items():
+    cur.execute(
+        "INSERT INTO bronze.jooble_job_market (country, raw_data) VALUES (%s, %s)",
+        (country, json.dumps(payload)),
+    )
+    jooble_rows += 1
+print(f"Loaded {jooble_rows} rows into bronze.jooble_job_market")
 
 conn.commit()
 cur.close()

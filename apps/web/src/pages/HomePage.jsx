@@ -60,10 +60,16 @@ function HomePage() {
       .then((rows) => {
         const grouped = {}
         const totals = {}
+        const joobleCounts = {}
         rows.forEach((row) => {
           if (!grouped[row.country_name]) grouped[row.country_name] = {}
           grouped[row.country_name][row.seniority_level] = row.adzuna_salary_usd
           totals[row.country_name] = (totals[row.country_name] || 0) + (row.job_count || 0)
+          if (row.jooble_job_count != null) joobleCounts[row.country_name] = row.jooble_job_count
+        })
+        // Countries with no Adzuna postings (Jooble-only) fall back to Jooble's count
+        Object.keys(joobleCounts).forEach((country) => {
+          if (!totals[country]) totals[country] = joobleCounts[country]
         })
         setJobMarketData(grouped)
         setJobCountsByCountry(totals)
@@ -247,6 +253,13 @@ function HomePage() {
               <div className="salary-cards">
                 {(() => {
                   const entries = Object.entries(jobMarketData[country] || {}).filter(([, val]) => val !== null)
+                  if (entries.length === 0) {
+                    return (
+                      <p style={{ color: 'var(--muted)', fontSize: '13px' }}>
+                        No salary data yet for this country — showing job posting volume only.
+                      </p>
+                    )
+                  }
                   return entries.map(([level, val], i) => {
                     const prevVal = i > 0 ? entries[i - 1][1] : null
                     const growth = prevVal ? Math.round(((val - prevVal) / prevVal) * 100) : null

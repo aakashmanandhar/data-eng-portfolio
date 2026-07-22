@@ -18,3 +18,10 @@ CREATE TABLE IF NOT EXISTS bronze.so_survey_preferred_global (
     raw_data JSONB NOT NULL,
     loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS bronze.jooble_job_market (
+    id SERIAL PRIMARY KEY,
+    country TEXT NOT NULL,
+    raw_data JSONB NOT NULL,
+    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
