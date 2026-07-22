@@ -908,10 +908,15 @@ footer a:hover {
 @media (max-width: 480px) {
   .nav {
     padding: 14px 16px;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
   }
   .nav-links {
     gap: 10px;
     font-size: 11px;
+    flex-wrap: wrap;
+    justify-content: center;
   }
   .hero {
     padding: 32px 16px 16px;
