@@ -19,7 +19,7 @@ so_salary AS (
 SELECT
     a.country_name,
     a.seniority_level,
-    a.job_count,
+    COALESCE(a.job_count, 0) AS job_count,
     a.salary_usd AS adzuna_salary_usd,
     s.avg_salary_usd AS so_survey_salary_usd,
     s.salary_sample_size AS so_survey_sample_size
