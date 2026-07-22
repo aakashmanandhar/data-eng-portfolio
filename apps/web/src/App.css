@@ -998,3 +998,24 @@ footer a:hover {
     margin-right: 16px;
   }
 }
+
+.pipeline-runs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pipeline-run {
+  display: flex;
+}
+.run-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  cursor: default;
+}
+.run-success {
+  background: #16A34A;
+}
+.run-failure {
+  background: #EF4444;
+}

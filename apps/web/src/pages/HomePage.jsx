@@ -24,6 +24,14 @@ function HomePage() {
   const [headlineMain, setHeadlineMain] = useState('Architecting the data infrastructure behind reliable pipelines.')
   const [subtext, setSubtext] = useState('I build production-grade ETL/ELT pipelines, and I run a live end-to-end pipeline.')
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
+  const [pipelineRuns, setPipelineRuns] = useState([])
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/pipeline-runs/`)
+      .then((res) => res.json())
+      .then((data) => setPipelineRuns(data))
+      .catch((err) => console.error('Failed to load pipeline runs:', err))
+  }, [])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -261,6 +269,29 @@ function HomePage() {
             🔧 Live data from PostgreSQL marts built via dbt.
             {lastRefreshed && ` Last refreshed: ${new Date(lastRefreshed).toLocaleString()}`}
           </div>
+        </div>
+      </section>
+
+      <section className="explorer-section">
+        <div className="eyebrow">Pipeline Health</div>
+        <div className="explorer-box">
+          <div className="pipeline-runs">
+            {pipelineRuns.length > 0 ? (
+              pipelineRuns.map((run, i) => (
+                <div className="pipeline-run" key={i} title={`${run.status} — ${new Date(run.finished_at).toLocaleString()}`}>
+                  <span className={`run-dot run-${run.status}`}></span>
+                </div>
+              ))
+            ) : (
+              <p style={{ color: 'var(--muted)', fontSize: '13px' }}>No runs recorded yet.</p>
+            )}
+          </div>
+          {pipelineRuns.length > 0 && (
+            <div className="explorer-note">
+              🔧 Last run: {pipelineRuns[0].status === 'success' ? '✅ Success' : '❌ Failure'} at{' '}
+              {new Date(pipelineRuns[0].finished_at).toLocaleString()}
+            </div>
+          )}
         </div>
       </section>
 
