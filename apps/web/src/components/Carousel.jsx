@@ -6,6 +6,11 @@ function Carousel({ slides }) {
   const touchStartX = useRef(null)
   const slideRefs = useRef([])
 
+  const goTo = (index) => {
+    if (index < 0 || index >= slides.length) return
+    setCurrent(index)
+  }
+
   useEffect(() => {
     const activeSlide = slideRefs.current[current]
     if (activeSlide) {
@@ -13,10 +18,14 @@ function Carousel({ slides }) {
     }
   }, [current, slides])
 
-  const goTo = (index) => {
-    if (index < 0 || index >= slides.length) return
-    setCurrent(index)
-  }
+  useEffect(() => {
+    const jumpHandler = (e) => {
+      const index = e.detail?.index
+      if (typeof index === 'number') goTo(index)
+    }
+    window.addEventListener('carousel-jump', jumpHandler)
+    return () => window.removeEventListener('carousel-jump', jumpHandler)
+  }, [])
 
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX
@@ -47,11 +56,27 @@ function Carousel({ slides }) {
 
       {slides.length > 1 && (
         <>
-          <button className="carousel-arrow carousel-arrow-left" onClick={() => goTo(current - 1)} disabled={current === 0}>‹</button>
-          <button className="carousel-arrow carousel-arrow-right" onClick={() => goTo(current + 1)} disabled={current === slides.length - 1}>›</button>
+          <button
+            className="carousel-arrow carousel-arrow-left"
+            onClick={() => goTo(current - 1)}
+            disabled={current === 0}
+          >
+            ‹
+          </button>
+          <button
+            className="carousel-arrow carousel-arrow-right"
+            onClick={() => goTo(current + 1)}
+            disabled={current === slides.length - 1}
+          >
+            ›
+          </button>
           <div className="carousel-dots">
             {slides.map((_, i) => (
-              <button key={i} className={`carousel-dot${i === current ? ' active' : ''}`} onClick={() => goTo(i)} />
+              <button
+                key={i}
+                className={`carousel-dot${i === current ? ' active' : ''}`}
+                onClick={() => goTo(i)}
+              />
             ))}
           </div>
         </>

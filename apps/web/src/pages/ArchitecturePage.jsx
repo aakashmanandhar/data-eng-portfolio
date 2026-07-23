@@ -3,8 +3,8 @@ import '../App.css'
 
 const stack = [
   'Django', 'Django REST Framework', 'React', 'PostgreSQL', 'pgvector',
-  'dbt', 'Terraform', 'Docker', 'Jenkins', 'Nginx', 'Cloudflare',
-  'Google Gemini API', 'Adzuna API', 'Stack Overflow Developer Survey'
+  'dbt', 'Terraform', 'Docker', 'Jenkins', 'Apache Airflow', 'Nginx', 'Cloudflare',
+  'Google Gemini API', 'Adzuna API', 'GitHub API', 'Stack Overflow Developer Survey'
 ]
 
 function ArchitecturePage() {
@@ -14,9 +14,11 @@ function ArchitecturePage() {
       <h1>How This Site Works</h1>
       <p style={{ color: 'var(--muted)', fontSize: '14.5px', lineHeight: 1.7, marginBottom: '30px' }}>
         This portfolio isn't just a static page describing my work — it's a live,
-        self-hosted data platform. Here's the architecture behind it, end to end.
+        self-hosted data platform running two independently-orchestrated pipelines.
+        Here's the architecture behind both, end to end.
       </p>
 
+      <h2 style={{ fontSize: '17px', marginBottom: '14px' }}>Pipeline 1 · Job Market Explorer (Jenkins)</h2>
       <svg viewBox="0 0 900 520" style={{ width: '100%', height: 'auto', marginBottom: '30px' }}>
         <defs>
           <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -102,6 +104,63 @@ function ArchitecturePage() {
         </text>
       </svg>
 
+      <h2 style={{ fontSize: '17px', marginBottom: '14px' }}>Pipeline 2 · GitHub Trends (Apache Airflow)</h2>
+      <svg viewBox="0 0 900 380" style={{ width: '100%', height: 'auto', marginBottom: '30px' }}>
+        <defs>
+          <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted)" />
+          </marker>
+        </defs>
+
+        {/* Sources - 3 parallel extraction branches */}
+        <rect x="20" y="20" width="170" height="42" rx="8" fill="var(--bg-alt)" stroke="var(--border)" />
+        <text x="105" y="38" textAnchor="middle" fontSize="11.5" fill="var(--text)" fontWeight="600">Fixed Tool List</text>
+        <text x="105" y="53" textAnchor="middle" fontSize="9.5" fill="var(--muted)">57 tracked repos</text>
+
+        <rect x="20" y="72" width="170" height="42" rx="8" fill="var(--bg-alt)" stroke="var(--border)" />
+        <text x="105" y="90" textAnchor="middle" fontSize="11.5" fill="var(--text)" fontWeight="600">Topic Discovery</text>
+        <text x="105" y="105" textAnchor="middle" fontSize="9.5" fill="var(--muted)">GitHub Search API</text>
+
+        <rect x="20" y="124" width="170" height="42" rx="8" fill="var(--bg-alt)" stroke="var(--border)" />
+        <text x="105" y="142" textAnchor="middle" fontSize="11.5" fill="var(--text)" fontWeight="600">Org Activity</text>
+        <text x="105" y="157" textAnchor="middle" fontSize="9.5" fill="var(--muted)">Apache, dbt Labs, etc.</text>
+
+        {/* Airflow */}
+        <rect x="250" y="60" width="150" height="55" rx="8" fill="var(--bg-alt)" stroke="var(--accent2)" strokeWidth="1.5" />
+        <text x="325" y="82" textAnchor="middle" fontSize="12" fill="var(--accent2)" fontWeight="700">Apache Airflow</text>
+        <text x="325" y="98" textAnchor="middle" fontSize="9.5" fill="var(--muted)">daily · parallel fan-out/in</text>
+
+        <line x1="190" y1="41" x2="250" y2="75" stroke="var(--muted)" markerEnd="url(#arrow2)" />
+        <line x1="190" y1="93" x2="250" y2="90" stroke="var(--muted)" markerEnd="url(#arrow2)" />
+        <line x1="190" y1="145" x2="250" y2="100" stroke="var(--muted)" markerEnd="url(#arrow2)" />
+
+        {/* Postgres time-series */}
+        <rect x="450" y="30" width="190" height="110" rx="8" fill="var(--bg-alt)" stroke="var(--border)" />
+        <text x="545" y="50" textAnchor="middle" fontSize="12" fill="var(--text)" fontWeight="700">PostgreSQL</text>
+        <rect x="463" y="62" width="164" height="26" rx="5" fill="var(--bg)" stroke="var(--border)" />
+        <text x="545" y="79" textAnchor="middle" fontSize="9.5" fill="var(--muted)">bronze — daily snapshots (append-only)</text>
+        <rect x="463" y="94" width="164" height="26" rx="5" fill="var(--bg)" stroke="var(--accent2)" />
+        <text x="545" y="111" textAnchor="middle" fontSize="9.5" fill="var(--accent2)" fontWeight="600">gold — LAG() growth calc (dbt)</text>
+
+        <line x1="400" y1="87" x2="450" y2="85" stroke="var(--muted)" markerEnd="url(#arrow2)" />
+
+        {/* Django + React */}
+        <rect x="690" y="35" width="160" height="46" rx="8" fill="var(--bg-alt)" stroke="var(--border)" />
+        <text x="770" y="53" textAnchor="middle" fontSize="12" fill="var(--text)" fontWeight="600">Django + DRF</text>
+        <text x="770" y="68" textAnchor="middle" fontSize="9.5" fill="var(--muted)">4 new endpoints</text>
+
+        <rect x="690" y="95" width="160" height="46" rx="8" fill="var(--bg-alt)" stroke="var(--border)" />
+        <text x="770" y="113" textAnchor="middle" fontSize="12" fill="var(--text)" fontWeight="600">React Dashboard</text>
+        <text x="770" y="128" textAnchor="middle" fontSize="9.5" fill="var(--muted)">Recharts visuals</text>
+
+        <line x1="640" y1="70" x2="690" y2="58" stroke="var(--muted)" markerEnd="url(#arrow2)" />
+        <line x1="770" y1="81" x2="770" y2="95" stroke="var(--muted)" markerEnd="url(#arrow2)" />
+
+        <text x="450" y="200" textAnchor="middle" fontSize="10.5" fill="var(--muted)">
+          Two orchestrators, one Postgres instance — Airflow proves multi-tool orchestration fluency alongside Jenkins.
+        </text>
+      </svg>
+
       <h2 style={{ fontSize: '18px', marginTop: '30px', marginBottom: '10px' }}>Why these choices</h2>
       <div style={{ fontSize: '13.5px', color: 'var(--muted)', lineHeight: 1.8 }}>
         <p style={{ marginBottom: '14px' }}>
@@ -114,14 +173,25 @@ function ArchitecturePage() {
           cleaning, and business-ready star-schema modeling — each layer testable independently via dbt tests.
         </p>
         <p style={{ marginBottom: '14px' }}>
-          <strong style={{ color: 'var(--text)' }}>Self-hosted, not managed:</strong> every piece — Postgres, Jenkins, Django,
-          React — runs in Docker on a single VPS I administer directly, giving full control over cost and configuration
+          <strong style={{ color: 'var(--text)' }}>Two orchestrators, deliberately:</strong> the job-market pipeline runs on Jenkins
+          (every 6 hours), while GitHub Trends runs on Apache Airflow (daily, with a genuine parallel fan-out/fan-in DAG across
+          3 extraction branches). Different tools for different needs — Jenkins for simple linear cron jobs, Airflow where
+          real dependency graphs and time-series scheduling matter.
+        </p>
+        <p style={{ marginBottom: '14px' }}>
+          <strong style={{ color: 'var(--text)' }}>Time-series over snapshots:</strong> unlike the job-market pipeline's
+          truncate-and-reload bronze tables, GitHub Trends never deletes old data — every daily run appends a fresh snapshot,
+          and dbt's window functions (LAG) compute real day-over-day star growth once enough history accumulates.
+        </p>
+        <p style={{ marginBottom: '14px' }}>
+          <strong style={{ color: 'var(--text)' }}>Self-hosted, not managed:</strong> every piece — Postgres, Jenkins, Airflow,
+          Django, React — runs in Docker on a single VPS I administer directly, giving full control over cost and configuration
           at the expense of the convenience managed services provide.
         </p>
         <p>
           <strong style={{ color: 'var(--text)' }}>RAG grounded in real data:</strong> the chat assistant routes questions
-          to either live SQL over the gold schema or vector retrieval over embedded case study content — it's built to say
-          "I don't know" rather than hallucinate when source material doesn't cover something.
+          to either live SQL over both pipelines' gold schemas or vector retrieval over embedded case study content — it's
+          built to say "I don't know" rather than hallucinate when source material doesn't cover something.
         </p>
       </div>
 
