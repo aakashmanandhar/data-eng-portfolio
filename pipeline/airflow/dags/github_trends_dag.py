@@ -71,7 +71,7 @@ with DAG(
         bash_command=(
             "docker exec portfolio_dbt dbt run --select "
             "silver_github_repo_snapshot dim_github_repo fact_github_repo_trend "
-            "silver_github_org_snapshot fact_github_org_trend"
+            "silver_github_org_snapshot fact_github_org_trend dim_github_org"
         ),
     )
 
@@ -79,7 +79,7 @@ with DAG(
         task_id="dbt_test",
         bash_command=(
             "docker exec portfolio_dbt dbt test --select "
-            "fact_github_repo_trend dim_github_repo fact_github_org_trend"
+            "fact_github_repo_trend dim_github_repo fact_github_org_trend dim_github_org"
         ),
     )
 
