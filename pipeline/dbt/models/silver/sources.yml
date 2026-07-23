@@ -7,3 +7,5 @@ sources:
       - name: so_survey_by_country
       - name: so_survey_preferred_global
       - name: jooble_job_market
+      - name: github_repo_snapshot
+      - name: github_org_snapshot

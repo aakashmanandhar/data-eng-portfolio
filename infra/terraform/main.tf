@@ -177,3 +177,56 @@ resource "docker_container" "dbt" {
 
   depends_on = [docker_container.postgres]
 }
+
+# --- Airflow ---
+resource "docker_volume" "airflow_logs" {
+  name = "portfolio_airflow_logs"
+}
+
+resource "docker_image" "airflow" {
+  name         = "portfolio-airflow:latest"
+  keep_locally = true
+}
+
+resource "docker_container" "airflow" {
+  name  = "portfolio_airflow"
+  image = docker_image.airflow.image_id
+  networks_advanced {
+    name = docker_network.portfolio_net.name
+  }
+  env = [
+    "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:localdevpassword@portfolio_postgres:5432/airflow_meta",
+    "AIRFLOW__CORE__EXECUTOR=LocalExecutor",
+    "AIRFLOW__CORE__LOAD_EXAMPLES=False",
+    "_AIRFLOW_WWW_USER_USERNAME=admin",
+    "_AIRFLOW_WWW_USER_PASSWORD=localdevadmin"
+  ]
+  ports {
+    internal = 8080
+    external = 8081
+  }
+  volumes {
+    host_path      = "${abspath(path.module)}/../../pipeline/airflow/dags"
+    container_path = "/opt/airflow/dags"
+  }
+  volumes {
+    volume_name    = docker_volume.airflow_logs.name
+    container_path = "/opt/airflow/logs"
+  }
+  volumes {
+    host_path      = "${abspath(path.module)}/../../.env"
+    container_path = "/secrets/.env"
+  }
+
+ volumes {
+    host_path      = "/var/run/docker.sock"
+    container_path = "/var/run/docker.sock"
+  }
+
+  volumes {
+    host_path      = "${abspath(path.module)}/../.."
+    container_path = "/repo"
+  }
+  command    = ["standalone"]
+  depends_on = [docker_container.postgres]
+}

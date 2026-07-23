@@ -1,5 +1,4 @@
 version: 2
-
 models:
   - name: dim_country
     columns:
@@ -10,14 +9,12 @@ models:
         tests:
           - unique
           - not_null
-
   - name: dim_tool
     columns:
       - name: tool_name
         tests:
           - unique
           - not_null
-
   - name: fact_job_market
     columns:
       - name: country_name
@@ -29,5 +26,42 @@ models:
           - accepted_values:
               values: ['entry', 'mid', 'senior', 'all']
       - name: job_count
+        tests:
+          - not_null
+  - name: dim_github_repo
+    columns:
+      - name: repo_full_name
+        tests:
+          - unique
+          - not_null
+      - name: cohort
+        tests:
+          - not_null
+      - name: stars
+        tests:
+          - not_null
+  - name: fact_github_repo_trend
+    columns:
+      - name: repo_full_name
+        tests:
+          - not_null
+      - name: cohort
+        tests:
+          - not_null
+      - name: stars
+        tests:
+          - not_null
+      - name: snapshot_date
+        tests:
+          - not_null
+  - name: fact_github_org_trend
+    columns:
+      - name: org_name
+        tests:
+          - not_null
+      - name: aggregate_stars
+        tests:
+          - not_null
+      - name: snapshot_date
         tests:
           - not_null

@@ -25,3 +25,20 @@ CREATE TABLE IF NOT EXISTS bronze.jooble_job_market (
     raw_data JSONB NOT NULL,
     loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS bronze.github_repo_snapshot (
+    id SERIAL PRIMARY KEY,
+    repo_full_name TEXT NOT NULL,
+    cohort TEXT NOT NULL,
+    raw_data JSONB NOT NULL,
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS bronze.github_org_snapshot (
+    id SERIAL PRIMARY KEY,
+    org_name TEXT NOT NULL,
+    raw_data JSONB NOT NULL,
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
