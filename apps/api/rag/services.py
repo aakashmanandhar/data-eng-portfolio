@@ -38,6 +38,14 @@ Columns: country (text), tool_name (text), usage_count (integer), respondent_cou
 
 Table: dbt_dev_gold.fact_tool_preference_global
 Columns: tool_name (text), preference_count (integer) — this is a GLOBAL ranking, not per-country
+
+Table: dbt_dev_gold.dim_github_repo
+Columns: repo_full_name (text, e.g. 'apache/airflow'), cohort (text: 'ai', 'traditional', 'language', 'nosql', 'rdbms', 'lakehouse', 'analytics-bi', 'cloud-aws', 'cloud-azure', 'cloud-gcp', 'platform-databricks', 'platform-snowflake', or 'topic-<name>' for dynamically discovered repos), language (text), stars (integer), forks (integer), contributor_count (integer, may be NULL), description (text)
+Notes: This is GitHub open-source repository data, refreshed daily. Use this for any question about GitHub stars, forks, contributors, specific repos/tools by name (e.g. LangChain, Airflow, dbt, Spark), or comparing 'ai' vs 'traditional' cohorts (the "AI data engineering" trend). To compare AI vs traditional tools in aggregate, filter WHERE cohort IN ('ai', 'traditional') and SUM(stars) GROUP BY cohort.
+
+Table: dbt_dev_gold.dim_github_org
+Columns: org_name (text: 'apache', 'dbt-labs', 'airbytehq', 'astronomer'), total_public_repos (integer), aggregate_stars (integer), aggregate_forks (integer)
+Notes: Aggregate GitHub activity for entire organizations, not individual repos.
 """
 
 
