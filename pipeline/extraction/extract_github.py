@@ -3,6 +3,8 @@ import json
 import time
 import requests
 from dotenv import load_dotenv
+import re
+
 
 load_dotenv()
 
@@ -85,6 +87,25 @@ TRACKED_REPOS = {
     "grafana/grafana": "analytics-bi",
 }
 
+def get_contributor_count(full_name, max_retries=3):
+    url = f"https://api.github.com/repos/{full_name}/contributors"
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json",
+    }
+    params = {"per_page": 1, "anon": "true"}
+    for attempt in range(max_retries):
+        try:
+            resp = requests.get(url, headers=headers, params=params, timeout=15)
+            if resp.status_code == 200:
+                link = resp.headers.get("Link", "")
+                match = re.search(r'page=(\d+)>; rel="last"', link)
+                return int(match.group(1)) if match else 1
+            return None
+        except requests.exceptions.RequestException as e:
+            print(f"    Contributor count attempt {attempt + 1}/{max_retries} failed: {e}")
+            time.sleep(2)
+    return None
 
 def get_repo_stats(full_name, max_retries=3):
     url = f"https://api.github.com/repos/{full_name}"
@@ -109,6 +130,7 @@ for repo, cohort in TRACKED_REPOS.items():
     time.sleep(0.5)
 
     if status == 200:
+        contributor_count = get_contributor_count(repo)
         results[repo] = {
             "cohort": cohort,
             "stars": data.get("stargazers_count"),
@@ -118,8 +140,9 @@ for repo, cohort in TRACKED_REPOS.items():
             "created_at": data.get("created_at"),
             "pushed_at": data.get("pushed_at"),
             "description": data.get("description"),
+            "contributor_count": contributor_count,
         }
-        print(f"  stars={results[repo]['stars']}, forks={results[repo]['forks']}")
+        print(f"  stars={results[repo]['stars']}, forks={results[repo]['forks']}, contributors={contributor_count}")
     else:
         results[repo] = {"cohort": cohort, "error": str(data), "status": status}
         print(f"  ERROR: {status}")
@@ -128,3 +151,4 @@ with open("github_raw_output.json", "w") as f:
     json.dump(results, f, indent=2)
 
 print("\nDone. Saved to github_raw_output.json")
+

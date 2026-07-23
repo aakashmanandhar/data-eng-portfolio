@@ -1,7 +1,7 @@
 WITH latest AS (
     SELECT
         *,
-        ROW_NUMBER() OVER (PARTITION BY repo_full_name ORDER BY snapshot_date DESC) AS rn
+        ROW_NUMBER() OVER (PARTITION BY repo_full_name ORDER BY snapshot_date DESC, loaded_at DESC) AS rn
     FROM {{ ref('silver_github_repo_snapshot') }}
 )
 
@@ -12,6 +12,7 @@ SELECT
     stars,
     forks,
     open_issues,
+    contributor_count,
     repo_created_at,
     repo_pushed_at,
     description,
