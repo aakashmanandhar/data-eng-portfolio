@@ -31,12 +31,7 @@ Respond with ONLY the single word "analytics" or "project", nothing else."""
 
 SCHEMA_DESCRIPTION = """
 Table: dbt_dev_gold.fact_job_market
-Columns: country_name (text), seniority_level (text: 'entry', 'mid', 'senior', or 'all'), job_count (integer, from Adzuna — 0 if Adzuna has no data for this country), adzuna_salary_usd (numeric, may be NULL), so_survey_salary_usd (numeric, may be NULL), jooble_job_count (integer, from Jooble API, may be NULL)
-
-Notes on this table:
-- Some countries only have data from Jooble, not Adzuna. For these rows, seniority_level = 'all' and job_count = 0, but jooble_job_count has the real count.
-- When answering "how many jobs" questions, use COALESCE(NULLIF(job_count, 0), jooble_job_count, 0) to get the best available count, since a 0 in job_count may just mean Adzuna has no data (check jooble_job_count as a fallback).
-- Adzuna and Jooble are independent sources with different country coverage — job_count and jooble_job_count are NOT meant to be summed together, they're separate counts from different providers for the same country.
+Columns: country_name (text), seniority_level (text: 'entry', 'mid', or 'senior'), job_count (integer), adzuna_salary_usd (numeric, may be NULL), so_survey_salary_usd (numeric, may be NULL)
 
 Table: dbt_dev_silver.silver_tool_usage
 Columns: country (text), tool_name (text), usage_count (integer), respondent_count (integer)

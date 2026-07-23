@@ -137,14 +137,13 @@ resource "docker_container" "django" {
   depends_on = [docker_container.postgres]
 }
 
-resource "docker_image" "react" {
-  name         = "portfolio-react:latest"
-  keep_locally = true
+resource "docker_image" "react_dev" {
+  name = "node:20-slim"
 }
 
 resource "docker_container" "react" {
   name  = "portfolio_react"
-  image = docker_image.react.image_id
+  image = docker_image.react_dev.image_id
 
   networks_advanced {
     name = docker_network.portfolio_net.name
@@ -155,6 +154,13 @@ resource "docker_container" "react" {
     external = 5173
   }
 
+  volumes {
+    host_path      = "${abspath(path.module)}/../../apps/web"
+    container_path = "/app"
+  }
+
+  working_dir = "/app"
+  command     = ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]
 }
 
 resource "docker_image" "dbt" {

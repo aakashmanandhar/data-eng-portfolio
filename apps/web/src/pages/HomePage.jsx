@@ -2,6 +2,7 @@ import '../App.css'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Carousel from '../components/Carousel'
+import GitHubTrendsSlide from '../components/GitHubTrendsSlide'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -61,16 +62,10 @@ function HomePage() {
       .then((rows) => {
         const grouped = {}
         const totals = {}
-        const joobleCounts = {}
         rows.forEach((row) => {
           if (!grouped[row.country_name]) grouped[row.country_name] = {}
           grouped[row.country_name][row.seniority_level] = row.adzuna_salary_usd
           totals[row.country_name] = (totals[row.country_name] || 0) + (row.job_count || 0)
-          if (row.jooble_job_count != null) joobleCounts[row.country_name] = row.jooble_job_count
-        })
-        // Countries with no Adzuna postings (Jooble-only) fall back to Jooble's count
-        Object.keys(joobleCounts).forEach((country) => {
-          if (!totals[country]) totals[country] = joobleCounts[country]
         })
         setJobMarketData(grouped)
         setJobCountsByCountry(totals)
@@ -201,7 +196,7 @@ function HomePage() {
               <img src="/icons/fabric.svg" alt="Fabric" title="Microsoft Fabric" />
               <img src="/icons/dbt.png" alt="dbt" title="dbt" />
               <img src="https://cdn.simpleicons.org/databricks/FF3621" alt="Databricks" title="Databricks" />
-              <img src="https://cdn.simpleicons.org/googlecloud/4285F4" alt="GCP" title="GCP" />
+              <img src="/icons/gcp.svg" alt="GCP" title="GCP" />
               <img src="https://cdn.simpleicons.org/terraform/844FBA" alt="Terraform" title="Terraform" />
               <img src="https://cdn.simpleicons.org/docker/2496ED" alt="Docker" title="Docker" />
               <img src="/icons/airflow.svg" alt="Airflow" title="Apache Airflow" />
@@ -216,10 +211,35 @@ function HomePage() {
         <span className="now-dot"></span>
         <span><span className="label">Now building</span>{nowBuilding}</span>
       </div>
+      
 
+         <div className="analytics-header">
+        <div className="analytics-header-text">
+          <h2>Live Data Engineering Analytics</h2>
+          <p>Real salary, hiring, and tooling data — refreshed automatically by a live ELT pipeline.</p>
+        </div>
+        <div className={`pipeline-status-widget ${pipelineRuns.length > 0 ? `status-${pipelineRuns[0].status}` : 'status-unknown'}`}>
+          <span className="pipeline-status-icon">
+            {pipelineRuns.length === 0 ? '⏳' : pipelineRuns[0].status === 'success' ? '✅' : '❌'}
+          </span>
+          <div className="pipeline-status-text">
+            <span className="pipeline-status-title">
+              {pipelineRuns.length === 0 ? 'No runs yet' : pipelineRuns[0].status === 'success' ? 'Pipeline Healthy' : 'Pipeline Failed'}
+            </span>
+            {pipelineRuns.length > 0 && (
+              <span className="pipeline-status-time">
+                {new Date(pipelineRuns[0].finished_at).toLocaleString()}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
       <Carousel
         slides={[
-          <>
+          
+          <GitHubTrendsSlide key="github-trends" />,
+          <div className="job-market-slide">
+
             <section className="explorer-section" id="explorer">
               <div className="eyebrow">Featured · Live Explorer</div>
               <div className="explorer-box">
@@ -289,40 +309,6 @@ function HomePage() {
               </div>
             </section>
 
-            <section className="explorer-section">
-              <div className="eyebrow">Pipeline Health</div>
-              <div className="explorer-box">
-                {pipelineRuns.length > 0 ? (
-                  <>
-                    <p style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '14px' }}>
-                      Every run of the ELT pipeline (extract → load → dbt) is recorded here automatically —
-                      the same one you can watch trigger every 6 hours. Green means all dbt tests passed;
-                      red means something (usually a data-quality check) caught an issue before it reached
-                      the live dashboard.
-                    </p>
-                    <div className="pipeline-runs">
-                      {pipelineRuns.map((run, i) => (
-                        <div className="pipeline-run" key={i} title={`${run.status} — ${new Date(run.finished_at).toLocaleString()}`}>
-                          <span className={`run-dot run-${run.status}`}></span>
-                        </div>
-                      ))}
-                    </div>
-                    <p style={{ fontSize: '11.5px', color: 'var(--muted)', marginTop: '10px' }}>
-                      {pipelineRuns.length} run{pipelineRuns.length !== 1 ? 's' : ''} recorded, most recent first.
-                    </p>
-                  </>
-                ) : (
-                  <p style={{ color: 'var(--muted)', fontSize: '13px' }}>No runs recorded yet.</p>
-                )}
-                {pipelineRuns.length > 0 && (
-                  <div className="explorer-note">
-                    🔧 Last run: {pipelineRuns[0].status === 'success' ? '✅ Success' : '❌ Failure'} at{' '}
-                    {new Date(pipelineRuns[0].finished_at).toLocaleString()}
-                  </div>
-                )}
-              </div>
-            </section>
-
             <section className="dual-charts-section">
               <div className="dual-col">
                 <div className="eyebrow">Data Engineering Jobs Posting by Country</div>
@@ -367,7 +353,7 @@ function HomePage() {
                 </div>
               </div>
             </section>
-          </>
+          </div>
         ]}
       />
 

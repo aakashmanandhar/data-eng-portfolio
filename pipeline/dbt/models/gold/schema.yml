@@ -24,7 +24,7 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['entry', 'mid', 'senior', 'all']
+              values: ['entry', 'mid', 'senior']
       - name: job_count
         tests:
           - not_null
@@ -63,5 +63,14 @@ models:
         tests:
           - not_null
       - name: snapshot_date
+        tests:
+          - not_null
+  - name: dim_github_org
+    columns:
+      - name: org_name
+        tests:
+          - unique
+          - not_null
+      - name: aggregate_stars
         tests:
           - not_null

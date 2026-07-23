@@ -19,13 +19,6 @@ CREATE TABLE IF NOT EXISTS bronze.so_survey_preferred_global (
     loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS bronze.jooble_job_market (
-    id SERIAL PRIMARY KEY,
-    country TEXT NOT NULL,
-    raw_data JSONB NOT NULL,
-    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
 CREATE TABLE IF NOT EXISTS bronze.github_repo_snapshot (
     id SERIAL PRIMARY KEY,
     repo_full_name TEXT NOT NULL,

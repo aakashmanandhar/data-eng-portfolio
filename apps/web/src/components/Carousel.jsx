@@ -1,8 +1,17 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 function Carousel({ slides }) {
   const [current, setCurrent] = useState(0)
+  const [height, setHeight] = useState('auto')
   const touchStartX = useRef(null)
+  const slideRefs = useRef([])
+
+  useEffect(() => {
+    const activeSlide = slideRefs.current[current]
+    if (activeSlide) {
+      setHeight(activeSlide.offsetHeight)
+    }
+  }, [current, slides])
 
   const goTo = (index) => {
     if (index < 0 || index >= slides.length) return
@@ -25,12 +34,12 @@ function Carousel({ slides }) {
     <div className="carousel">
       <div
         className="carousel-track"
-        style={{ transform: `translateX(-${current * 100}%)` }}
+        style={{ transform: `translateX(-${current * 100}%)`, height }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
         {slides.map((slide, i) => (
-          <div className="carousel-slide" key={i}>
+          <div className="carousel-slide" key={i} ref={(el) => (slideRefs.current[i] = el)}>
             {slide}
           </div>
         ))}
@@ -38,27 +47,11 @@ function Carousel({ slides }) {
 
       {slides.length > 1 && (
         <>
-          <button
-            className="carousel-arrow carousel-arrow-left"
-            onClick={() => goTo(current - 1)}
-            disabled={current === 0}
-          >
-            ‹
-          </button>
-          <button
-            className="carousel-arrow carousel-arrow-right"
-            onClick={() => goTo(current + 1)}
-            disabled={current === slides.length - 1}
-          >
-            ›
-          </button>
+          <button className="carousel-arrow carousel-arrow-left" onClick={() => goTo(current - 1)} disabled={current === 0}>‹</button>
+          <button className="carousel-arrow carousel-arrow-right" onClick={() => goTo(current + 1)} disabled={current === slides.length - 1}>›</button>
           <div className="carousel-dots">
             {slides.map((_, i) => (
-              <button
-                key={i}
-                className={`carousel-dot${i === current ? ' active' : ''}`}
-                onClick={() => goTo(i)}
-              />
+              <button key={i} className={`carousel-dot${i === current ? ' active' : ''}`} onClick={() => goTo(i)} />
             ))}
           </div>
         </>
