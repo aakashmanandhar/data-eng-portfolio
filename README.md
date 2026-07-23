@@ -91,6 +91,9 @@ Real salary, hiring, and tooling data across 20 countries, refreshed automatical
 
 ![Job Market Pipeline Architecture](./docs/architecture.png)
 
+## Analytics Dashboard
+![Job Market Analytics Dashboard](./docs/analytics2.png)
+
 ### Data Sources
 
 - **Adzuna API** — salary histograms + job counts, 19 countries, 3 seniority-level searches per country (junior/mid/senior)
@@ -143,6 +146,9 @@ Tracks real GitHub activity across traditional vs. AI-native data engineering to
 
 ## Architecture
 ![GitHub Trends Pipeline Architecture](./docs/architecture2.png)
+
+## Analytics Dashboard
+![GitHub Trends Analytics Dashboard](./docs/analytics1.png)
 
 ### Cohorts Tracked
 
