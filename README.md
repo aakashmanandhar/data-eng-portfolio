@@ -20,11 +20,7 @@ Real salary, hiring, and tooling data across 20 countries, refreshed automatical
 
 ### Architecture
 
-```
-Adzuna API ──┐
-             ├──▶ Jenkins (every 6h) ──▶ PostgreSQL (bronze) ──▶ dbt (silver → gold) ──▶ Django API ──▶ React Explorer
-SO Survey ───┘
-```
+![Job Market Pipeline Architecture](./docs/architecture-job-market.png)
 
 ### Data Sources
 
@@ -39,15 +35,29 @@ SO Survey ───┘
 
 ### Folder Structure
 
+### Folder Structure
+
 ```
 pipeline/
   extraction/
-    extract_adzuna.py
-    load_bronze.py
+    extract_adzuna.py            # Adzuna: salary histograms + job counts, 19 countries
+    extract_so_survey.py         # Stack Overflow Developer Survey: tool usage + salary
+    load_bronze.py                # loads both sources into their bronze tables
+    data/so_survey_2025.csv       # raw survey export
+    embed_case_studies.py         # embeds case study content into pgvector (RAG, not job-market)
+    test_adzuna.py, test_gemini.py, test_router.py   # ad hoc verification scripts
   dbt/
     models/
-      silver/silver_job_market.sql
-      gold/dim_country.sql, dim_tool.sql, fact_job_market.sql
+      silver/
+        silver_job_market.sql
+        silver_tool_usage.sql
+        silver_preferred_tools_global.sql
+        sources.yml                # registers bronze tables for BOTH pipelines
+      gold/
+        dim_country.sql, dim_tool.sql
+        fact_job_market.sql
+        fact_tool_preference_global.sql
+        schema.yml                 # tests for BOTH pipelines' gold models
     seeds/country_mapping.csv
 
 infra/
@@ -57,6 +67,8 @@ apps/
   api/analytics/               # JobMarketView, ToolUsageView, ToolPreferenceGlobalView
   web/src/pages/HomePage.jsx    # Explorer, Pipeline Health widget, dual-charts
 ```
+
+> **Note:** `dbt/models/silver/sources.yml` and `dbt/models/gold/schema.yml` are shared files registering models for *both* pipelines (job market and GitHub Trends) — they aren't split per pipeline.
 
 ### Setup
 
@@ -81,36 +93,7 @@ Tracks real GitHub activity across traditional vs. AI-native data engineering to
 
 ### Architecture
 
-```
-┌─────────────────┐   ┌──────────────────┐   ┌────────────────┐
-│  Fixed Tool List │   │  Topic Discovery │   │  Org Activity  │
-│   (57 repos)     │   │ (GitHub Search)  │   │ (4 orgs, paged)│
-└────────┬─────────┘   └────────┬─────────┘   └────────┬───────┘
-         │                      │                        │
-         └──────────────────────┼────────────────────────┘
-                                 ▼
-                        ┌─────────────────┐
-                        │  Apache Airflow │  (daily, parallel fan-out/fan-in)
-                        └────────┬────────┘
-                                 ▼
-                 ┌───────────────────────────────┐
-                 │   PostgreSQL — bronze (raw)    │
-                 │   append-only, snapshot_date   │
-                 └───────────────┬───────────────┘
-                                 ▼
-                 ┌───────────────────────────────┐
-                 │  dbt — silver → gold           │
-                 │  LAG()-based growth calc       │
-                 └───────────────┬───────────────┘
-                                 ▼
-                    ┌─────────────────────────┐
-                    │  Django REST API         │
-                    └────────────┬────────────┘
-                                 ▼
-                    ┌─────────────────────────┐
-                    │  React (Recharts)        │
-                    └─────────────────────────┘
-```
+![GitHub Trends Pipeline Architecture](./docs/architecture-github-trends.png)
 
 ### Cohorts Tracked
 
@@ -222,6 +205,9 @@ A chat widget on the live site, powered by Google's Gemini API, that routes each
 - **Vector retrieval (pgvector)** — grounds answers in embedded case study content, explicitly trained to say "I don't know" rather than hallucinate
 
 The assistant's schema description covers both pipelines, so it can answer things like *"What's the average senior salary in Germany?"* and *"How many stars does LangChain have?"* in the same conversation.
+
+![RAG Assistant example 1](./docs/RAG_1.png)
+![RAG Assistant example 2](./docs/RAG_2.png)
 
 ## 5. Full Tech Stack
 
