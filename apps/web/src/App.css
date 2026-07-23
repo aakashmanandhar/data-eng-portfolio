@@ -1055,3 +1055,61 @@ footer a:hover {
 .run-failure {
   background: #EF4444;
 }
+
+.carousel {
+  position: relative;
+  overflow: hidden;
+}
+.carousel-track {
+  display: flex;
+  transition: transform 0.35s ease;
+}
+.carousel-slide {
+  flex: 0 0 100%;
+  min-width: 100%;
+}
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.carousel-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.carousel-arrow-left {
+  left: -10px;
+}
+.carousel-arrow-right {
+  right: -10px;
+}
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.carousel-dot.active {
+  background: var(--accent1);
+}
