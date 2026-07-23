@@ -59,7 +59,8 @@ def get_readonly_connection():
     )
 
 
-def generate_sql(question):
+def generate_sql(question, retry_context=None):
+    retry_note = f"\n\nIMPORTANT: {retry_context}" if retry_context else ""
     prompt = f"""You are a PostgreSQL expert. Given this schema:
 
 {SCHEMA_DESCRIPTION}
@@ -71,6 +72,7 @@ Rules:
 - No semicolons
 - Use ILIKE for text matching on country_name (e.g. country_name ILIKE '%germany%') since exact names may vary
 - Respond with ONLY the raw SQL, no markdown formatting, no explanation
+- Double-check spelling of SQL keywords (SELECT, FROM, WHERE, ILIKE, GROUP BY, ORDER BY) before responding{retry_note}
 
 SQL:"""
 
@@ -92,22 +94,33 @@ def is_safe_select(sql):
     return not any(word in normalized for word in forbidden)
 
 
-def answer_analytics_question(question):
+def answer_analytics_question(question, max_attempts=2):
     sql = generate_sql(question)
+    last_error = None
 
-    if not is_safe_select(sql):
-        return {"answer": "I couldn't safely answer that question.", "sql": sql, "source": "analytics (blocked)"}
+    for attempt in range(max_attempts):
+        if not is_safe_select(sql):
+            return {"answer": "I couldn't safely answer that question.", "sql": sql, "source": "analytics (blocked)"}
 
-    conn = get_readonly_connection()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    try:
-        cur.execute(sql)
-        rows = cur.fetchall()
-    except Exception as e:
-        return {"answer": f"I ran into an error querying the data: {e}", "sql": sql, "source": "analytics (error)"}
-    finally:
-        cur.close()
-        conn.close()
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        try:
+            cur.execute(sql)
+            rows = cur.fetchall()
+            cur.close()
+            conn.close()
+            break
+        except Exception as e:
+            cur.close()
+            conn.close()
+            last_error = str(e)
+            if attempt < max_attempts - 1:
+                sql = generate_sql(
+                    question,
+                    retry_context=f"Your previous SQL failed with this error: {last_error}\nPrevious SQL: {sql}\nFix the SQL and try again."
+                )
+            else:
+                return {"answer": f"I ran into an error querying the data: {last_error}", "sql": sql, "source": "analytics (error)"}
 
     format_prompt = f"""Question: {question}
     SQL query used: {sql}
