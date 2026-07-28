@@ -395,8 +395,7 @@ const buildForecastChartData = (trend, forecastData) => {
                           <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip contentStyle={{ background: 'var(--bg-alt)', border: '1px solid var(--border)', fontSize: '12px' }} formatter={(v) => v.toLocaleString()} />
-                    </PieChart>
+                  <Tooltip position={{ x: 0, y: 0 }} contentStyle={{ background: 'var(--bg-alt)', border: '1px solid var(--border)', fontSize: '12px' }} formatter={(v) => v.toLocaleString()} />                    </PieChart>
                   </ResponsiveContainer>
                   <div className="donut-center-label">
                     <div className="donut-center-value">
@@ -438,8 +437,7 @@ const buildForecastChartData = (trend, forecastData) => {
                           <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip contentStyle={{ background: 'var(--bg-alt)', border: '1px solid var(--border)', fontSize: '12px' }} formatter={(v) => v.toLocaleString()} />
-                    </PieChart>
+                  <Tooltip position={{ x: 0, y: 0 }} contentStyle={{ background: 'var(--bg-alt)', border: '1px solid var(--border)', fontSize: '12px' }} formatter={(v) => v.toLocaleString()} />                    </PieChart>
                   </ResponsiveContainer>
                   <div className="donut-center-label">
                     <div className="donut-center-value">

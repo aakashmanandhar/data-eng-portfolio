@@ -1501,6 +1501,10 @@ footer a:hover {
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  z-index: 1;
+}
+.github-trends-slide .recharts-tooltip-wrapper {
+  z-index: 10 !important;
 }
 .github-trends-slide .donut-center-value {
   font-size: 19px;
