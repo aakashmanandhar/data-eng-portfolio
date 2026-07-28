@@ -610,7 +610,7 @@ footer a:hover {
   .visitor-widget-wrap {
     width: 200px;
   }
-  
+
   .dual-charts-section {
     grid-template-columns: 1fr;
   }
@@ -1849,13 +1849,13 @@ footer a:hover {
 .visitor-widget {
   position: relative;
   z-index: 2;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   background: var(--bg-alt);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 8px 14px;
+  padding: 8px 12px;
   font-size: 12px;
   color: var(--text);
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -1863,6 +1863,7 @@ footer a:hover {
   font-family: inherit;
   width: 100%;
   box-sizing: border-box;
+  justify-content: center;
 }
 .visitor-dot {
   width: 7px;
