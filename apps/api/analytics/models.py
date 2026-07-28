@@ -6,6 +6,7 @@ class PipelineRun(models.Model):
         ('success', 'Success'),
         ('failure', 'Failure'),
     ]
+    pipeline_name = models.CharField(max_length=50, default='job_market')  # 'job_market' or 'github_trends'
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
     stage_reached = models.CharField(max_length=50, blank=True)
     started_at = models.DateTimeField()
@@ -13,6 +14,3 @@ class PipelineRun(models.Model):
 
     class Meta:
         ordering = ['-finished_at']
-
-    def __str__(self):
-        return f"{self.status} @ {self.finished_at}"

@@ -27,9 +27,18 @@ function HomePage() {
   const [subtext, setSubtext] = useState('I build production-grade ETL/ELT pipelines, and I run a live end-to-end pipeline.')
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
   const [pipelineRuns, setPipelineRuns] = useState([])
+  const [activeSlide, setActiveSlide] = useState(0)
+  const [githubPipelineRuns, setGithubPipelineRuns] = useState([])
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/pipeline-runs/`)
+    fetch(`${API_BASE}/api/pipeline-runs/?pipeline=github_trends`)
+      .then((res) => res.json())
+      .then(setGithubPipelineRuns)
+      .catch((err) => console.error('Failed to load pipeline runs:', err))
+  }, [])
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/pipeline-runs/?pipeline=job_market`)
       .then((res) => res.json())
       .then((data) => setPipelineRuns(data))
       .catch((err) => console.error('Failed to load pipeline runs:', err))
@@ -218,23 +227,33 @@ function HomePage() {
           <h2>Live Data Engineering Analytics</h2>
           <p>Real salary, hiring, and tooling data — refreshed automatically by a live ELT pipeline.</p>
         </div>
-        <div className={`pipeline-status-widget ${pipelineRuns.length > 0 ? `status-${pipelineRuns[0].status}` : 'status-unknown'}`}>
+        <div className={`pipeline-status-widget ${
+          activeSlide === 0
+            ? (githubPipelineRuns.length > 0 ? `status-${githubPipelineRuns[0].status}` : 'status-unknown')
+            : (pipelineRuns.length > 0 ? `status-${pipelineRuns[0].status}` : 'status-unknown')
+        }`}>
           <span className="pipeline-status-icon">
-            {pipelineRuns.length === 0 ? '⏳' : pipelineRuns[0].status === 'success' ? '✅' : '❌'}
+            {activeSlide === 0
+              ? (githubPipelineRuns.length === 0 ? '⏳' : githubPipelineRuns[0].status === 'success' ? '✅' : '❌')
+              : (pipelineRuns.length === 0 ? '⏳' : pipelineRuns[0].status === 'success' ? '✅' : '❌')}
           </span>
           <div className="pipeline-status-text">
             <span className="pipeline-status-title">
-              {pipelineRuns.length === 0 ? 'No runs yet' : pipelineRuns[0].status === 'success' ? 'Pipeline Healthy' : 'Pipeline Failed'}
+              {activeSlide === 0 ? 'Airflow Pipeline ' : 'Jenkins Pipeline '}
+              {(activeSlide === 0 ? githubPipelineRuns : pipelineRuns).length === 0
+                ? 'No runs yet'
+                : (activeSlide === 0 ? githubPipelineRuns : pipelineRuns)[0].status === 'success' ? 'Healthy' : 'Failed'}
             </span>
-            {pipelineRuns.length > 0 && (
+            {(activeSlide === 0 ? githubPipelineRuns : pipelineRuns).length > 0 && (
               <span className="pipeline-status-time">
-                {new Date(pipelineRuns[0].finished_at).toLocaleString()}
+                {new Date((activeSlide === 0 ? githubPipelineRuns : pipelineRuns)[0].finished_at).toLocaleString()}
               </span>
             )}
           </div>
         </div>
       </div>
       <Carousel
+        onSlideChange={setActiveSlide}
         slides={[
           
           <GitHubTrendsSlide key="github-trends" />,

@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
     JobMarketView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
     GitHubRepoRankingView, GitHubCohortTrendView, GitHubPlatformComparisonView, GitHubOrgActivityView,
+    AIAdoptionForecastView,
 )
 
 urlpatterns = [
@@ -14,4 +15,5 @@ urlpatterns = [
     path('github-cohort-trend/', GitHubCohortTrendView.as_view(), name='github-cohort-trend'),
     path('github-platforms/', GitHubPlatformComparisonView.as_view(), name='github-platforms'),
     path('github-orgs/', GitHubOrgActivityView.as_view(), name='github-orgs'),
+    path('ai-adoption-forecast/', AIAdoptionForecastView.as_view(), name='ai-adoption-forecast'),
 ]

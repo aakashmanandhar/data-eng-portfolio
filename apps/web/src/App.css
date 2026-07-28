@@ -1524,3 +1524,123 @@ footer a:hover {
   margin-top: auto;
   padding-top: 10px;
 }
+.github-trends-slide .forecast-pending {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.github-trends-slide .forecast-pending-icon {
+  font-size: 24px;
+}
+.github-trends-slide .forecast-pending-title {
+  font-weight: 700;
+  font-size: 13px;
+}
+.github-trends-slide .forecast-pending-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.github-trends-slide .forecast-cards {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.github-trends-slide .forecast-card {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.github-trends-slide .forecast-card-label {
+  font-size: 10.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.github-trends-slide .forecast-card-rate {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 4px 0;
+}
+.github-trends-slide .forecast-card-sub {
+  font-size: 10px;
+  color: var(--muted);
+}
+.github-trends-slide .forecast-crossover {
+  width: 100%;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent1);
+  margin-top: 8px;
+}
+.github-trends-slide .forecast-context {
+  width: 100%;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.github-trends-slide .plain-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #EEF2FF;
+  border: 1px solid #C7D2FE;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.github-trends-slide .plain-summary-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.github-trends-slide .plain-summary-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4338CA;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+.github-trends-slide .plain-summary-text {
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.github-trends-slide .tech-detail {
+  margin-bottom: 12px;
+}
+.github-trends-slide .tech-detail summary {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.github-trends-slide .tech-detail summary:hover {
+  color: var(--accent1);
+}
+.github-trends-slide .forecast-card-plain {
+  font-size: 10px;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 2px;
+}
+.github-trends-slide .forecast-card-sub-hint {
+  font-weight: 400;
+  opacity: 0.7;
+}
+.github-trends-slide .forecast-context-label {
+  font-weight: 700;
+  color: var(--text);
+}

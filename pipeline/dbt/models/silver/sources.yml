@@ -8,3 +8,5 @@ sources:
       - name: so_survey_preferred_global
       - name: github_repo_snapshot
       - name: github_org_snapshot
+      - name: arxiv_snapshot
+      - name: hackernews_snapshot

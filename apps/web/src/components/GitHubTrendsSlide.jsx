@@ -33,6 +33,61 @@ function GitHubTrendsSlide() {
   const [repos, setRepos] = useState([])
   const [platforms, setPlatforms] = useState([])
   const [orgs, setOrgs] = useState([])
+  const [forecast, setForecast] = useState([])
+  const [githubPipelineRuns, setGithubPipelineRuns] = useState([])
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/pipeline-runs/?pipeline=github_trends`)
+      .then((res) => res.json())
+      .then(setGithubPipelineRuns)
+      .catch((err) => console.error('Failed to load pipeline runs:', err))
+  }, [])
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/ai-adoption-forecast/`)
+      .then((res) => res.json())
+      .then(setForecast)
+      .catch((err) => console.error('Failed to load forecast:', err))
+  }, [])
+
+  const getForecastContext = (f) => {
+    if (!f || f.length === 0) return null
+    if (f[0].status === 'insufficient_data') return null
+
+    const ai = f.find((c) => c.cohort === 'ai')
+    const trad = f.find((c) => c.cohort === 'traditional')
+    if (!ai || !trad) return null
+
+    const aiRate = ai.daily_growth_rate
+    const tradRate = trad.daily_growth_rate
+    const faster = aiRate > tradRate ? 'AI-native' : 'traditional'
+    const gap = Math.abs(aiRate - tradRate)
+
+    if (ai.crossover_days_from_now) {
+      const days = Math.round(ai.crossover_days_from_now)
+      return `Based on the last ${ai.days_of_history} days, ${faster} tooling is growing roughly ${gap.toLocaleString()} more stars per day than the other cohort. If this holds, the two trend lines would cross in about ${days} day${days !== 1 ? 's' : ''}.`
+    }
+
+    return `Based on the last ${ai.days_of_history} days, ${faster} tooling is growing faster (+${aiRate.toLocaleString()}/day vs. +${tradRate.toLocaleString()}/day for the other cohort) — but the two aren't on a path to cross within the current forecast window.`
+  }
+
+  const getPlainSummary = (f) => {
+    if (!f || f.length === 0) return null
+    if (f[0].status === 'insufficient_data') return null
+
+    const ai = f.find((c) => c.cohort === 'ai')
+    const trad = f.find((c) => c.cohort === 'traditional')
+    if (!ai || !trad) return null
+
+    const faster = ai.daily_growth_rate > trad.daily_growth_rate ? 'AI-focused' : 'traditional'
+    const slower = faster === 'AI-focused' ? 'traditional' : 'AI-focused'
+
+    if (ai.crossover_days_from_now) {
+      const days = Math.round(ai.crossover_days_from_now)
+      return `${faster} tools (like LangChain) are gaining popularity on GitHub faster than ${slower} tools (like Airflow). If that pace continues, ${faster} tools could pull ahead in total popularity in about ${days} days.`
+    }
+    return `${faster} tools are currently gaining popularity faster than ${slower} tools, though they're not on track to overtake them within the near-term forecast window.`
+  }
 
   useEffect(() => {
     fetch(`${API_BASE}/api/github-repos/`)
@@ -106,16 +161,6 @@ function GitHubTrendsSlide() {
       <section className="explorer-section">
         <div className="eyebrow">GitHub Trends · The Shift to AI Data Engineering</div>
         <div className="explorer-box">
-          {aiTraditional.length > 0 && (
-            <div className={`insight-banner insight-${leader}`}>
-              <span className="insight-icon">{leader === 'ai' ? '🚀' : '🏗️'}</span>
-              <span className="insight-text">
-                <strong>{COHORT_LABELS[leader]}</strong> tools are leading right now — accumulating{' '}
-                <strong>{Math.abs(aiLeadPct)}% {aiStars >= traditionalStars ? 'more' : 'fewer'} stars</strong>{' '}
-                than {leader === 'ai' ? 'traditional tools' : 'AI-native tools'} across {aiTraditional.length} tracked repositories.
-              </span>
-            </div>
-          )}
 
           <div className="cohort-vs-row">
             {cohortChartData.map((d) => (
@@ -298,6 +343,65 @@ function GitHubTrendsSlide() {
           <div className="explorer-note">
             🔧 Aggregate stars and repo counts across each org's full public repository list. {latestSnapshot && `Last snapshot: ${new Date(latestSnapshot).toLocaleDateString()}`}
           </div>
+        </div>
+      </section>
+      <section className="explorer-section">
+        <div className="eyebrow">🔮 AI Adoption Forecast</div>
+        <div className="explorer-box">
+          {forecast.length > 0 && forecast[0].status !== 'insufficient_data' && (
+            <div className="plain-summary">
+              <span className="plain-summary-icon">💡</span>
+              <div>
+                <div className="plain-summary-label">In plain terms</div>
+                <div className="plain-summary-text">{getPlainSummary(forecast)}</div>
+              </div>
+            </div>
+          )}
+
+          <details className="tech-detail">
+            <summary>Technical detail</summary>
+            <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '8px', lineHeight: 1.6 }}>
+              A live forecast model (scikit-learn linear regression) trained daily on combined GitHub star growth,
+              arXiv publication volume, and Hacker News discussion volume — projecting when AI-native tooling
+              might overtake traditional tooling, if current trends hold.
+            </p>
+          </details>
+
+          {forecast.length > 0 && forecast[0].status === 'insufficient_data' ? (
+            <div className="forecast-pending">
+              <span className="forecast-pending-icon">⏳</span>
+              <div>
+                <div className="forecast-pending-title">Building history — {forecast[0].days_of_history} of {forecast[0].days_required} days collected</div>
+                <div className="forecast-pending-sub">
+                  The model needs at least {forecast[0].days_required} days of real data before producing a reliable forecast.
+                  Check back soon — this updates automatically every day.
+                </div>
+              </div>
+            </div>
+          ) : forecast.length > 0 ? (
+            <div className="forecast-cards">
+              {forecast.map((f) => (
+                <div className={`forecast-card cohort-${f.cohort}`} key={f.cohort}>
+                  <div className="forecast-card-label">
+                    {f.cohort === 'ai' ? '🤖 AI Tools' : '🏗️ Traditional Tools'}
+                  </div>
+                  <div className="forecast-card-rate">{f.daily_growth_rate > 0 ? '+' : ''}{f.daily_growth_rate}/day</div>
+                  <div className="forecast-card-plain">gaining ~{Math.abs(Math.round(f.daily_growth_rate))} new stars every day</div>
+                  <div className="forecast-card-sub">R² = {f.r_squared} <span className="forecast-card-sub-hint">(fit confidence)</span></div>
+                </div>
+              ))}
+              {forecast[0]?.crossover_days_from_now && (
+                <div className="forecast-crossover">
+                  📍 At this pace, AI tools could become more popular than traditional tools in ~{Math.round(forecast[0].crossover_days_from_now)} days
+                </div>
+              )}
+              <div className="forecast-context">
+                <span className="forecast-context-label">What this means:</span> {getForecastContext(forecast)}
+              </div>
+            </div>
+          ) : (
+            <p style={{ color: 'var(--muted)', fontSize: '13px' }}>No forecast data yet.</p>
+          )}
         </div>
       </section>
     </div>

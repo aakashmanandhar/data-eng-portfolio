@@ -74,3 +74,13 @@ models:
       - name: aggregate_stars
         tests:
           - not_null
+  - name: fact_ai_adoption_signal
+    columns:
+      - name: cohort
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['ai', 'traditional']
+      - name: snapshot_date
+        tests:
+          - not_null

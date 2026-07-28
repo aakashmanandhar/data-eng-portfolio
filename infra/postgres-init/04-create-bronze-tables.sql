@@ -35,3 +35,19 @@ CREATE TABLE IF NOT EXISTS bronze.github_org_snapshot (
     snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
     loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS bronze.arxiv_snapshot (
+    id SERIAL PRIMARY KEY,
+    cohort TEXT NOT NULL,
+    raw_data JSONB NOT NULL,
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS bronze.hackernews_snapshot (
+    id SERIAL PRIMARY KEY,
+    cohort TEXT NOT NULL,
+    raw_data JSONB NOT NULL,
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

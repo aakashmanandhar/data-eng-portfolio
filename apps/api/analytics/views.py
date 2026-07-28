@@ -74,7 +74,13 @@ class LastRefreshedView(APIView):
 
 class PipelineRunListView(generics.ListAPIView):
     serializer_class = PipelineRunSerializer
-    queryset = PipelineRun.objects.all()[:10]
+
+    def get_queryset(self):
+        queryset = PipelineRun.objects.all()
+        pipeline = self.request.query_params.get('pipeline')
+        if pipeline:
+            queryset = queryset.filter(pipeline_name=pipeline)
+        return queryset[:10]
 
 class GitHubRepoRankingView(APIView):
     def get(self, request):
@@ -132,6 +138,22 @@ class GitHubOrgActivityView(APIView):
             SELECT org_name, total_public_repos, aggregate_stars, aggregate_forks, top_repos
             FROM dbt_dev_gold.dim_github_org
             ORDER BY aggregate_stars DESC
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
+
+class AIAdoptionForecastView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT DISTINCT ON (cohort) cohort, status, days_of_history, days_required,
+                   daily_growth_rate, current_stars, r_squared, message,
+                   crossover_days_from_now, generated_at
+            FROM dbt_dev_gold.ai_adoption_forecast
+            ORDER BY cohort, generated_at DESC, created_at DESC
         """)
         rows = cur.fetchall()
         cur.close()

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 
-function Carousel({ slides }) {
+function Carousel({ slides, onSlideChange }) {
   const [current, setCurrent] = useState(0)
   const [height, setHeight] = useState('auto')
   const touchStartX = useRef(null)
@@ -9,6 +9,7 @@ function Carousel({ slides }) {
   const goTo = (index) => {
     if (index < 0 || index >= slides.length) return
     setCurrent(index)
+    if (onSlideChange) onSlideChange(index)
   }
 
   useEffect(() => {
