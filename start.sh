@@ -1,4 +1,10 @@
 #!/bin/bash
+#!/bin/bash
+
+echo "Clearing any stale processes on dev ports (VS Code's port-forwarding can squat on these)..."
+lsof -ti :5173 | xargs kill -9 2>/dev/null
+lsof -ti :8000 | xargs kill -9 2>/dev/null
+
 echo "Checking if Docker is running..."
 
 if ! docker info > /dev/null 2>&1; then
