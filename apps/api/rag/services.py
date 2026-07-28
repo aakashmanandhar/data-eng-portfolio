@@ -13,10 +13,9 @@ def classify_question(question):
     """
     prompt = f"""Classify this question into exactly one category: "analytics" or "project".
 
-"analytics" = questions about data engineering salaries, job postings, tool popularity, or statistics by country (e.g. "what's the average salary in Germany?", "what are the top tools in the US?")
+"analytics" = questions about data engineering salaries, job postings, tool popularity, statistics by country, GitHub repo/star/contributor data, cohort comparisons (AI vs traditional tooling), or the AI adoption forecast model (growth rates, predictions, confidence scores, days of history, crossover timing) — e.g. "what's the average salary in Germany?", "what are the top tools in the US?", "how many stars does LangChain have?", "how confident is the forecast model?", "how many days of history is the forecast based on?"
 
-"project" = questions about specific projects, their architecture, tech stack, or how something was built (e.g. "what stack did you use?", "how does the pipeline work?")
-
+"project" = questions about how this portfolio site itself was built — its architecture, tech stack, or engineering decisions (e.g. "what stack did you use?", "how does the RAG assistant work?", "why did you choose Airflow over Jenkins?")
 Question: {question}
 
 Respond with ONLY the single word "analytics" or "project", nothing else."""
@@ -49,7 +48,7 @@ Notes: Aggregate GitHub activity for entire organizations, not individual repos.
 
 Table: dbt_dev_gold.ai_adoption_forecast
 Columns: cohort (text: 'ai' or 'traditional'), status (text: 'ok' or 'insufficient_data'), days_of_history (integer), daily_growth_rate (numeric — average GitHub stars gained per day, based on a linear regression trained on combined GitHub star growth, arXiv publication volume, and Hacker News discussion volume), current_stars (integer), r_squared (numeric — model fit confidence, 0 to 1), crossover_days_from_now (numeric, may be NULL — estimated days until the two cohorts' growth trajectories would cross, if on a converging path), generated_at (date)
-Notes: This is a live, daily-retrained forecast model — use this table for any question about future trends, growth rate predictions, or "when will X overtake Y" type questions. Always report status='insufficient_data' honestly if that's what's returned (don't fabricate a forecast). For "which is growing faster" questions, compare daily_growth_rate between the two cohorts.
+Notes: This is a live, daily-retrained forecast model — use this table for any question about future trends, growth rate predictions, or "when will X overtake Y" type questions. Always report status='insufficient_data' honestly if that's what's returned (don't fabricate a forecast). For "which is growing faster" questions, compare daily_growth_rate between the two cohorts. IMPORTANT: this table can have multiple rows sharing the same generated_at date (re-runs on the same day) — always order by BOTH generated_at DESC AND created_at DESC (not generated_at alone) before taking the top row per cohort, since generated_at ties are otherwise resolved arbitrarily.
 """
 
 
@@ -93,11 +92,17 @@ SQL:"""
 
 def is_safe_select(sql):
     """Guard against anything except a read-only SELECT."""
+    import re
     normalized = sql.strip().lower()
     if not normalized.startswith('select'):
         return False
-    forbidden = ['insert', 'update', 'delete', 'drop', 'alter', 'truncate', 'create', 'grant', ';']
-    return not any(word in normalized for word in forbidden)
+    forbidden = ['insert', 'update', 'delete', 'drop', 'alter', 'truncate', 'create', 'grant']
+    if ';' in normalized:
+        return False
+    for word in forbidden:
+        if re.search(rf'\b{word}\b', normalized):
+            return False
+    return True
 
 
 def answer_analytics_question(question, max_attempts=2):
