@@ -1,4 +1,11 @@
-WITH ranked AS (
+WITH deduped AS (
+    SELECT
+        *,
+        ROW_NUMBER() OVER (PARTITION BY repo_full_name, snapshot_date ORDER BY loaded_at DESC) AS rn
+    FROM {{ ref('silver_github_repo_snapshot') }}
+),
+
+ranked AS (
     SELECT
         repo_full_name,
         cohort,
@@ -7,8 +14,9 @@ WITH ranked AS (
         forks,
         open_issues,
         snapshot_date,
-        LAG(stars) OVER (PARTITION BY repo_full_name ORDER BY snapshot_date, loaded_at) AS prev_stars
-    FROM {{ ref('silver_github_repo_snapshot') }}
+        LAG(stars) OVER (PARTITION BY repo_full_name ORDER BY snapshot_date) AS prev_stars
+    FROM deduped
+    WHERE rn = 1
 )
 
 SELECT

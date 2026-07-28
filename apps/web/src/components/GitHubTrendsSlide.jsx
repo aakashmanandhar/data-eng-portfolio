@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList, PieChart, Pie } from 'recharts'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList, PieChart, Pie } from 'recharts'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -29,12 +29,33 @@ const PLATFORM_ICONS = {
   Snowflake: 'https://cdn.simpleicons.org/snowflake/29B5E8',
 }
 
+function EmptyChartState({ icon, title, subtitle }) {
+  return (
+    <div className="empty-chart">
+      <svg className="empty-chart-svg" viewBox="0 0 400 160" preserveAspectRatio="none">
+        <line x1="30" y1="10" x2="30" y2="140" stroke="var(--border)" strokeWidth="1" />
+        <line x1="30" y1="140" x2="390" y2="140" stroke="var(--border)" strokeWidth="1" />
+        {[35, 70, 105].map((y) => (
+          <line key={y} x1="30" y1={y} x2="390" y2={y} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="4 4" />
+        ))}
+        <path d="M 30 130 Q 120 100, 210 90 T 390 60" fill="none" stroke="var(--border)" strokeWidth="2" strokeDasharray="6 5" opacity="0.5" />
+      </svg>
+      <div className="empty-chart-overlay">
+        <span className="empty-chart-icon">{icon}</span>
+        <div className="empty-chart-title">{title}</div>
+        {subtitle && <div className="empty-chart-subtitle">{subtitle}</div>}
+      </div>
+    </div>
+  )
+}
+
 function GitHubTrendsSlide() {
   const [repos, setRepos] = useState([])
   const [platforms, setPlatforms] = useState([])
   const [orgs, setOrgs] = useState([])
   const [forecast, setForecast] = useState([])
   const [githubPipelineRuns, setGithubPipelineRuns] = useState([])
+  const [cohortTrend, setCohortTrend] = useState([])
 
   useEffect(() => {
     fetch(`${API_BASE}/api/pipeline-runs/?pipeline=github_trends`)
@@ -48,6 +69,13 @@ function GitHubTrendsSlide() {
       .then((res) => res.json())
       .then(setForecast)
       .catch((err) => console.error('Failed to load forecast:', err))
+  }, [])
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/github-cohort-trend/`)
+      .then((res) => res.json())
+      .then(setCohortTrend)
+      .catch((err) => console.error('Failed to load cohort trend:', err))
   }, [])
 
   const getForecastContext = (f) => {
@@ -87,6 +115,54 @@ function GitHubTrendsSlide() {
       return `${faster} tools (like LangChain) are gaining popularity on GitHub faster than ${slower} tools (like Airflow). If that pace continues, ${faster} tools could pull ahead in total popularity in about ${days} days.`
     }
     return `${faster} tools are currently gaining popularity faster than ${slower} tools, though they're not on track to overtake them within the near-term forecast window.`
+  }
+
+const buildForecastChartData = (trend, forecastData) => {
+    const ai = forecastData.find((c) => c.cohort === 'ai')
+    const trad = forecastData.find((c) => c.cohort === 'traditional')
+    if (!ai || !trad) return []
+
+    const byDate = {}
+    trend.forEach((row) => {
+      if (!byDate[row.snapshot_date]) byDate[row.snapshot_date] = { date: row.snapshot_date }
+      byDate[row.snapshot_date][row.cohort === 'ai' ? 'aiActual' : 'tradActual'] = Number(row.total_stars)
+    })
+    const historical = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date))
+    if (historical.length === 0) return []
+
+    const aiBase = historical[0].aiActual
+    const tradBase = historical[0].tradActual
+    const toPct = (val, base) => (base ? ((val - base) / base) * 100 : 0)
+
+    const historicalPct = historical.map((row) => ({
+      date: row.date,
+      aiActualPct: row.aiActual != null ? toPct(row.aiActual, aiBase) : undefined,
+      tradActualPct: row.tradActual != null ? toPct(row.tradActual, tradBase) : undefined,
+    }))
+
+    const lastPoint = historical[historical.length - 1]
+    const bridge = {
+      date: lastPoint.date,
+      aiActualPct: toPct(lastPoint.aiActual, aiBase),
+      tradActualPct: toPct(lastPoint.tradActual, tradBase),
+      aiProjectedPct: toPct(ai.current_stars, aiBase),
+      tradProjectedPct: toPct(trad.current_stars, tradBase),
+    }
+
+    const projected = []
+    for (let i = 1; i <= 14; i++) {
+      const d = new Date(lastPoint.date)
+      d.setDate(d.getDate() + i)
+      const aiVal = ai.current_stars + ai.daily_growth_rate * i
+      const tradVal = trad.current_stars + trad.daily_growth_rate * i
+      projected.push({
+        date: d.toISOString().slice(0, 10),
+        aiProjectedPct: toPct(aiVal, aiBase),
+        tradProjectedPct: toPct(tradVal, tradBase),
+      })
+    }
+
+    return [...historicalPct.slice(0, -1), bridge, ...projected]
   }
 
   useEffect(() => {
@@ -159,6 +235,77 @@ function GitHubTrendsSlide() {
   return (
     <div className="github-trends-slide">
       <section className="explorer-section">
+        <div className="eyebrow">🔮 AI Adoption Forecast</div>
+        <div className="explorer-box">
+          {forecast.length > 0 && forecast[0].status !== 'insufficient_data' && (
+            <div className="plain-summary">
+              <span className="plain-summary-icon">💡</span>
+              <div>
+                <div className="plain-summary-label">In plain terms</div>
+                <div className="plain-summary-text">{getPlainSummary(forecast)}</div>
+              </div>
+            </div>
+          )}
+
+          <details className="tech-detail">
+            <summary>Technical detail</summary>
+            <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '8px', lineHeight: 1.6 }}>
+              A live forecast model (scikit-learn linear regression) trained daily on combined GitHub star growth,
+              arXiv publication volume, and Hacker News discussion volume — projecting when AI-native tooling
+              might overtake traditional tooling, if current trends hold.
+            </p>
+          </details>
+
+          {forecast.length > 0 && forecast[0].status === 'insufficient_data' ? (
+            <EmptyChartState
+              icon="⏳"
+              title={`Building history — ${forecast[0].days_of_history} of ${forecast[0].days_required} days`}
+              subtitle="The forecast chart activates automatically once enough real data accumulates."
+            />
+          ) : forecast.length > 0 ? (
+            <div className="forecast-cards">
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={buildForecastChartData(cohortTrend, forecast)} margin={{ left: 10, right: 10, top: 10 }}>
+                  <XAxis dataKey="date" tickFormatter={(d) => new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} fontSize={10} stroke="var(--muted)" />
+                  <YAxis fontSize={10} stroke="var(--muted)" tickFormatter={(v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`} width={55} />
+                  <Tooltip contentStyle={{ background: 'var(--bg-alt)', border: '1px solid var(--border)', fontSize: '12px' }} formatter={(v) => `${v > 0 ? '+' : ''}${v.toFixed(2)}%`} />
+                  <Line type="monotone" dataKey="aiActualPct" stroke={COHORT_COLORS.ai} strokeWidth={2.2} dot={false} name="AI Tools" connectNulls />
+                  <Line type="monotone" dataKey="aiProjectedPct" stroke={COHORT_COLORS.ai} strokeWidth={2} strokeDasharray="5 4" dot={false} name="AI (projected)" connectNulls />
+                  <Line type="monotone" dataKey="tradActualPct" stroke={COHORT_COLORS.traditional} strokeWidth={2.2} dot={false} name="Traditional" connectNulls />
+                  <Line type="monotone" dataKey="tradProjectedPct" stroke={COHORT_COLORS.traditional} strokeWidth={2} strokeDasharray="5 4" dot={false} name="Traditional (projected)" connectNulls />
+                </LineChart>
+              </ResponsiveContainer>
+               <div className="chart-caption">
+                Shows % growth from each cohort's own starting point — easier to compare pace than raw star counts. Solid = actual, dashed = projected if the pace holds.
+              </div>
+              <div className="forecast-cards-row">
+                {forecast.map((f) => (
+                  <div className={`forecast-card cohort-${f.cohort}`} key={f.cohort}>
+                    <div className="forecast-card-label">
+                      {f.cohort === 'ai' ? '🤖 AI Tools' : '🏗️ Traditional Tools'}
+                    </div>
+                    <div className="forecast-card-rate">{f.daily_growth_rate > 0 ? '+' : ''}{f.daily_growth_rate}/day</div>
+                    <div className="forecast-card-plain">gaining ~{Math.abs(Math.round(f.daily_growth_rate))} new stars every day</div>
+                    <div className="forecast-card-sub">R² = {f.r_squared} <span className="forecast-card-sub-hint">(fit confidence)</span></div>
+                  </div>
+                ))}
+              </div>
+              {forecast[0]?.crossover_days_from_now && (
+                <div className="forecast-crossover">
+                  📍 At this pace, AI tools could become more popular than traditional tools in ~{Math.round(forecast[0].crossover_days_from_now)} days
+                </div>
+              )}
+              <div className="forecast-context">
+                <span className="forecast-context-label">What this means:</span> {getForecastContext(forecast)}
+              </div>
+            </div>
+          ) : (
+            <EmptyChartState icon="📊" title="No forecast data available yet" />
+          )}
+        </div>
+      </section>
+
+      <section className="explorer-section">
         <div className="eyebrow">GitHub Trends · The Shift to AI Data Engineering</div>
         <div className="explorer-box">
 
@@ -185,7 +332,6 @@ function GitHubTrendsSlide() {
                   <LabelList dataKey="stars" position="right" formatter={(v) => v.toLocaleString()} style={{ fontSize: 12, fill: 'var(--text)', fontWeight: 600 }} />
                 </Bar>
               </BarChart>
-              
             </ResponsiveContainer>
           )}
           {latestSnapshot && (
@@ -343,65 +489,6 @@ function GitHubTrendsSlide() {
           <div className="explorer-note">
             🔧 Aggregate stars and repo counts across each org's full public repository list. {latestSnapshot && `Last snapshot: ${new Date(latestSnapshot).toLocaleDateString()}`}
           </div>
-        </div>
-      </section>
-      <section className="explorer-section">
-        <div className="eyebrow">🔮 AI Adoption Forecast</div>
-        <div className="explorer-box">
-          {forecast.length > 0 && forecast[0].status !== 'insufficient_data' && (
-            <div className="plain-summary">
-              <span className="plain-summary-icon">💡</span>
-              <div>
-                <div className="plain-summary-label">In plain terms</div>
-                <div className="plain-summary-text">{getPlainSummary(forecast)}</div>
-              </div>
-            </div>
-          )}
-
-          <details className="tech-detail">
-            <summary>Technical detail</summary>
-            <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '8px', lineHeight: 1.6 }}>
-              A live forecast model (scikit-learn linear regression) trained daily on combined GitHub star growth,
-              arXiv publication volume, and Hacker News discussion volume — projecting when AI-native tooling
-              might overtake traditional tooling, if current trends hold.
-            </p>
-          </details>
-
-          {forecast.length > 0 && forecast[0].status === 'insufficient_data' ? (
-            <div className="forecast-pending">
-              <span className="forecast-pending-icon">⏳</span>
-              <div>
-                <div className="forecast-pending-title">Building history — {forecast[0].days_of_history} of {forecast[0].days_required} days collected</div>
-                <div className="forecast-pending-sub">
-                  The model needs at least {forecast[0].days_required} days of real data before producing a reliable forecast.
-                  Check back soon — this updates automatically every day.
-                </div>
-              </div>
-            </div>
-          ) : forecast.length > 0 ? (
-            <div className="forecast-cards">
-              {forecast.map((f) => (
-                <div className={`forecast-card cohort-${f.cohort}`} key={f.cohort}>
-                  <div className="forecast-card-label">
-                    {f.cohort === 'ai' ? '🤖 AI Tools' : '🏗️ Traditional Tools'}
-                  </div>
-                  <div className="forecast-card-rate">{f.daily_growth_rate > 0 ? '+' : ''}{f.daily_growth_rate}/day</div>
-                  <div className="forecast-card-plain">gaining ~{Math.abs(Math.round(f.daily_growth_rate))} new stars every day</div>
-                  <div className="forecast-card-sub">R² = {f.r_squared} <span className="forecast-card-sub-hint">(fit confidence)</span></div>
-                </div>
-              ))}
-              {forecast[0]?.crossover_days_from_now && (
-                <div className="forecast-crossover">
-                  📍 At this pace, AI tools could become more popular than traditional tools in ~{Math.round(forecast[0].crossover_days_from_now)} days
-                </div>
-              )}
-              <div className="forecast-context">
-                <span className="forecast-context-label">What this means:</span> {getForecastContext(forecast)}
-              </div>
-            </div>
-          ) : (
-            <p style={{ color: 'var(--muted)', fontSize: '13px' }}>No forecast data yet.</p>
-          )}
         </div>
       </section>
     </div>
