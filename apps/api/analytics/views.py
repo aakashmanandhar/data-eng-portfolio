@@ -5,6 +5,9 @@ from rest_framework.response import Response
 from rest_framework import generics
 from .models import PipelineRun
 from .serializers import PipelineRunSerializer
+from django.utils import timezone
+from datetime import timedelta
+from .models import VisitorSession
 
 
 def get_readonly_connection():
@@ -159,3 +162,34 @@ class AIAdoptionForecastView(APIView):
         cur.close()
         conn.close()
         return Response(rows)
+
+class VisitorHeartbeatView(APIView):
+    def post(self, request):
+        session_id = request.data.get('session_id')
+        if not session_id:
+            return Response({"error": "session_id required"}, status=400)
+        VisitorSession.objects.update_or_create(
+            session_id=session_id,
+            defaults={}
+        )
+        return Response({"ok": True})
+
+
+class VisitorCountView(APIView):
+    def get(self, request):
+        cutoff = timezone.now() - timedelta(seconds=30)
+        count = VisitorSession.objects.filter(last_seen__gte=cutoff).count()
+        return Response({"active_visitors": count})
+
+class VisitorStatsView(APIView):
+    def get(self, request):
+        now = timezone.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_ago = now - timedelta(days=7)
+        month_ago = now - timedelta(days=30)
+
+        return Response({
+            "today": VisitorSession.objects.filter(created_at__gte=today_start).count(),
+            "this_week": VisitorSession.objects.filter(created_at__gte=week_ago).count(),
+            "this_month": VisitorSession.objects.filter(created_at__gte=month_ago).count(),
+        })

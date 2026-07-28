@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage'
 import CaseStudyDetailPage from './pages/CaseStudyDetailPage'
 import ArchitecturePage from './pages/ArchitecturePage'
 import ChatWidget from './components/ChatWidget'
+import VisitorWidget from './components/VisitorWidget'
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/architecture" element={<ArchitecturePage />} />
       </Routes>
       <ChatWidget />
+      <VisitorWidget />
     </BrowserRouter>
   )
 }

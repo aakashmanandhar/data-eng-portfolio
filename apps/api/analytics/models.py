@@ -1,4 +1,10 @@
 from django.db import models
+from django.utils import timezone
+
+class VisitorSession(models.Model):
+    session_id = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    last_seen = models.DateTimeField(default=timezone.now)
 
 
 class PipelineRun(models.Model):
@@ -14,3 +20,8 @@ class PipelineRun(models.Model):
 
     class Meta:
         ordering = ['-finished_at']
+
+class VisitorSession(models.Model):
+    session_id = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    last_seen = models.DateTimeField(default=timezone.now)
