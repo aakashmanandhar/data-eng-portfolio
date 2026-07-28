@@ -46,7 +46,13 @@ Notes: This is GitHub open-source repository data, refreshed daily. IMPORTANT: a
 Table: dbt_dev_gold.dim_github_org
 Columns: org_name (text: 'apache', 'dbt-labs', 'airbytehq', 'astronomer'), total_public_repos (integer), aggregate_stars (integer), aggregate_forks (integer)
 Notes: Aggregate GitHub activity for entire organizations, not individual repos.
+
+Table: dbt_dev_gold.ai_adoption_forecast
+Columns: cohort (text: 'ai' or 'traditional'), status (text: 'ok' or 'insufficient_data'), days_of_history (integer), daily_growth_rate (numeric — average GitHub stars gained per day, based on a linear regression trained on combined GitHub star growth, arXiv publication volume, and Hacker News discussion volume), current_stars (integer), r_squared (numeric — model fit confidence, 0 to 1), crossover_days_from_now (numeric, may be NULL — estimated days until the two cohorts' growth trajectories would cross, if on a converging path), generated_at (date)
+Notes: This is a live, daily-retrained forecast model — use this table for any question about future trends, growth rate predictions, or "when will X overtake Y" type questions. Always report status='insufficient_data' honestly if that's what's returned (don't fabricate a forecast). For "which is growing faster" questions, compare daily_growth_rate between the two cohorts.
 """
+
+
 
 
 def get_readonly_connection():
