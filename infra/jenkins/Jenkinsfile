@@ -36,24 +36,24 @@ pipeline {
             script {
                 def startedAt = new Date(currentBuild.startTimeInMillis).format("yyyy-MM-dd'T'HH:mm:ss")
                 sh """
-                    docker exec portfolio_django python manage.py shell -c "
-                    from analytics.models import PipelineRun
-                    from django.utils.dateparse import parse_datetime
-                    PipelineRun.objects.create(pipeline_name='job_market', status='success', stage_reached='dbt test', started_at=parse_datetime('${startedAt}'))
-                    "
-                """
+docker exec portfolio_django python manage.py shell -c "
+from analytics.models import PipelineRun
+from django.utils.dateparse import parse_datetime
+PipelineRun.objects.create(pipeline_name='job_market', status='success', stage_reached='dbt test', started_at=parse_datetime('${startedAt}'))
+"
+"""
             }
         }
         failure {
             script {
                 def startedAt = new Date(currentBuild.startTimeInMillis).format("yyyy-MM-dd'T'HH:mm:ss")
                 sh """
-                    docker exec portfolio_django python manage.py shell -c "
-                    from analytics.models import PipelineRun
-                    from django.utils.dateparse import parse_datetime
-                    PipelineRun.objects.create(pipeline_name='job_market', status='failure', stage_reached='pipeline', started_at=parse_datetime('${startedAt}'))
-                    "
-                """
+docker exec portfolio_django python manage.py shell -c "
+from analytics.models import PipelineRun
+from django.utils.dateparse import parse_datetime
+PipelineRun.objects.create(pipeline_name='job_market', status='failure', stage_reached='pipeline', started_at=parse_datetime('${startedAt}'))
+"
+"""
             }
         }
     }
