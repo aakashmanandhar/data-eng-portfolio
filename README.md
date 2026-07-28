@@ -29,6 +29,12 @@ pipeline/
 │   ├── load_bronze_github_discovery.py  [P2]
 │   ├── load_bronze_github_orgs.py       [P2]
 │   │
+│   ├── extract_arxiv.py                 [Forecast] cs.DB/cs.SE vs cs.AI/cs.LG paper counts
+│   ├── extract_hackernews.py            [Forecast] Algolia search API, per-keyword summed
+│   ├── load_bronze_arxiv.py             [Forecast]
+│   ├── load_bronze_hackernews.py        [Forecast]
+│   ├── forecast_ai_adoption.py          [Forecast] scikit-learn linear regression, honest data-sufficiency gate
+│   │
 │   ├── embed_case_studies.py            [RAG] embeds case study content into pgvector
 │   └── test_adzuna.py, test_gemini.py, test_router.py   - ad hoc verification scripts
 │
@@ -45,20 +51,24 @@ pipeline/
 │       │   ├── silver_preferred_tools_global.sql   [P1]
 │       │   ├── silver_github_repo_snapshot.sql      [P2]
 │       │   ├── silver_github_org_snapshot.sql       [P2]
-│       │   └── sources.yml                          - registers bronze tables, BOTH pipelines
+│       │   ├── silver_arxiv_snapshot.sql            [Forecast]
+│       │   ├── silver_hackernews_snapshot.sql       [Forecast]
+│       │   └── sources.yml                          - registers bronze tables, ALL sources
 │       └── gold/
 │           ├── dim_country.sql, dim_tool.sql        [P1]
 │           ├── fact_job_market.sql                  [P1]
 │           ├── fact_tool_preference_global.sql      [P1]
-│           ├── dim_github_repo.sql                  [P2] latest snapshot per repo
-│           ├── dim_github_org.sql                   [P2] latest snapshot per org
-│           ├── fact_github_repo_trend.sql           [P2] LAG()-based star growth
+│           ├── dim_github_repo.sql                  [P2] latest snapshot per repo (deduped)
+│           ├── dim_github_org.sql                   [P2] latest snapshot per org (deduped)
+│           ├── fact_github_repo_trend.sql           [P2] LAG()-based star growth (deduped)
 │           ├── fact_github_org_trend.sql            [P2]
-│           └── schema.yml                            - tests for BOTH pipelines
+│           ├── fact_ai_adoption_signal.sql          [Forecast] GitHub+arXiv+HN joined by cohort/day
+│           └── schema.yml                            - tests for every model above
 │
 └── airflow/
     └── dags/
-        └── github_trends_dag.py         [P2] 3-branch parallel fan-out/fan-in DAG
+        └── github_trends_dag.py         [P2+Forecast] 5-branch parallel fan-out/fan-in DAG,
+                                          dbt run/test, then forecast_ai_adoption.py
 
 infra/
 ├── jenkins/
@@ -69,16 +79,16 @@ infra/
 │   ├── Dockerfile                       [P2] apache/airflow base + extra deps
 │   └── requirements.txt                 [P2]
 │
-├── postgres-init/                       - shared, both pipelines
+├── postgres-init/                       - shared, all pipelines
 │   ├── 01-enable-pgvector.sql
 │   ├── 02-create-readonly-role.sql
 │   ├── 03-create-pipeline-schemas.sql
-│   ├── 04-create-bronze-tables.sql       - includes tables for BOTH pipelines
+│   ├── 04-create-bronze-tables.sql       - includes tables for ALL sources
 │   ├── 05-grant-readonly-dbt-schemas.sql
 │   └── 06-create-airflow-db.sql         [P2] airflow_meta database
 │
 └── terraform/
-    └── main.tf                          - every container as code, BOTH pipelines
+    └── main.tf                          - every container as code, all pipelines
 ```
 
 ---
