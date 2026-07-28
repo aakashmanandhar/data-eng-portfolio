@@ -217,8 +217,11 @@ function HomePage() {
       </div>
 
       <div className="now-card">
-        <span className="now-dot"></span>
-        <span><span className="label">Now building</span>{nowBuilding}</span>
+        <div className="now-dot"></div>
+        <div className="now-content">
+          <span className="label">Now building</span>
+          <span>{nowBuilding}</span>
+        </div>
       </div>
       
 

@@ -782,7 +782,7 @@ footer a:hover {
   border-radius: 14px;
   padding: 16px 40px;
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: center;
   gap: 14px;
   max-width: 920px;
@@ -796,16 +796,26 @@ footer a:hover {
   flex-shrink: 0;
   animation: pulse 2s infinite;
 }
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .3; }
+.now-content {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 8px;
+  align-items: baseline;
 }
-.now-card span.label {
+.now-content .label {
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--muted);
-  margin-right: 8px;
+  white-space: nowrap;
+}
+.now-content span:last-child {
+  text-align: left;
+  font-size: 15px;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
 }
 
 .msg-markdown p {
@@ -1599,8 +1609,8 @@ footer a:hover {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  background: #EEF2FF;
-  border: 1px solid #C7D2FE;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.35);
   border-radius: 8px;
   padding: 12px 14px;
   margin-bottom: 10px;
@@ -1612,7 +1622,7 @@ footer a:hover {
 .github-trends-slide .plain-summary-label {
   font-size: 11px;
   font-weight: 700;
-  color: #4338CA;
+  color: var(--accent1);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   margin-bottom: 3px;
