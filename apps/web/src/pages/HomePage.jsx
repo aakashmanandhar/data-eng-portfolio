@@ -232,25 +232,25 @@ function HomePage() {
           <p>Real salary, hiring, and tooling data — refreshed automatically by a live ELT pipeline.</p>
         </div>
         <div className={`pipeline-status-widget ${
-          activeSlide === 0
+          activeSlide <= 1
             ? (githubPipelineRuns.length > 0 ? `status-${githubPipelineRuns[0].status}` : 'status-unknown')
             : (pipelineRuns.length > 0 ? `status-${pipelineRuns[0].status}` : 'status-unknown')
         }`}>
           <span className="pipeline-status-icon">
-            {activeSlide === 0
+            {activeSlide <= 1
               ? (githubPipelineRuns.length === 0 ? '⏳' : githubPipelineRuns[0].status === 'success' ? '✅' : '❌')
               : (pipelineRuns.length === 0 ? '⏳' : pipelineRuns[0].status === 'success' ? '✅' : '❌')}
           </span>
           <div className="pipeline-status-text">
             <span className="pipeline-status-title">
-              {activeSlide === 0 ? 'Airflow Pipeline ' : 'Jenkins Pipeline '}
-              {(activeSlide === 0 ? githubPipelineRuns : pipelineRuns).length === 0
+              {activeSlide <= 1 ? 'Airflow Pipeline ' : 'Jenkins Pipeline '}
+              {(activeSlide <= 1 ? githubPipelineRuns : pipelineRuns).length === 0
                 ? 'No runs yet'
-                : (activeSlide === 0 ? githubPipelineRuns : pipelineRuns)[0].status === 'success' ? 'Healthy' : 'Failed'}
+                : (activeSlide <= 1 ? githubPipelineRuns : pipelineRuns)[0].status === 'success' ? 'Healthy' : 'Failed'}
             </span>
-            {(activeSlide === 0 ? githubPipelineRuns : pipelineRuns).length > 0 && (
+            {(activeSlide <= 1 ? githubPipelineRuns : pipelineRuns).length > 0 && (
               <span className="pipeline-status-time">
-                {new Date((activeSlide === 0 ? githubPipelineRuns : pipelineRuns)[0].finished_at).toLocaleString()}
+                {new Date((activeSlide <= 1 ? githubPipelineRuns : pipelineRuns)[0].finished_at).toLocaleString()}
               </span>
             )}
           </div>

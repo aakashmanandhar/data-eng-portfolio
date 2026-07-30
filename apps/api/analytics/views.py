@@ -207,3 +207,52 @@ class CountryAISignalView(APIView):
         cur.close()
         conn.close()
         return Response(rows)
+
+class CountryArchetypeView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT country_code, archetype, ai_share_pct, total_stargazers
+            FROM dbt_dev_gold.dim_country_archetype
+            ORDER BY total_stargazers DESC
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
+
+class CountryToolSignalView(APIView):
+    def get(self, request):
+        repo = request.query_params.get('repo')
+        if not repo:
+            return Response({"error": "repo query param required"}, status=400)
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT DISTINCT ON (country_code) country_code, stargazers, percentage
+            FROM dbt_dev_gold.fact_country_tool_signal
+            WHERE repo_full_name = %s
+            ORDER BY country_code, snapshot_date DESC
+        """, (repo,))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        rows.sort(key=lambda r: r['stargazers'], reverse=True)
+        return Response(rows)
+
+
+class ToolListView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT DISTINCT repo_full_name, cohort
+            FROM dbt_dev_gold.fact_country_tool_signal
+            WHERE repo_full_name !~* '(awesome|how-?to|roadmap|course|tutorial|guide|learning|resources|interview|cheat-?sheet|list|handbook|book)'
+            ORDER BY repo_full_name
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
