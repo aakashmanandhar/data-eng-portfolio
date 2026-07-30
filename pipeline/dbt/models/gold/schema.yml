@@ -84,3 +84,41 @@ models:
       - name: snapshot_date
         tests:
           - not_null
+  - name: fact_country_ai_signal
+    columns:
+      - name: country_code
+        tests:
+          - not_null
+      - name: snapshot_date
+        tests:
+          - not_null
+      - name: ai_stargazers
+        tests:
+          - not_null
+      - name: traditional_stargazers
+        tests:
+          - not_null
+      - name: total_stargazers
+        tests:
+          - not_null
+      - name: ai_share_pct
+        tests:
+          - not_null
+
+  - name: fact_country_tool_signal
+    columns:
+      - name: repo_full_name
+        tests:
+          - not_null
+      - name: cohort
+        tests:
+          - not_null
+      - name: country_code
+        tests:
+          - not_null
+      - name: stargazers
+        tests:
+          - not_null
+      - name: snapshot_date
+        tests:
+          - not_null
