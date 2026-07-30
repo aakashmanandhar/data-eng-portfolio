@@ -10,3 +10,4 @@ sources:
       - name: github_org_snapshot
       - name: arxiv_snapshot
       - name: hackernews_snapshot
+      - name: oss_insight_stargazers

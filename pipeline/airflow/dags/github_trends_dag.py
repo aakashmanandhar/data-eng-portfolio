@@ -81,6 +81,14 @@ with DAG(
         ),
     )
 
+    extract_oss_insight = BashOperator(
+        task_id="extract_oss_insight",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/extract_oss_insight.py portfolio_django:/tmp/extract_oss_insight.py && "
+            "docker exec -w /tmp portfolio_django python extract_oss_insight.py"
+        ),
+    )
+
     load_bronze_fixed = BashOperator(
         task_id="load_bronze_github_fixed",
         bash_command=(
@@ -121,13 +129,22 @@ with DAG(
         ),
     )
 
+    load_bronze_oss_insight = BashOperator(
+        task_id="load_bronze_oss_insight",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/load_bronze_oss_insight.py portfolio_django:/tmp/load_bronze_oss_insight.py && "
+            "docker exec -w /tmp portfolio_django python load_bronze_oss_insight.py"
+        ),
+    )
+
     dbt_run = BashOperator(
         task_id="dbt_run",
         bash_command=(
             "docker exec portfolio_dbt dbt run --select "
             "silver_github_repo_snapshot dim_github_repo fact_github_repo_trend "
             "silver_github_org_snapshot fact_github_org_trend dim_github_org "
-            "silver_arxiv_snapshot silver_hackernews_snapshot fact_ai_adoption_signal"
+            "silver_arxiv_snapshot silver_hackernews_snapshot fact_ai_adoption_signal "
+            "silver_oss_insight_stargazers fact_country_ai_signal fact_country_tool_signal"
         ),
     )
 
@@ -136,7 +153,7 @@ with DAG(
         bash_command=(
             "docker exec portfolio_dbt dbt test --select "
             "fact_github_repo_trend dim_github_repo fact_github_org_trend dim_github_org "
-            "fact_ai_adoption_signal"
+            "fact_ai_adoption_signal fact_country_ai_signal fact_country_tool_signal"
         ),
     )
 
@@ -153,4 +170,5 @@ with DAG(
     extract_orgs >> load_bronze_orgs
     extract_arxiv >> load_bronze_arxiv
     extract_hackernews >> load_bronze_hackernews
-    [load_bronze_fixed, load_bronze_discovery, load_bronze_orgs, load_bronze_arxiv, load_bronze_hackernews] >> dbt_run >> dbt_test >> forecast_ai_adoption
+    extract_oss_insight >> load_bronze_oss_insight
+    [load_bronze_fixed, load_bronze_discovery, load_bronze_orgs, load_bronze_arxiv, load_bronze_hackernews, load_bronze_oss_insight] >> dbt_run >> dbt_test >> forecast_ai_adoption
