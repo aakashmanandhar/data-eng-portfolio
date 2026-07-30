@@ -1938,3 +1938,41 @@ footer a:hover {
   font-size: 11px;
   color: var(--muted);
 }
+
+.map-layer-toggle {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.layer-pill {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+.layer-pill.active {
+  border-color: #8B5CF6;
+  background: rgba(139, 92, 246, 0.12);
+  color: var(--text);
+}
+.layer-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  height: 420px;
+  border: 1.5px dashed var(--border);
+  border-radius: 10px;
+  background: var(--bg-alt);
+}
+.layer-pending-icon { font-size: 28px; }
+.layer-pending-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.layer-pending-sub { font-size: 12px; color: var(--muted); max-width: 380px; line-height: 1.5; }

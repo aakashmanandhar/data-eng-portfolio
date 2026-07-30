@@ -40,6 +40,7 @@ function createPieIcon(aiPct, radius) {
 
 function GisAiMapSlide() {
   const [countryData, setCountryData] = useState([])
+  const [activeLayer, setActiveLayer] = useState('ai-vs-traditional')
 
   useEffect(() => {
     fetch(`${API_BASE}/api/country-ai-signal/`)
@@ -50,35 +51,72 @@ function GisAiMapSlide() {
 
   const maxStars = countryData.length > 0 ? Math.max(...countryData.map((d) => d.total_stargazers)) : 1
 
+  const mapLayers = ['ai-vs-traditional', 'per-tool']
+
   return (
     <div className="gis-map-slide">
       <section className="explorer-section">
         <div className="eyebrow">🌐 AI Adoption Map · Where the Shift Is Happening</div>
         <div className="explorer-box">
-          <MapContainer center={[20, 10]} zoom={2} minZoom={2} maxBounds={[[-90, -180], [90, 180]]}
-                        style={{ height: '420px', width: '100%', borderRadius: '10px' }}
-                        scrollWheelZoom={false}>
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; OpenStreetMap contributors &copy; CARTO'
-            />
-            {countryData.map((d) => {
-              const coords = COUNTRY_COORDS[d.country_code]
-              if (!coords) return null
-              const radius = 10 + (d.total_stargazers / maxStars) * 26
-              return (
-                <Marker key={d.country_code} position={coords} icon={createPieIcon(d.ai_share_pct, radius)}>
-                  <Popup>
-                    <strong>{d.country_code}</strong><br />
-                    AI share: {(d.ai_share_pct * 100).toFixed(1)}%<br />
-                    Total stars: {d.total_stargazers.toLocaleString()}
-                  </Popup>
-                </Marker>
-              )
-            })}
-          </MapContainer>
+
+          <div className="map-layer-toggle">
+            <button className={`layer-pill ${activeLayer === 'ai-vs-traditional' ? 'active' : ''}`}
+                    onClick={() => setActiveLayer('ai-vs-traditional')}>
+              AI vs Traditional
+            </button>
+            <button className={`layer-pill ${activeLayer === 'per-tool' ? 'active' : ''}`}
+                    onClick={() => setActiveLayer('per-tool')}>
+              Per-Tool Breakdown
+            </button>
+            <button className={`layer-pill ${activeLayer === 'growth' ? 'active' : ''}`}
+                    onClick={() => setActiveLayer('growth')}>
+              Growth Forecast
+            </button>
+            <button className={`layer-pill ${activeLayer === 'archetype' ? 'active' : ''}`}
+                    onClick={() => setActiveLayer('archetype')}>
+              Archetype Clusters
+            </button>
+            <button className={`layer-pill ${activeLayer === 'career' ? 'active' : ''}`}
+                    onClick={() => setActiveLayer('career')}>
+              Career Fit
+            </button>
+          </div>
+
+          {mapLayers.includes(activeLayer) ? (
+            <MapContainer center={[20, 10]} zoom={2} minZoom={2} maxBounds={[[-90, -180], [90, 180]]}
+                          style={{ height: '420px', width: '100%', borderRadius: '10px' }}
+                          scrollWheelZoom={false}>
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+              />
+              {countryData.map((d) => {
+                const coords = COUNTRY_COORDS[d.country_code]
+                if (!coords) return null
+                const radius = 10 + (d.total_stargazers / maxStars) * 26
+                return (
+                  <Marker key={d.country_code} position={coords} icon={createPieIcon(d.ai_share_pct, radius)}>
+                    <Popup>
+                      <strong>{d.country_code}</strong><br />
+                      AI share: {(d.ai_share_pct * 100).toFixed(1)}%<br />
+                      Total stars: {d.total_stargazers.toLocaleString()}
+                    </Popup>
+                  </Marker>
+                )
+              })}
+            </MapContainer>
+          ) : (
+            <div className="layer-pending">
+              <span className="layer-pending-icon">⏳</span>
+              <div className="layer-pending-title">Building history for this layer</div>
+              <div className="layer-pending-sub">
+                This feature needs several days of accumulated daily snapshots before it can show a genuine result — check back soon, it updates automatically every day.
+              </div>
+            </div>
+          )}
+
           <div className="explorer-note">
-            🔧 Live data from GitHub via OSS Insight, refreshed daily via Apache Airflow. Bubble size = total tracked activity, color = AI-leaning (purple) vs. balanced (blue) vs. traditional-leaning (cyan).
+            🔧 Live data from GitHub via OSS Insight, refreshed daily via Apache Airflow. Bubble size = total tracked activity, split shows AI-cohort share (purple) vs. traditional-cohort share (blue).
           </div>
         </div>
       </section>
