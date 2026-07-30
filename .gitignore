@@ -39,3 +39,4 @@ full_dump.sql
 
 apps/web/.env
 media.tar.gz
+apps/web/.env.production

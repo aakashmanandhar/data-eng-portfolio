@@ -60,9 +60,9 @@ Notes: This is a per-country breakdown derived from OSS Insight (api.ossinsight.
 
 Table: dbt_dev_gold.dim_country_archetype
 Columns: country_code (text, 2-letter ISO code), archetype (text: 'AI-Leaning Hub', 'Balanced Tech Hub', 'Traditional-Leaning Hub', or 'Emerging Market'), ai_share_pct (numeric 0-1), total_stargazers (integer), generated_at (date)
-Notes: Countries are grouped into 4 archetypes using k-means clustering on AI-share percentage and total tracked GitHub activity (log-scaled) — this is a snapshot-based clustering, recomputed periodically, not a time-series trend. Use this for questions like "what archetype is X in" or "which countries are Balanced Tech Hubs". This is a different, complementary view from fact_country_ai_signal (which gives raw percentages) — archetype groups countries into named patterns instead.
-"""
+Notes: Countries are grouped into 4 archetypes using k-means clustering on AI-share percentage and total tracked GitHub activity (log-scaled) — this is a snapshot-based clustering, recomputed periodically, not a time-series trend. IMPORTANT: for simple "what archetype is X" questions, query this table ALONE with no join — it already has everything needed (country_code, archetype). Do NOT join to fact_country_ai_signal or fact_job_market for this kind of question; there's no need and no reliable shared key for the country name variant used there. Use this for questions like "what archetype is X in" or "which countries are Balanced Tech Hubs".
 
+"""
 
 
 
