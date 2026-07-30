@@ -2,22 +2,13 @@ import { useState, useRef, useEffect } from 'react'
 
 function Carousel({ slides, onSlideChange }) {
   const [current, setCurrent] = useState(0)
-  const [height, setHeight] = useState('auto')
   const touchStartX = useRef(null)
-  const slideRefs = useRef([])
 
   const goTo = (index) => {
     if (index < 0 || index >= slides.length) return
     setCurrent(index)
     if (onSlideChange) onSlideChange(index)
   }
-
-  useEffect(() => {
-    const activeSlide = slideRefs.current[current]
-    if (activeSlide) {
-      setHeight(activeSlide.offsetHeight)
-    }
-  }, [current, slides])
 
   useEffect(() => {
     const jumpHandler = (e) => {
@@ -44,15 +35,12 @@ function Carousel({ slides, onSlideChange }) {
     <div className="carousel">
       <div
         className="carousel-track"
-        style={{ transform: `translateX(-${current * 100}%)`, height }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {slides.map((slide, i) => (
-          <div className="carousel-slide" key={i} ref={(el) => (slideRefs.current[i] = el)}>
-            {slide}
-          </div>
-        ))}
+        <div className="carousel-slide" key={current}>
+          {slides[current]}
+        </div>
       </div>
 
       {slides.length > 1 && (

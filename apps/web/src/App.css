@@ -1181,11 +1181,8 @@ footer a:hover {
 }
 .carousel-track {
   display: flex;
-  align-items: flex-start;
-  transition: transform 0.35s ease, height 0.3s ease;
 }
 .carousel-slide {
-  flex: 0 0 100%;
   min-width: 100%;
 }
 .carousel-arrow {
@@ -2026,14 +2023,6 @@ footer a:hover {
   animation: pulse 2s infinite;
 }
 
-.map-layer-toggle {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  margin-bottom: 16px;
-  width: 100%;
-  box-sizing: border-box;
-}
 .layer-pill {
   display: flex;
   align-items: center;
@@ -2397,5 +2386,11 @@ footer a:hover {
 @media (min-width: 700px) {
   .map-layer-toggle {
     grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (min-width: 481px) and (max-width: 699px) {
+  .map-layer-toggle {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
