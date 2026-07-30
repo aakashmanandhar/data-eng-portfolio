@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Carousel from '../components/Carousel'
 import GitHubTrendsSlide from '../components/GitHubTrendsSlide'
+import GisAiMapSlide from '../components/GisAiMapSlide'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -260,6 +261,7 @@ function HomePage() {
         slides={[
           
           <GitHubTrendsSlide key="github-trends" />,
+          <GisAiMapSlide key="gis-ai-map" />,
           <div className="job-market-slide">
 
             <section className="explorer-section" id="explorer">

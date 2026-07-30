@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     JobMarketView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
     GitHubRepoRankingView, GitHubCohortTrendView, GitHubPlatformComparisonView, GitHubOrgActivityView,
-    AIAdoptionForecastView, VisitorCountView, VisitorHeartbeatView, VisitorStatsView,
+    AIAdoptionForecastView, VisitorCountView, VisitorHeartbeatView, VisitorStatsView, CountryAISignalView,
 )
 
 urlpatterns = [
@@ -19,4 +19,5 @@ urlpatterns = [
     path('visitor-heartbeat/', VisitorHeartbeatView.as_view(), name='visitor-heartbeat'),
     path('visitor-count/', VisitorCountView.as_view(), name='visitor-count'),
     path('visitor-stats/', VisitorStatsView.as_view(), name='visitor-stats'),
+    path('country-ai-signal/', CountryAISignalView.as_view(), name='country-ai-signal'),
 ]

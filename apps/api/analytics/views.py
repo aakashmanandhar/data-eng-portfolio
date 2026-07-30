@@ -193,3 +193,17 @@ class VisitorStatsView(APIView):
             "this_week": VisitorSession.objects.filter(created_at__gte=week_ago).count(),
             "this_month": VisitorSession.objects.filter(created_at__gte=month_ago).count(),
         })
+
+class CountryAISignalView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT country_code, ai_stargazers, traditional_stargazers, total_stargazers, ai_share_pct
+            FROM dbt_dev_gold.fact_country_ai_signal
+            ORDER BY total_stargazers DESC
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
