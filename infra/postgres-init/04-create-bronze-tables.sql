@@ -59,3 +59,11 @@ CREATE TABLE IF NOT EXISTS bronze.oss_insight_stargazers (
     snapshot_date DATE NOT NULL,
     loaded_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS bronze.so_survey_historical (
+    id SERIAL PRIMARY KEY,
+    survey_year INTEGER NOT NULL,
+    raw_data JSONB NOT NULL,
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

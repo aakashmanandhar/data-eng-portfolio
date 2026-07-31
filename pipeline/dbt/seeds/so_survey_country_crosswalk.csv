@@ -1,0 +1,19 @@
+raw_country,canonical_country,exclude
+"United States of America","United States",false
+"United Kingdom of Great Britain and Northern Ireland","United Kingdom",false
+"Russian Federation","Russia",false
+"Iran, Islamic Republic of...","Iran",false
+"Viet Nam","Vietnam",false
+"Venezuela, Bolivarian Republic of...","Venezuela",false
+"Republic of Korea","South Korea",false
+"Korea South","South Korea",false
+"Hong Kong (S.A.R.)","Hong Kong",false
+"Ireland {Republic}","Ireland",false
+"Slovak Republic","Slovakia",false
+"The former Yugoslav Republic of Macedonia","North Macedonia",false
+"Republic of Moldova","Moldova",false
+"United Republic of Tanzania","Tanzania",false
+"Syrian Arab Republic","Syria",false
+"Nomadic","",true
+"Other Country (Not Listed Above)","",true
+"I prefer not to say","",true

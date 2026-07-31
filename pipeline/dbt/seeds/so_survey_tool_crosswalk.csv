@@ -1,0 +1,30 @@
+raw_tool,canonical_tool,tool_category
+Python,Python,language
+SQL,SQL,language
+R,R,language
+Scala,Scala,language
+Rust,Rust,language
+Go,Go,language
+Java,Java,language
+Julia,Julia,language
+Bash/Shell,Bash/Shell,language
+Bash/Shell (all shells),Bash/Shell,language
+Bash/Shell/PowerShell,Bash/Shell,language
+MySQL,MySQL,database
+PostgreSQL,PostgreSQL,database
+MongoDB,MongoDB,database
+Redis,Redis,database
+MariaDB,MariaDB,database
+Elasticsearch,Elasticsearch,database
+Oracle,Oracle,database
+DynamoDB,DynamoDB,database
+Cassandra,Cassandra,database
+Microsoft SQL Server,Microsoft SQL Server,database
+SQL Server,Microsoft SQL Server,database
+Amazon Web Services (AWS),Amazon Web Services (AWS),platform
+Microsoft Azure,Microsoft Azure,platform
+Docker,Docker,platform
+Kubernetes,Kubernetes,platform
+Databricks,Databricks,platform
+Google Cloud,Google Cloud Platform,platform
+Google Cloud Platform,Google Cloud Platform,platform
