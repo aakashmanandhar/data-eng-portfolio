@@ -2023,6 +2023,14 @@ footer a:hover {
   animation: pulse 2s infinite;
 }
 
+.map-layer-toggle {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .layer-pill {
   display: flex;
   align-items: center;

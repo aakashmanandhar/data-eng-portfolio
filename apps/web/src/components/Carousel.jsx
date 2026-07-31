@@ -3,6 +3,13 @@ import { useState, useRef, useEffect } from 'react'
 function Carousel({ slides, onSlideChange }) {
   const [current, setCurrent] = useState(0)
   const touchStartX = useRef(null)
+  const containerRef = useRef(null)
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [current])
 
   const goTo = (index) => {
     if (index < 0 || index >= slides.length) return
@@ -20,6 +27,10 @@ function Carousel({ slides, onSlideChange }) {
   }, [])
 
   const handleTouchStart = (e) => {
+    if (e.target.closest('.leaflet-container')) {
+      touchStartX.current = null
+      return
+    }
     touchStartX.current = e.touches[0].clientX
   }
 
@@ -32,7 +43,7 @@ function Carousel({ slides, onSlideChange }) {
   }
 
   return (
-    <div className="carousel">
+    <div className="carousel" ref={containerRef}>
       <div
         className="carousel-track"
         onTouchStart={handleTouchStart}
