@@ -319,6 +319,103 @@ docker exec portfolio_django python manage.py migrate analytics
 
 ---
 
+
+## Pipeline 3 Interactive AI/ML GIS Map
+
+A third carousel slide — an interactive choropleth world map showing where AI-native data engineering tooling is actually gaining ground, built entirely from the existing GitHub Trends cohort data plus one new country-level API.
+
+### Interactive AI/ML GIS Map Architecture
+![Interactive AI/ML GIS Map Pipeline Architecture](./docs/GISData_Architecture.png)
+
+### GIS Analytics Dashboard
+![Interactive AI/ML GIS Map Analytics Dashboard1](./docs/GIS_Analytics1.png)
+![Interactive AI/ML GIS Map Analytics Dashboard2](./docs/GIS_Analytics2.png)
+
+### Data Source
+
+- **OSS Insight** (`api.ossinsight.io`) — PingCAP's GitHub analytics API, 5B+ indexed events, no API key required. Used specifically for `/v1/repos/{owner}/{repo}/stargazers/countries`, which returns per-country stargazer counts and percentages for any public repo (confirmed: `apache/airflow` → 152 countries in ~200ms).
+- **Scope discipline:** only ever queried for repos already tracked in Pipeline 2's existing `ai`/`traditional`/etc. cohorts (~122 repos total, ~57 fixed-list + ~65 dynamically-discovered) — never a generic all-of-GitHub pull. Stays fully separate from the GitHub Trends slide and the AI Adoption Forecast model; neither is modified by this feature.
+
+**Rejected alternatives** (kept for reference):
+- *GitHub contributor profile location* — only 47% of a sampled cohort had any location set at all; free-text field needing city→country resolution; too expensive to scale.
+- *OpenStreetMap Overpass API (tech-office density)* — syntax confirmed working, was briefly the planned primary signal before OSS Insight was found.
+- *Stack Overflow Developer Survey* — genuinely strong (49k+ respondents, 177 countries, ODbL-licensed, dedicated AI questions) but set aside to keep this feature within one coherent GitHub-data ecosystem. Worth reconsidering for a future, separate project.
+- *DexPaprika* — unrelated (crypto DEX data).
+
+### The 7 Analytics Layers
+
+| # | Layer | Status | Notes |
+|---|---|---|---|
+| 1 | Per-Country AI Adoption Forecast | 🕒 Building history | Extends the existing regression per-country via `stargazers/history`; same `insufficient_data` gate as the global forecast (needs ~7 days of accumulated snapshots — only 1 day exists as of this writing) |
+| 2 | Adoption Archetype Clustering | ✅ Live | k-means (k=4) on `[ai_share_pct, log10(total_stargazers)]`, doesn't need time-series data since it's a snapshot technique |
+| 3 | Growth Anomaly/Outlier Detection | 🕒 Building history | Residuals from #1's regression — depends on the same history gate |
+| 4 | "Best Place for an AI Career" Recommender | 🕒 Building history | Combines #1 with Pipeline 1's salary/job-market data |
+| 5 | Nearest-Neighbor Country Matching | 🕒 Building history | Ranked-list upgrade of #4, reusing #2's feature vectors |
+| 6 | Per-Tool Country Breakdown | ✅ Live | Re-shades the map by a single selected tool's own stargazer geography |
+| 7 | RAG (text-to-SQL) | ✅ Live | Grounded in all of the above via the existing RAG schema |
+
+Layers still gated behind "building history" aren't a bug — they're deliberately withheld until there's enough real day-over-day data to fit a meaningful trend, exactly the same honest-gating pattern used by the global AI Adoption Forecast.
+
+### Gold-Layer Tables
+
+- `fact_country_ai_signal` — per-country `ai_share_pct`, filtered to `total_stargazers >= 500` to exclude small-sample noise (a real bug surfaced this: Barbados showed a 100% "AI share" from just 16 stars before the floor was added)
+- `fact_country_tool_signal` — per-repo-per-country breakdown, powers the Per-Tool layer
+- `dim_country_archetype` — k-means cluster assignment per country (`AI-Leaning Hub` / `Balanced Tech Hub` / `Traditional-Leaning Hub` / `Emerging Market`, named by ranking cluster centroids' average AI-share rather than arbitrary indices)
+
+### Setup — Local
+
+```bash
+# Extraction pulls the full repo universe directly from dim_github_repo (stays in sync
+# automatically as GitHub Trends' discovery finds new repos) and calls OSS Insight per repo:
+docker exec portfolio_django python extract_oss_insight.py
+docker exec portfolio_django python load_bronze_oss_insight.py
+
+docker exec portfolio_dbt dbt run --select silver_oss_insight_stargazers fact_country_ai_signal fact_country_tool_signal
+docker exec portfolio_dbt dbt test --select fact_country_ai_signal fact_country_tool_signal
+
+# Archetype clustering (separate script, run after fact_country_ai_signal exists):
+docker exec portfolio_django python cluster_country_archetypes.py
+```
+
+The extraction step takes 2-3+ minutes for ~122 repos (1s delay between OSS Insight calls) — this is expected, not a hang.
+
+### API Endpoints
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/country-ai-signal/` | Per-country AI vs. traditional stargazer share, powers the pie-chart choropleth |
+| `GET /api/country-tool-signal/` | Per-country breakdown for a single selected tool |
+| `GET /api/country-archetype/` | Per-country cluster assignment |
+
+### Frontend
+
+- `GisAiMapSlide.jsx` (react-leaflet + custom `divIcon` SVG pie-chart markers, purple=AI share/blue=traditional share, sized by `total_stargazers`)
+- A layer-toggle pill row switches between all 7 analytics above, each pill showing a "Building history for this layer" pending state until its data is ready
+- A tool-name filter (regex excluding `awesome`/`how-to`/`roadmap`/`tutorial`/etc.) drops non-tool reference repos from the Per-Tool dropdown; a `TOOL_DISPLAY_NAMES` mapping shows clean names ("Airflow") instead of raw repo paths ("apache/airflow")
+- Deliberately does **not** include general AI model repos (Llama, Mistral, Gemma, etc.) in the Per-Tool Breakdown — kept scoped to data engineering tools only
+
+### Design Decisions & Bugs Fixed
+
+- **ISO code crosswalk:** OSS Insight returns ISO alpha-2 country codes; a crosswalk maps these to the TopoJSON boundary file's own country ID scheme (same pattern as the existing `country_mapping` seed).
+- **Small-sample noise:** see the `total_stargazers >= 500` floor above — the RAG assistant is also instructed to always report the raw stargazer count alongside any percentage ranking, so a genuinely small-but-valid result (e.g. Uruguay's 64.57% AI-share from 714 real stars) still reads with honest scale context instead of looking equivalent to a large-sample result.
+- **RAG join safety:** the schema description explicitly forbids joining `fact_country_ai_signal.country_code` (ISO codes) to `fact_job_market.country_name` (full names) — an earlier version of the LLM invented a nonsensical join between the two since there's no shared key.
+- **Carousel height/scroll bugs** (see also the main Pipeline 2 section): the height-adaptive carousel needed a full rewrite to a single-active-slide-in-DOM approach (`key={current}`, no transform-based multi-slide layout) after JS-measured height repeatedly desynced from this slide's async-loading map content — the original symptom was missing layer pills and a vertically misaligned prev/next arrow on narrow viewports.
+- **CSS specificity bug:** an unscoped `.map-layer-toggle` base rule (no media query) forced 5 grid columns at every screen width, silently overriding the phone breakpoint's 2-column rule since it appeared later in the file. Fixed by stripping the column count out of the base rule entirely, leaving it controlled solely by the three breakpoint-scoped rules (phone ≤480px: 2 cols, tablet 481-699px: 3 cols, desktop ≥700px: 5 cols).
+- **Touch conflict:** dragging on the Leaflet map triggered a carousel slide-swipe instead of panning, since touch events bubble up from inside the map to the carousel's own touch handler. Fixed by checking `e.target.closest('.leaflet-container')` and skipping swipe logic when a touch originates inside the map.
+- **Scroll position on slide change:** switching slides previously preserved the old slide's scroll offset, landing on the new slide's bottom instead of its top. Fixed with a `containerRef` + `scrollIntoView({block:'start'})`, guarded by a `hasInteracted` ref (set only inside the real slide-change handler) so it never fires on initial page load — an early attempt using a simple "first render" flag failed under React StrictMode's intentional dev-mode double-mount.
+
+### Deploying Frontend Changes
+
+The React container runs a production build (multi-stage Dockerfile — `npm run build` → served via `serve`), not a live dev server — so a plain `git pull` on the server does **not** update the live site. Any frontend change requires:
+
+```bash
+git pull origin main
+docker build -t portfolio-react:latest apps/web
+docker stop portfolio_react && docker rm portfolio_react
+cd infra/terraform && terraform apply
+```
+
+
 ## Shared Infrastructure
 
 - **PostgreSQL** (+pgvector) — one instance, separate bronze/gold schemas per pipeline
