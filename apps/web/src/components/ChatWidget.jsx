@@ -70,7 +70,7 @@ function ChatWidget() {
       {showHook && !isOpen && (
         <div className="chat-hook" onClick={() => { setIsOpen(true); setShowHook(false); }}>
           <button className="chat-hook-close" onClick={(e) => { e.stopPropagation(); setShowHook(false); }}>✕</button>
-          👋 Curious why I chose Postgres over BigQuery for this? Ask me anything.
+          👋 Curious how I built a live AI adoption model from GitHub data? Ask me anything.
         </div>
       )}
       <button className="chat-fab" onClick={() => { setIsOpen(!isOpen); setShowHook(false); }}>💬</button>
