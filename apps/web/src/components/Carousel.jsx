@@ -4,18 +4,20 @@ function Carousel({ slides, onSlideChange }) {
   const [current, setCurrent] = useState(0)
   const touchStartX = useRef(null)
   const containerRef = useRef(null)
-
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }, [current])
+  const hasInteracted = useRef(false)
 
   const goTo = (index) => {
     if (index < 0 || index >= slides.length) return
+    hasInteracted.current = true
     setCurrent(index)
     if (onSlideChange) onSlideChange(index)
   }
+
+  useEffect(() => {
+    if (hasInteracted.current && containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [current])
 
   useEffect(() => {
     const jumpHandler = (e) => {
