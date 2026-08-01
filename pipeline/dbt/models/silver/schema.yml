@@ -1,0 +1,27 @@
+version: 2
+models:
+  - name: silver_so_survey_historical
+    columns:
+      - name: survey_year
+        tests:
+          - not_null
+      - name: country
+        tests:
+          - not_null
+      - name: canonical_tool
+        tests:
+          - not_null
+      - name: tool_category
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['language', 'database', 'platform']
+  - name: silver_practical_data_survey
+    columns:
+      - name: respondent_id
+        tests:
+          - unique
+          - not_null
+      - name: role
+        tests:
+          - not_null

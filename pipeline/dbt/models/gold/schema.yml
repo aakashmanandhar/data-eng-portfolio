@@ -122,3 +122,25 @@ models:
       - name: snapshot_date
         tests:
           - not_null
+  - name: fact_de_tool_by_country_year
+    columns:
+      - name: survey_year
+        tests:
+          - not_null
+      - name: country
+        tests:
+          - not_null
+      - name: canonical_tool
+        tests:
+          - not_null
+      - name: usage_pct
+        tests:
+          - not_null
+  - name: fact_de_tool_ranking
+    columns:
+      - name: rank_in_country
+        tests:
+          - not_null
+      - name: rank_overall
+        tests:
+          - not_null
