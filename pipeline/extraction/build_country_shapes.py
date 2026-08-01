@@ -52,10 +52,14 @@ def build_svg_path(geometry, min_lon, max_lon, min_lat, max_lat):
         (VIEWBOX_H - 2 * PADDING) / lat_range,
     )
 
+    rendered_w = lon_range * scale
+    rendered_h = lat_range * scale
+    extra_x = ((VIEWBOX_W - 2 * PADDING) - rendered_w) / 2
+    extra_y = ((VIEWBOX_H - 2 * PADDING) - rendered_h) / 2
+
     def project(lon, lat):
-        x = PADDING + (lon - min_lon) * scale
-        # Flip y: latitude increases northward, SVG y increases downward.
-        y = PADDING + (max_lat - lat) * scale
+        x = PADDING + extra_x + (lon - min_lon) * scale
+        y = PADDING + extra_y + (max_lat - lat) * scale
         return round(x, 2), round(y, 2)
 
     def ring_to_path(ring):

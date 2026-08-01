@@ -209,7 +209,6 @@ class CountryAISignalView(APIView):
         return Response(rows)
 
 class DeToolSummaryView(APIView):
-    """Global/world-level KPIs for the SO Survey historical slide's default view."""
     def get(self, request):
         conn = get_readonly_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -229,13 +228,48 @@ class DeToolSummaryView(APIView):
             ORDER BY tool_category
         """)
         top_tools = cur.fetchall()
+        cur.execute("""
+            SELECT canonical_tool, tool_category,
+                   SUM(respondent_count)::numeric / NULLIF(SUM(total_respondents), 0) AS usage_pct
+            FROM dbt_dev_gold.fact_de_tool_by_country_year
+            WHERE survey_year = (SELECT MAX(survey_year) FROM dbt_dev_gold.fact_de_tool_by_country_year)
+            GROUP BY canonical_tool, tool_category
+            ORDER BY usage_pct DESC
+            LIMIT 10
+        """)
+        top10_overall = cur.fetchall()
+        cur.execute("""
+            SELECT canonical_tool, tool_category, growth_rate_per_year, predicted_next_year_usage_pct
+            FROM dbt_dev_gold.de_tool_forecast
+            WHERE scope = 'overall' AND status = 'ok'
+            ORDER BY predicted_next_year_usage_pct DESC
+            LIMIT 5
+        """)
+        forecast_trend = cur.fetchall()
+        top_tool_name = top10_overall[0]['canonical_tool'] if top10_overall else None
+        trend_over_time = []
+        if top_tool_name:
+            cur.execute("""
+                SELECT survey_year,
+                       SUM(respondent_count)::numeric / NULLIF(SUM(total_respondents), 0) AS usage_pct
+                FROM dbt_dev_gold.fact_de_tool_by_country_year
+                WHERE canonical_tool = %s
+                GROUP BY survey_year
+                ORDER BY survey_year
+            """, (top_tool_name,))
+            trend_over_time = cur.fetchall()
         cur.close()
         conn.close()
-        return Response({"summary": summary, "top_tools_by_category": top_tools})
+        return Response({
+            "summary": summary,
+            "top_tools_by_category": top_tools,
+            "top10_overall": top10_overall,
+            "forecast_trend": forecast_trend,
+            "trend_over_time": {"tool": top_tool_name, "points": trend_over_time},
+        })
 
 
 class DeToolByCountryView(APIView):
-    """Country-specific breakdown: top tools, forecast, respondent count."""
     def get(self, request):
         country = request.query_params.get('country')
         if not country:
@@ -250,17 +284,34 @@ class DeToolByCountryView(APIView):
         """, (country, country))
         top_tools = cur.fetchall()
         cur.execute("""
-            SELECT canonical_tool, tool_category, status, growth_rate_per_year, predicted_next_year_usage_pct
+            SELECT canonical_tool, tool_category, growth_rate_per_year, predicted_next_year_usage_pct
             FROM dbt_dev_gold.de_tool_forecast
             WHERE scope = 'country' AND country = %s AND status = 'ok'
             ORDER BY predicted_next_year_usage_pct DESC
-            LIMIT 1
+            LIMIT 5
         """, (country,))
-        top_forecast = cur.fetchone()
+        forecast_trend = cur.fetchall()
+        top_forecast = forecast_trend[0] if forecast_trend else None
+        top_tool_name = top_tools[0]['canonical_tool'] if top_tools else None
+        trend_over_time = []
+        if top_tool_name:
+            cur.execute("""
+                SELECT survey_year, usage_pct
+                FROM dbt_dev_gold.fact_de_tool_by_country_year
+                WHERE country = %s AND canonical_tool = %s
+                ORDER BY survey_year
+            """, (country, top_tool_name))
+            trend_over_time = cur.fetchall()
         cur.close()
         conn.close()
-        return Response({"country": country, "top_tools": top_tools, "top_forecast": top_forecast})
-
+        return Response({
+            "country": country,
+            "top_tools": top_tools,
+            "top_forecast": top_forecast,
+            "forecast_trend": forecast_trend,
+            "trend_over_time": {"tool": top_tool_name, "points": trend_over_time},
+        })
+    
 class CountryArchetypeView(APIView):
     def get(self, request):
         conn = get_readonly_connection()

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import Carousel from '../components/Carousel'
 import GitHubTrendsSlide from '../components/GitHubTrendsSlide'
 import GisAiMapSlide from '../components/GisAiMapSlide'
+import SoSurveySlide from '../components/SoSurveySlide'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -231,30 +232,40 @@ function HomePage() {
           <h2>Live Data Engineering Analytics</h2>
           <p>Real salary, hiring, and tooling data — refreshed automatically by a live ELT pipeline.</p>
         </div>
-        <div className={`pipeline-status-widget ${
-          activeSlide <= 1
-            ? (githubPipelineRuns.length > 0 ? `status-${githubPipelineRuns[0].status}` : 'status-unknown')
-            : (pipelineRuns.length > 0 ? `status-${pipelineRuns[0].status}` : 'status-unknown')
-        }`}>
-          <span className="pipeline-status-icon">
-            {activeSlide <= 1
-              ? (githubPipelineRuns.length === 0 ? '⏳' : githubPipelineRuns[0].status === 'success' ? '✅' : '❌')
-              : (pipelineRuns.length === 0 ? '⏳' : pipelineRuns[0].status === 'success' ? '✅' : '❌')}
-          </span>
-          <div className="pipeline-status-text">
-            <span className="pipeline-status-title">
-              {activeSlide <= 1 ? 'Airflow Pipeline ' : 'Jenkins Pipeline '}
-              {(activeSlide <= 1 ? githubPipelineRuns : pipelineRuns).length === 0
-                ? 'No runs yet'
-                : (activeSlide <= 1 ? githubPipelineRuns : pipelineRuns)[0].status === 'success' ? 'Healthy' : 'Failed'}
-            </span>
-            {(activeSlide <= 1 ? githubPipelineRuns : pipelineRuns).length > 0 && (
-              <span className="pipeline-status-time">
-                {new Date((activeSlide <= 1 ? githubPipelineRuns : pipelineRuns)[0].finished_at).toLocaleString()}
-              </span>
-            )}
+        {activeSlide === 2 ? (
+          <div className="pipeline-status-widget status-static">
+            <span className="pipeline-status-icon">📊</span>
+            <div className="pipeline-status-text">
+              <span className="pipeline-status-title">Historical Survey Data</span>
+              <span className="pipeline-status-time">2016–2025, static snapshot</span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className={`pipeline-status-widget ${
+            activeSlide <= 1
+              ? (githubPipelineRuns.length > 0 ? `status-${githubPipelineRuns[0].status}` : 'status-unknown')
+              : (pipelineRuns.length > 0 ? `status-${pipelineRuns[0].status}` : 'status-unknown')
+          }`}>
+            <span className="pipeline-status-icon">
+              {activeSlide <= 1
+                ? (githubPipelineRuns.length === 0 ? '⏳' : githubPipelineRuns[0].status === 'success' ? '✅' : '❌')
+                : (pipelineRuns.length === 0 ? '⏳' : pipelineRuns[0].status === 'success' ? '✅' : '❌')}
+            </span>
+            <div className="pipeline-status-text">
+              <span className="pipeline-status-title">
+                {activeSlide <= 1 ? 'Airflow Pipeline ' : 'Jenkins Pipeline '}
+                {(activeSlide <= 1 ? githubPipelineRuns : pipelineRuns).length === 0
+                  ? 'No runs yet'
+                  : (activeSlide <= 1 ? githubPipelineRuns : pipelineRuns)[0].status === 'success' ? 'Healthy' : 'Failed'}
+              </span>
+              {(activeSlide <= 1 ? githubPipelineRuns : pipelineRuns).length > 0 && (
+                <span className="pipeline-status-time">
+                  {new Date((activeSlide <= 1 ? githubPipelineRuns : pipelineRuns)[0].finished_at).toLocaleString()}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
       <Carousel
         onSlideChange={setActiveSlide}
@@ -262,6 +273,7 @@ function HomePage() {
           
           <GitHubTrendsSlide key="github-trends" />,
           <GisAiMapSlide key="gis-ai-map" />,
+          <SoSurveySlide key="so-survey" />,
           <div className="job-market-slide">
 
             <section className="explorer-section" id="explorer">

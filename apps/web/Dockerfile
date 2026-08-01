@@ -1,11 +1,10 @@
 # Stage 1: build the production bundle
 FROM node:20-slim AS build
-
 WORKDIR /app
-
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 COPY package*.json ./
 RUN npm install
-
 COPY . .
 RUN npm run build
 
