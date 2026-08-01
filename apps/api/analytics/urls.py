@@ -3,7 +3,7 @@ from .views import (
     JobMarketView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
     GitHubRepoRankingView, GitHubCohortTrendView, GitHubPlatformComparisonView, GitHubOrgActivityView,
     AIAdoptionForecastView, VisitorCountView, VisitorHeartbeatView, VisitorStatsView, CountryAISignalView, CountryArchetypeView,
-    CountryToolSignalView, ToolListView,
+    DeToolSummaryView, DeToolByCountryView, CountryToolSignalView, ToolListView,
 )
 
 urlpatterns = [
@@ -21,6 +21,8 @@ urlpatterns = [
     path('visitor-count/', VisitorCountView.as_view(), name='visitor-count'),
     path('visitor-stats/', VisitorStatsView.as_view(), name='visitor-stats'),
     path('country-ai-signal/', CountryAISignalView.as_view(), name='country-ai-signal'),
+    path('de-tool-summary/', DeToolSummaryView.as_view(), name='de-tool-summary'),
+    path('de-tool-by-country/', DeToolByCountryView.as_view(), name='de-tool-by-country'),
     path('country-archetype/', CountryArchetypeView.as_view(), name='country-archetype'),
     path('country-tool-signal/', CountryToolSignalView.as_view(), name='country-tool-signal'),
     path('tool-list/', ToolListView.as_view(), name='tool-list'),

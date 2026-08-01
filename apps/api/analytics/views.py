@@ -208,6 +208,59 @@ class CountryAISignalView(APIView):
         conn.close()
         return Response(rows)
 
+class DeToolSummaryView(APIView):
+    """Global/world-level KPIs for the SO Survey historical slide's default view."""
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT
+                SUM(respondent_count) AS total_tool_selections,
+                COUNT(DISTINCT country) AS countries_covered,
+                MIN(survey_year) AS earliest_year,
+                MAX(survey_year) AS latest_year
+            FROM dbt_dev_gold.fact_de_tool_by_country_year
+        """)
+        summary = cur.fetchone()
+        cur.execute("""
+            SELECT DISTINCT canonical_tool, tool_category
+            FROM dbt_dev_gold.fact_de_tool_ranking
+            WHERE rank_overall = 1 AND survey_year = (SELECT MAX(survey_year) FROM dbt_dev_gold.fact_de_tool_ranking)
+            ORDER BY tool_category
+        """)
+        top_tools = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response({"summary": summary, "top_tools_by_category": top_tools})
+
+
+class DeToolByCountryView(APIView):
+    """Country-specific breakdown: top tools, forecast, respondent count."""
+    def get(self, request):
+        country = request.query_params.get('country')
+        if not country:
+            return Response({"error": "country query param required"}, status=400)
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT canonical_tool, tool_category, usage_pct, respondent_count, total_respondents
+            FROM dbt_dev_gold.fact_de_tool_by_country_year
+            WHERE country = %s AND survey_year = (SELECT MAX(survey_year) FROM dbt_dev_gold.fact_de_tool_by_country_year WHERE country = %s)
+            ORDER BY usage_pct DESC
+        """, (country, country))
+        top_tools = cur.fetchall()
+        cur.execute("""
+            SELECT canonical_tool, tool_category, status, growth_rate_per_year, predicted_next_year_usage_pct
+            FROM dbt_dev_gold.de_tool_forecast
+            WHERE scope = 'country' AND country = %s AND status = 'ok'
+            ORDER BY predicted_next_year_usage_pct DESC
+            LIMIT 1
+        """, (country,))
+        top_forecast = cur.fetchone()
+        cur.close()
+        conn.close()
+        return Response({"country": country, "top_tools": top_tools, "top_forecast": top_forecast})
+
 class CountryArchetypeView(APIView):
     def get(self, request):
         conn = get_readonly_connection()
