@@ -41,3 +41,4 @@ apps/web/.env
 media.tar.gz
 apps/web/.env.production
 pipeline/extraction/so_survey_historical_extracted.json
+pipeline/extraction/survey_2026_data_engineering.csv

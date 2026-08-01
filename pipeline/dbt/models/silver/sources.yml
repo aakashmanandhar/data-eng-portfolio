@@ -11,3 +11,5 @@ sources:
       - name: arxiv_snapshot
       - name: hackernews_snapshot
       - name: oss_insight_stargazers
+      - name: so_survey_historical
+      - name: practical_data_survey_2026

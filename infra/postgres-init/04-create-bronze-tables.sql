@@ -67,3 +67,10 @@ CREATE TABLE IF NOT EXISTS bronze.so_survey_historical (
     snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
     loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS bronze.practical_data_survey_2026 (
+    id SERIAL PRIMARY KEY,
+    raw_data JSONB NOT NULL,
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
