@@ -88,6 +88,21 @@ all_results = []
 all_results.extend(process_scope("overall", overall_query))
 all_results.extend(process_scope("country", country_query))
 
+cur.execute("""
+    CREATE TABLE IF NOT EXISTS dbt_dev_gold.de_tool_forecast (
+        id SERIAL PRIMARY KEY,
+        scope TEXT NOT NULL,
+        country TEXT,
+        tool_category TEXT NOT NULL,
+        canonical_tool TEXT NOT NULL,
+        years_of_history INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        growth_rate_per_year NUMERIC,
+        r_squared NUMERIC,
+        predicted_next_year_usage_pct NUMERIC,
+        generated_at DATE NOT NULL DEFAULT CURRENT_DATE
+    )
+""")
 cur.execute("TRUNCATE TABLE dbt_dev_gold.de_tool_forecast")
 execute_values(
     cur,
