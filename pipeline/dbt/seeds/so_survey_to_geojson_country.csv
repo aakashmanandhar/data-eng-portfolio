@@ -1,0 +1,6 @@
+survey_country,geojson_name,has_boundary_shape
+United States,United States of America,true
+Serbia,Republic of Serbia,true
+North Macedonia,Macedonia,true
+Singapore,,false
+Hong Kong,,false
