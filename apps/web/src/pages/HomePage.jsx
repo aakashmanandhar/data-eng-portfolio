@@ -232,7 +232,7 @@ function HomePage() {
          <div className="analytics-header">
         <div className="analytics-header-text">
           <h2>Live Data Engineering Analytics</h2>
-          <p>Real salary, hiring, and tooling data — refreshed automatically by a live ELT pipeline.</p>
+          <p>Real GitHub trends, a decade of tool-adoption history, and organizational behavior — refreshed automatically by live ELT and ML pipelines. Six views into how data engineering is actually evolving.</p>
         </div>
         {activeSlide === 2 || activeSlide === 3 || activeSlide === 4 ? (
           <div className="pipeline-status-widget status-static">
