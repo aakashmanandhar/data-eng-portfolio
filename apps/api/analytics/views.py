@@ -311,6 +311,42 @@ class DeToolByCountryView(APIView):
             "forecast_trend": forecast_trend,
             "trend_over_time": {"tool": top_tool_name, "points": trend_over_time},
         })
+
+class OrgArchetypeSummaryView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT
+                a.archetype_name,
+                COUNT(*) AS respondent_count,
+                MODE() WITHIN GROUP (ORDER BY s.org_size) AS common_org_size,
+                MODE() WITHIN GROUP (ORDER BY s.architecture_trend) AS common_architecture,
+                MODE() WITHIN GROUP (ORDER BY s.orchestration) AS common_orchestration,
+                MODE() WITHIN GROUP (ORDER BY s.ai_adoption) AS common_ai_adoption,
+                MODE() WITHIN GROUP (ORDER BY s.biggest_bottleneck) AS common_bottleneck
+            FROM dbt_dev_gold.org_maturity_archetype a
+            JOIN dbt_dev_silver.silver_practical_data_survey s ON s.respondent_id = a.respondent_id
+            GROUP BY a.archetype_name
+            ORDER BY respondent_count DESC
+        """)
+        archetypes = cur.fetchall()
+        cur.execute("""
+            SELECT ai_adoption, COUNT(*) AS count
+            FROM dbt_dev_silver.silver_practical_data_survey
+            WHERE ai_adoption IS NOT NULL
+            GROUP BY ai_adoption
+            ORDER BY count DESC
+        """)
+        ai_adoption_breakdown = cur.fetchall()
+        cur.close()
+        conn.close()
+        total_respondents = sum(a['respondent_count'] for a in archetypes)
+        return Response({
+            "total_respondents": total_respondents,
+            "archetypes": archetypes,
+            "ai_adoption_breakdown": ai_adoption_breakdown,
+        })
     
 class CountryArchetypeView(APIView):
     def get(self, request):

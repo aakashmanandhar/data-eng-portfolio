@@ -5,6 +5,7 @@ import Carousel from '../components/Carousel'
 import GitHubTrendsSlide from '../components/GitHubTrendsSlide'
 import GisAiMapSlide from '../components/GisAiMapSlide'
 import SoSurveySlide from '../components/SoSurveySlide'
+import OrgArchetypeSlide from '../components/OrgArchetypeSlide'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -232,12 +233,12 @@ function HomePage() {
           <h2>Live Data Engineering Analytics</h2>
           <p>Real salary, hiring, and tooling data — refreshed automatically by a live ELT pipeline.</p>
         </div>
-        {activeSlide === 2 ? (
+        {activeSlide === 2 || activeSlide === 3 ? (
           <div className="pipeline-status-widget status-static">
             <span className="pipeline-status-icon">📊</span>
             <div className="pipeline-status-text">
-              <span className="pipeline-status-title">Historical Survey Data</span>
-              <span className="pipeline-status-time">2016–2025, static snapshot</span>
+              <span className="pipeline-status-title">{activeSlide === 2 ? 'Historical Survey Data' : 'Community Survey Data'}</span>
+              <span className="pipeline-status-time">{activeSlide === 2 ? '2016–2025, static snapshot' : '2026, static snapshot'}</span>
             </div>
           </div>
         ) : (
@@ -274,6 +275,7 @@ function HomePage() {
           <GitHubTrendsSlide key="github-trends" />,
           <GisAiMapSlide key="gis-ai-map" />,
           <SoSurveySlide key="so-survey" />,
+          <OrgArchetypeSlide key="org-archetype" />,
           <div className="job-market-slide">
 
             <section className="explorer-section" id="explorer">
