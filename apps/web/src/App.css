@@ -897,8 +897,8 @@ footer a:hover {
   .case-studies-section,
   .adr-section,
   .about-section,
-  .contact-section {
-    padding: 32px 20px;
+  .contact-form {
+    max-width: 100%;
   }
   .case-card {
     flex-direction: column;
