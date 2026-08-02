@@ -73,19 +73,47 @@ cur.execute("""
         generated_at DATE NOT NULL DEFAULT CURRENT_DATE
     )
 """)
-cur.execute("TRUNCATE TABLE dbt_dev_gold.tool_co_adoption_cluster")
-CLUSTER_NAMES = {
-    0: "Mainstream Global Tools",
-    1: "Apache Big-Data Ecosystem",
-    2: "Emerging & Community-Driven",
-    3: "Cloud-Warehouse Adapters",
-}
+# Cluster IDs from k-means are NOT stable across runs (confirmed: the same
+# semantic grouping can get a different numeric ID depending on the day's
+# exact data) - names are derived from real cluster CONTENT via anchor
+# repos known to always belong to a specific real-world category, not by
+# positional ID, so labels stay correct regardless of how k-means numbers
+# the clusters on any given day.
+cluster_members = {}
+for i in range(len(repos)):
+    cluster_members.setdefault(int(cluster_labels[i]), []).append(repos[i])
+
+ANCHOR_RULES = [
+    ("Apache Big-Data Ecosystem", "apache/flink"),
+    ("Cloud-Warehouse Adapters", "dbt-labs/dbt-bigquery"),
+]
+cluster_id_to_name = {}
+named_clusters = set()
+for name, anchor in ANCHOR_RULES:
+    for cid, members in cluster_members.items():
+        if anchor in members and cid not in cluster_id_to_name:
+            cluster_id_to_name[cid] = name
+            named_clusters.add(cid)
+
+remaining = [cid for cid in cluster_members if cid not in cluster_id_to_name]
+remaining.sort(key=lambda cid: len(cluster_members[cid]), reverse=True)
+remaining_names = ["Mainstream Global Tools", "Emerging & Community-Driven"]
+for cid, name in zip(remaining, remaining_names):
+    cluster_id_to_name[cid] = name
+for cid in remaining[len(remaining_names):]:
+    cluster_id_to_name[cid] = f"Cluster {cid}"  # fallback if k ever changes
+
 rows_to_insert = [
-    (repos[i], int(cluster_labels[i]), CLUSTER_NAMES.get(int(cluster_labels[i])))
+    (repos[i], int(cluster_labels[i]), cluster_id_to_name[int(cluster_labels[i])])
     for i in range(len(repos))
 ]
 execute_values(
-    cur, "INSERT INTO dbt_dev_gold.tool_co_adoption_cluster (repo_full_name, cluster_id, cluster_name) VALUES %s",
+    cur,
+    """INSERT INTO dbt_dev_gold.tool_co_adoption_cluster (repo_full_name, cluster_id, cluster_name) VALUES %s
+       ON CONFLICT (repo_full_name) DO UPDATE SET
+           cluster_id = EXCLUDED.cluster_id,
+           cluster_name = EXCLUDED.cluster_name,
+           generated_at = CURRENT_DATE""",
     rows_to_insert,
 )
 conn.commit()
