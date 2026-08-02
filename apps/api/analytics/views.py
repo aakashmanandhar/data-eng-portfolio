@@ -347,6 +347,41 @@ class OrgArchetypeSummaryView(APIView):
             "archetypes": archetypes,
             "ai_adoption_breakdown": ai_adoption_breakdown,
         })
+
+class OssLandscapeSummaryView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # Idea #4: org-level competitive landscape (latest snapshot per org)
+        cur.execute("""
+            SELECT DISTINCT ON (org_name)
+                org_name, total_public_repos, aggregate_stars, aggregate_forks,
+                star_growth, star_growth_pct, snapshot_date
+            FROM dbt_dev_gold.fact_github_org_trend
+            ORDER BY org_name, snapshot_date DESC
+        """)
+        org_landscape = cur.fetchall()
+
+        # Idea #3: tool co-adoption clusters (grouped counts + sample members)
+        cur.execute("""
+            SELECT cluster_name, COUNT(*) AS repo_count,
+                   array_agg(repo_full_name ORDER BY repo_full_name) AS sample_repos
+            FROM dbt_dev_gold.tool_co_adoption_cluster
+            GROUP BY cluster_name
+            ORDER BY repo_count DESC
+        """)
+        co_adoption_clusters = cur.fetchall()
+        for c in co_adoption_clusters:
+            c['sample_repos'] = c['sample_repos'][:5]
+
+        cur.close()
+        conn.close()
+        return Response({
+            "org_landscape": org_landscape,
+            "co_adoption_clusters": co_adoption_clusters,
+            "tool_momentum_status": "building_history",
+        })
     
 class CountryArchetypeView(APIView):
     def get(self, request):

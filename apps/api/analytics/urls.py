@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (
-    JobMarketView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
+    JobMarketView, OssLandscapeSummaryView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
     GitHubRepoRankingView, GitHubCohortTrendView, GitHubPlatformComparisonView, GitHubOrgActivityView,
     AIAdoptionForecastView, VisitorCountView, VisitorHeartbeatView, VisitorStatsView, CountryAISignalView, CountryArchetypeView,
     DeToolSummaryView, DeToolByCountryView, OrgArchetypeSummaryView, CountryToolSignalView, ToolListView, 
@@ -24,7 +24,7 @@ urlpatterns = [
     path('de-tool-summary/', DeToolSummaryView.as_view(), name='de-tool-summary'),
     path('de-tool-by-country/', DeToolByCountryView.as_view(), name='de-tool-by-country'),
     path('org-archetype-summary/', OrgArchetypeSummaryView.as_view(), name='org-archetype-summary'),
-    path('country-archetype/', CountryArchetypeView.as_view(), name='country-archetype'),
+    path('oss-landscape-summary/', OssLandscapeSummaryView.as_view(), name='oss-landscape-summary'),
     path('country-tool-signal/', CountryToolSignalView.as_view(), name='country-tool-signal'),
     path('tool-list/', ToolListView.as_view(), name='tool-list'),
 ]
