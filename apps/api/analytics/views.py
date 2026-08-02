@@ -382,6 +382,59 @@ class OssLandscapeSummaryView(APIView):
             "co_adoption_clusters": co_adoption_clusters,
             "tool_momentum_status": "building_history",
         })
+
+SURVEY_TO_GITHUB_REPO = {
+    "Cassandra": "apache/cassandra",
+    "Elasticsearch": "elastic/elasticsearch",
+    "MariaDB": "MariaDB/server",
+    "Microsoft SQL Server": "microsoft/mssql-docker",
+    "MongoDB": "mongodb/mongo",
+    "MySQL": "mysql/mysql-server",
+    "PostgreSQL": "postgres/postgres",
+    "Redis": "redis/redis",
+}
+
+
+class SentimentVsAdoptionGapView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT canonical_tool,
+                   SUM(respondent_count)::numeric / NULLIF(SUM(total_respondents), 0) AS survey_usage_pct
+            FROM dbt_dev_gold.fact_de_tool_by_country_year
+            WHERE canonical_tool = ANY(%s)
+              AND survey_year = (SELECT MAX(survey_year) FROM dbt_dev_gold.fact_de_tool_by_country_year)
+            GROUP BY canonical_tool
+        """, (list(SURVEY_TO_GITHUB_REPO.keys()),))
+        survey_rows = {r['canonical_tool']: r['survey_usage_pct'] for r in cur.fetchall()}
+
+        repo_names = list(SURVEY_TO_GITHUB_REPO.values())
+        cur.execute("""
+            SELECT repo_full_name, stars, contributor_count
+            FROM dbt_dev_gold.dim_github_repo
+            WHERE repo_full_name = ANY(%s)
+        """, (repo_names,))
+        github_rows = {r['repo_full_name']: r for r in cur.fetchall()}
+
+        results = []
+        for tool, repo in SURVEY_TO_GITHUB_REPO.items():
+            survey_pct = survey_rows.get(tool)
+            gh = github_rows.get(repo)
+            if survey_pct is None or gh is None:
+                continue
+            results.append({
+                "tool": tool,
+                "repo": repo,
+                "survey_usage_pct": round(float(survey_pct), 4),
+                "github_stars": gh['stars'],
+                "github_contributors": gh['contributor_count'],
+            })
+        results.sort(key=lambda r: r['survey_usage_pct'], reverse=True)
+
+        cur.close()
+        conn.close()
+        return Response({"gap_analysis": results})
     
 class CountryArchetypeView(APIView):
     def get(self, request):
