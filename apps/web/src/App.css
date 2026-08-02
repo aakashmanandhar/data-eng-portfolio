@@ -2288,17 +2288,10 @@ footer a:hover {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.gis-popup-bar {
-  height: 6px;
-  border-radius: 3px;
-  background: #F59E0B;
-  margin-top: 8px;
-  overflow: hidden;
-}
-.gis-popup-bar-fill {
-  height: 100%;
-  background: #8B5CF6;
-}
+.gis-popup-bar { display: flex; overflow: hidden; }
+.gis-popup-bar-traditional { height: 100%; background: #F59E0B; }
+.gis-popup-bar-ai { height: 100%; background: #8B5CF6; }
+
 .gis-popup-legend-mini {
   display: flex;
   justify-content: space-between;

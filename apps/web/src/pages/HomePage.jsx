@@ -157,7 +157,7 @@ function HomePage() {
         <strong>Aakash Manandhar</strong>
         <div className="nav-links">
           <a href="#projects">Projects</a>
-          <a href="#explorer" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 1 } })); setTimeout(() => document.getElementById('explorer')?.scrollIntoView({ behavior: 'smooth' }), 50) }}>Explorer</a>
+          <a href="#explorer" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })); setTimeout(() => document.getElementById('explorer')?.scrollIntoView({ behavior: 'smooth' }), 50) }}>Explorer</a>
           <Link to="/architecture">Architecture</Link>
           <a href="#adrs">ADRs</a>
           <a href="#about">About</a>
@@ -182,7 +182,7 @@ function HomePage() {
           <p className="hero-sub">{subtext}</p>
           <div className="hero-btns">
             <button className="btn-primary" onClick={() => window.dispatchEvent(new Event('open-chat-widget'))}>Talk to Assistant →</button>
-            <a href="#explorer" className="btn-secondary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 1 } })); setTimeout(() => document.getElementById('explorer')?.scrollIntoView({ behavior: 'smooth' }), 50) }}>Explore the Data</a>
+            <a href="#explorer" className="btn-secondary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })); setTimeout(() => document.getElementById('explorer')?.scrollIntoView({ behavior: 'smooth' }), 50) }}>Explore the Data</a>
           </div>
         </div>
 
@@ -282,122 +282,6 @@ function HomePage() {
           <SoSurveySlide key="so-survey" />,
           <OrgArchetypeSlide key="org-archetype" />,
           <OssLandscapeSlide key="oss-landscape" />,
-          <div className="job-market-slide">
-
-            <section className="explorer-section" id="explorer">
-              <div className="eyebrow">Featured · Live Explorer</div>
-              <div className="explorer-box">
-                <select value={country} onChange={(e) => setCountry(e.target.value)}>
-                  {Object.keys(jobMarketData).sort().map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-                <div className="explorer-grid">
-                  <div className="explorer-panel">
-                    <h4>TOP TOOLS BY USAGE</h4>
-                    {toolRespondentCounts[country] && (
-                      <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '-8px', marginBottom: '12px' }}>
-                        Based on {toolRespondentCounts[country]} data professionals (engineers, analysts, scientists, DBAs) surveyed in this country
-                      </p>
-                    )}
-                    {toolUsageData[country] && toolUsageData[country].length > 0 ? (
-                      toolUsageData[country].map(([name, pct]) => {
-                        const widthPct = Math.min(100, Math.round((pct / toolRespondentCounts[country]) * 100))
-                        return (
-                          <div className="tool-row" key={name}>
-                            <span className="tool-name">{name}</span>
-                            <div className="tool-bar-bg">
-                              <div className="tool-bar-fill" style={{ width: widthPct + '%' }}></div>
-                            </div>
-                            <span className="tool-pct">{pct}/{toolRespondentCounts[country]}</span>
-                          </div>
-                        )
-                      })
-                    ) : (
-                      <p style={{ color: 'var(--muted)', fontSize: '13px' }}>Not enough survey responses yet for this country's tool data.</p>
-                    )}
-                  </div>
-                  <div className="explorer-panel">
-                    <h4>AVG. SALARY BY SENIORITY (USD/yr)</h4>
-                    <div className="salary-cards">
-                      {(() => {
-                        const entries = Object.entries(jobMarketData[country] || {}).filter(([, val]) => val !== null)
-                        if (entries.length === 0) {
-                          return (
-                            <p style={{ color: 'var(--muted)', fontSize: '13px' }}>
-                              No salary data yet for this country — showing job posting volume only.
-                            </p>
-                          )
-                        }
-                        return entries.map(([level, val], i) => {
-                          const prevVal = i > 0 ? entries[i - 1][1] : null
-                          const growth = prevVal ? Math.round(((val - prevVal) / prevVal) * 100) : null
-                          return (
-                            <div className="salary-card" key={level}>
-                              <div className="salary-card-label">{level}</div>
-                              <div className="salary-card-value">${(val / 1000).toFixed(0)}k</div>
-                              <div className={"salary-card-growth" + (growth === null ? " empty" : "")}>
-                                {growth !== null ? `+${growth}%` : ''}
-                              </div>
-                            </div>
-                          )
-                        })
-                      })()}
-                    </div>
-                  </div>
-                </div>
-                <div className="explorer-note">
-                  🔧 Live data from PostgreSQL marts built via dbt.
-                  {lastRefreshed && ` Last refreshed: ${new Date(lastRefreshed).toLocaleString()}`}
-                </div>
-              </div>
-            </section>
-
-            <section className="dual-charts-section">
-              <div className="dual-col">
-                <div className="eyebrow">Data Engineering Jobs Posting by Country</div>
-                <div className="explorer-box">
-                  <div className="chip-scroll-area">
-                    <div className="preferred-grid">
-                      {Object.entries(jobCountsByCountry)
-                        .sort((a, b) => b[1] - a[1])
-                        .map(([country, count], i) => (
-                          <div className="preferred-chip" key={country}>
-                            <span className="preferred-rank">#{i + 1}</span>
-                            <span className="preferred-name">{country}</span>
-                            <span className="preferred-count">{count.toLocaleString()}</span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                  <div className="explorer-note">
-                    🔧 Live data from PostgreSQL marts built via dbt.
-                    {lastRefreshed && ` Last refreshed: ${new Date(lastRefreshed).toLocaleString()}`}
-                  </div>
-                </div>
-              </div>
-              <div className="dual-col">
-                <div className="eyebrow">Most Desired Data Engineering Tools Globally</div>
-                <div className="explorer-box">
-                  <div className="chip-scroll-area">
-                    <div className="preferred-grid">
-                      {preferredGlobal.map(({ tool_name, preference_count }, i) => (
-                        <div className="preferred-chip" key={tool_name}>
-                          <span className="preferred-rank">#{i + 1}</span>
-                          <span className="preferred-name">{tool_name}</span>
-                          <span className="preferred-count">{preference_count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="explorer-note">
-                    🔧 Live data from PostgreSQL marts built via dbt.
-                    {lastRefreshed && ` Last refreshed: ${new Date(lastRefreshed).toLocaleString()}`}
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
         ]}
       />
 

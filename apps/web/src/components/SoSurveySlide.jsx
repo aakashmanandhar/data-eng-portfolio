@@ -102,7 +102,7 @@ function SoSurveySlide() {
   }))
 
   return (
-    <div className="so-survey-slide">
+    <div className="so-survey-slide" id="explorer">
       <div className="tool-selector so-survey-filter-row">
         <span>Filter by country</span>
         <select value={selectedCountry || ''} onChange={(e) => setSelectedCountry(e.target.value || null)}>

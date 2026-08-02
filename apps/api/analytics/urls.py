@@ -21,6 +21,7 @@ urlpatterns = [
     path('visitor-count/', VisitorCountView.as_view(), name='visitor-count'),
     path('visitor-stats/', VisitorStatsView.as_view(), name='visitor-stats'),
     path('country-ai-signal/', CountryAISignalView.as_view(), name='country-ai-signal'),
+    path('country-archetype/', CountryArchetypeView.as_view(), name='country-archetype'),
     path('de-tool-summary/', DeToolSummaryView.as_view(), name='de-tool-summary'),
     path('de-tool-by-country/', DeToolByCountryView.as_view(), name='de-tool-by-country'),
     path('org-archetype-summary/', OrgArchetypeSummaryView.as_view(), name='org-archetype-summary'),

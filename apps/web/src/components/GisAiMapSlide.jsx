@@ -211,7 +211,8 @@ function GisAiMapSlide() {
         <div class="gis-popup-title">${flag} ${name}</div>
         <div class="gis-popup-row">⭐ ${d.total_stargazers.toLocaleString()} total tracked stars</div>
         <div class="gis-popup-bar">
-          <div class="gis-popup-bar-fill" style="width:${(d.ai_share_pct * 100).toFixed(0)}%"></div>
+          <div class="gis-popup-bar-traditional" style="width:${(100 - d.ai_share_pct * 100).toFixed(0)}%"></div>
+          <div class="gis-popup-bar-ai" style="width:${(d.ai_share_pct * 100).toFixed(0)}%"></div>
         </div>
         <div class="gis-popup-legend-mini"><span>Traditional</span><span>${(d.ai_share_pct * 100).toFixed(1)}% AI</span><span>AI</span></div>
       </div>`
