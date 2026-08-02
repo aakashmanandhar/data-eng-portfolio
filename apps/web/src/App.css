@@ -882,6 +882,9 @@ footer a:hover {
   h1 {
     font-size: 30px;
   }
+  .hero-sub {
+    max-width: 100%;
+  }
   .explorer-section {
     padding: 24px 20px;
   }
