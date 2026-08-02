@@ -165,10 +165,18 @@ with DAG(
         ),
     )
 
+    cluster_tool_co_adoption = BashOperator(
+        task_id="cluster_tool_co_adoption",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/cluster_tool_co_adoption.py portfolio_django:/tmp/cluster_tool_co_adoption.py && "
+            "docker exec -w /tmp portfolio_django python cluster_tool_co_adoption.py"
+        ),
+    )
+
     extract_fixed >> load_bronze_fixed
     discover_topics >> load_bronze_discovery
     extract_orgs >> load_bronze_orgs
     extract_arxiv >> load_bronze_arxiv
     extract_hackernews >> load_bronze_hackernews
     extract_oss_insight >> load_bronze_oss_insight
-    [load_bronze_fixed, load_bronze_discovery, load_bronze_orgs, load_bronze_arxiv, load_bronze_hackernews, load_bronze_oss_insight] >> dbt_run >> dbt_test >> forecast_ai_adoption
+    [load_bronze_fixed, load_bronze_discovery, load_bronze_orgs, load_bronze_arxiv, load_bronze_hackernews, load_bronze_oss_insight] >> dbt_run >> dbt_test >> [forecast_ai_adoption, cluster_tool_co_adoption]
