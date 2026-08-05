@@ -493,6 +493,20 @@ class MomentumStatusView(APIView):
         threshold = 14
         return Response({"days_of_history": days, "threshold": threshold, "ready": days >= threshold})
 
+class CountryGrowthForecastView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT country_code, status, days_of_history, growth_rate_per_day,
+                   current_ai_share_pct, predicted_ai_share_pct_30d, r_squared
+            FROM dbt_dev_gold.country_growth_forecast
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
+
 class ToolListView(APIView):
     def get(self, request):
         conn = get_readonly_connection()

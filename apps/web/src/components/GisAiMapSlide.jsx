@@ -90,7 +90,7 @@ const LAYERS = [
   { id: 'ai-vs-traditional', label: 'AI vs Traditional', icon: '🌐', ready: true },
   { id: 'per-tool', label: 'Per-Tool Breakdown', icon: '🔧', ready: true },
   { id: 'archetype', label: 'Archetype Clusters', icon: '🎯', ready: true },
-  { id: 'growth', label: 'Growth Forecast', icon: '📈', ready: false },
+  { id: 'growth', label: 'Growth Forecast', icon: '📈', ready: true },
   { id: 'career', label: 'Career Fit', icon: '💼', ready: false },
 ]
 
@@ -155,6 +155,7 @@ function GisAiMapSlide() {
   const [loading, setLoading] = useState(true)
   const [theme, setTheme] = useState(document.documentElement.getAttribute('data-theme') || 'light')
   const [growthStatus, setGrowthStatus] = useState(null)
+  const [growthForecastData, setGrowthForecastData] = useState([])
 
   console.log('GisAiMapSlide theme:', theme)
 
@@ -186,6 +187,10 @@ function GisAiMapSlide() {
     if (activeLayer === 'archetype' && archetypeData.length === 0) {
       fetch(`${API_BASE}/api/country-archetype/`).then((res) => res.json()).then(setArchetypeData)
         .catch((err) => console.error('Failed to load archetype data:', err))
+    }
+    if (activeLayer === 'growth' && growthForecastData.length === 0) {
+      fetch(`${API_BASE}/api/country-growth-forecast/`).then((res) => res.json()).then(setGrowthForecastData)
+        .catch((err) => console.error('Failed to load growth forecast data:', err))
     }
   }, [activeLayer])
 
@@ -224,6 +229,10 @@ function GisAiMapSlide() {
   } else if (activeLayer === 'per-tool') {
     const maxToolStars = toolData.length > 0 ? Math.max(...toolData.map((t) => t.stargazers)) : 1
     toolData.forEach((d) => { const iso3 = ISO2_TO_ISO3[d.country_code]; if (iso3) dataByIso3[iso3] = { ...d, ratio: d.stargazers / maxToolStars } })
+  } else if (activeLayer === 'growth') {
+    growthForecastData.filter((d) => d.status === 'ok').forEach((d) => {
+      const iso3 = ISO2_TO_ISO3[d.country_code]; if (iso3) dataByIso3[iso3] = d
+    })
   } else {
     countryData.forEach((d) => { const iso3 = ISO2_TO_ISO3[d.country_code]; if (iso3) dataByIso3[iso3] = d })
   }
@@ -234,7 +243,8 @@ function GisAiMapSlide() {
     if (d) {
       if (activeLayer === 'archetype') fillColor = ARCHETYPE_COLORS[d.archetype] || noDataColor
       else if (activeLayer === 'per-tool') fillColor = toolIntensityColor(d.ratio) || noDataColor
-      else fillColor = aiShareColor(d.ai_share_pct) || noDataColor
+      else if (activeLayer === 'growth') fillColor = aiShareColor(d.predicted_ai_share_pct_30d)
+      else fillColor = aiShareColor(d.ai_share_pct)
     }
     const borderColor = theme === 'dark' ? 'rgba(255,255,255,0.35)' : '#334155'
     return { fillColor, weight: 0.7, color: borderColor, fillOpacity: d ? 0.9 : 0.4 }
@@ -260,6 +270,14 @@ function GisAiMapSlide() {
         <div class="gis-popup-row">🔧 ${getToolDisplayName(selectedTool)}</div>
         <div class="gis-popup-row">⭐ ${d.stargazers.toLocaleString()} stars</div>
         <div class="gis-popup-row">📊 ${(d.percentage * 100).toFixed(1)}% of this tool's global stars</div>
+      </div>`
+    } else if (activeLayer === 'growth') {
+      const growthArrow = d.growth_rate_per_day >= 0 ? '📈' : '📉'
+      html = `<div class="gis-popup-inner">
+        <div class="gis-popup-title">${flag} ${name}</div>
+        <div class="gis-popup-row">Now: ${(d.current_ai_share_pct * 100).toFixed(1)}% AI-leaning</div>
+        <div class="gis-popup-row">${growthArrow} Predicted in 30 days: ${(d.predicted_ai_share_pct_30d * 100).toFixed(1)}%</div>
+        <div class="gis-popup-row" style="font-size:10px;color:var(--muted)">${d.days_of_history} days of history, R²=${d.r_squared}</div>
       </div>`
     } else {
       html = `<div class="gis-popup-inner">
@@ -330,6 +348,29 @@ function GisAiMapSlide() {
       )
     }
 
+    // default: ai-vs-traditional
+    if (activeLayer === 'growth') {
+      const okForecasts = growthForecastData.filter((d) => d.status === 'ok')
+      const topRising = [...okForecasts].sort((a, b) => b.growth_rate_per_day - a.growth_rate_per_day).slice(0, 5)
+      return (
+        <>
+          <div className="gis-side-card">
+            <div className="gis-side-title">Fastest-rising (predicted, 30 days)</div>
+            {topRising.map((c, i) => (
+              <div className="gis-rank-row" key={c.country_code}>
+                <span className="gis-rank-num">#{i + 1}</span>
+                <span className="gis-rank-name">{COUNTRY_NAMES[c.country_code] || c.country_code}</span>
+                <span className="gis-rank-value">{(c.predicted_ai_share_pct_30d * 100).toFixed(1)}%</span>
+              </div>
+            ))}
+          </div>
+          <div className="gis-side-card gis-side-card-note">
+            <div className="gis-side-title">What this means</div>
+            <p>A linear regression on each country's real daily AI-share history, projected 30 days forward. Only countries with 7+ days of real accumulated history are shown — no fabricated trends from too little data.</p>
+          </div>
+        </>
+      )
+    }
     // default: ai-vs-traditional
     const sortedByShare = [...countryData].filter((d) => d.total_stargazers >= 500).sort((a, b) => b.ai_share_pct - a.ai_share_pct)
     const mostAI = sortedByShare[0]
@@ -456,6 +497,12 @@ function GisAiMapSlide() {
                     <span>Less popular</span>
                     <div className="gis-gradient-bar" style={{ background: 'linear-gradient(90deg, #1E293B, #8B5CF6)' }}></div>
                     <span>Most popular</span>
+                  </div>
+                ) : activeLayer === 'growth' ? (
+                  <div className="gis-gradient-legend">
+                    <span>Predicted traditional-leaning</span>
+                    <div className="gis-gradient-bar"></div>
+                    <span>Predicted AI-leaning</span>
                   </div>
                 ) : (
                   <div className="gis-gradient-legend">
