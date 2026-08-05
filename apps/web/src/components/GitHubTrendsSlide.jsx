@@ -323,7 +323,7 @@ const buildForecastChartData = (trend, forecastData) => {
             <ResponsiveContainer width="100%" height={90}>
               <BarChart data={cohortChartData} layout="vertical" margin={{ left: 10, right: 30 }}>
                 <XAxis type="number" hide />
-                <YAxis dataKey="label" type="category" stroke="var(--muted)" fontSize={12} width={90} />
+                <YAxis dataKey="label" type="category" interval={0} stroke="var(--muted)" fontSize={12} width={90} />
                 <Tooltip contentStyle={{ background: 'var(--bg-alt)', border: '1px solid var(--border)', fontSize: '12px' }} formatter={(v) => v.toLocaleString()} />
                 <Bar dataKey="stars" radius={[0, 8, 8, 0]} barSize={24}>
                   {cohortChartData.map((entry, i) => (

@@ -18,10 +18,11 @@ function formatNum(n) {
 function OssLandscapeSlide() {
   const [landscape, setLandscape] = useState(null)
   const [gap, setGap] = useState(null)
-
+  const [momentum, setMomentum] = useState(null)
   useEffect(() => {
     fetch(`${API_BASE}/api/oss-landscape-summary/`).then((r) => r.json()).then(setLandscape).catch(console.error)
     fetch(`${API_BASE}/api/sentiment-vs-adoption-gap/`).then((r) => r.json()).then(setGap).catch(console.error)
+    fetch(`${API_BASE}/api/momentum-status/`).then((r) => r.json()).then(setMomentum).catch(console.error)
   }, [])
 
   if (!landscape) return null
@@ -53,8 +54,8 @@ function OssLandscapeSlide() {
           <div className="gis-stat-label"><span className="so-survey-stat-icon">⚖️</span>Hype vs. reality checks</div>
         </div>
         <div className="gis-stat">
-          <div className="gis-stat-value">⏳</div>
-          <div className="gis-stat-label"><span className="so-survey-stat-icon">📈</span>Momentum: building history</div>
+          <div className="gis-stat-value">{momentum?.ready ? '✅' : momentum ? `${momentum.days_of_history}/${momentum.threshold}` : '⏳'}</div>
+          <div className="gis-stat-label"><span className="so-survey-stat-icon">📈</span>{momentum?.ready ? 'Momentum: ready' : 'Momentum: building history'}</div>
         </div>
       </div>
 

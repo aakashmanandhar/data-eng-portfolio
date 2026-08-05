@@ -1410,9 +1410,10 @@ footer a:hover {
 }
 
 .github-trends-slide .explorer-section,
-.github-trends-slide .dual-charts-section {
-  padding: 10px 40px;
-}
+  .github-trends-slide .dual-charts-section {
+    padding: 10px 14px;
+  }
+  
 .github-trends-slide .eyebrow {
   margin-bottom: 6px;
 }

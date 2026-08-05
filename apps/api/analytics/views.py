@@ -199,11 +199,13 @@ class CountryAISignalView(APIView):
         conn = get_readonly_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("""
-            SELECT country_code, ai_stargazers, traditional_stargazers, total_stargazers, ai_share_pct
+            SELECT DISTINCT ON (country_code)
+                country_code, ai_stargazers, traditional_stargazers, total_stargazers, ai_share_pct
             FROM dbt_dev_gold.fact_country_ai_signal
-            ORDER BY total_stargazers DESC
+            ORDER BY country_code, snapshot_date DESC
         """)
         rows = cur.fetchall()
+        rows.sort(key=lambda r: r['total_stargazers'], reverse=True)
         cur.close()
         conn.close()
         return Response(rows)
@@ -469,6 +471,27 @@ class CountryToolSignalView(APIView):
         rows.sort(key=lambda r: r['stargazers'], reverse=True)
         return Response(rows)
 
+class GrowthForecastStatusView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT COUNT(DISTINCT snapshot_date) AS days FROM dbt_dev_gold.fact_country_ai_signal")
+        days = cur.fetchone()['days']
+        cur.close()
+        conn.close()
+        threshold = 7
+        return Response({"days_of_history": days, "threshold": threshold, "ready": days >= threshold})
+
+class MomentumStatusView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT COUNT(DISTINCT snapshot_date) AS days FROM dbt_dev_gold.fact_github_repo_trend")
+        days = cur.fetchone()['days']
+        cur.close()
+        conn.close()
+        threshold = 14
+        return Response({"days_of_history": days, "threshold": threshold, "ready": days >= threshold})
 
 class ToolListView(APIView):
     def get(self, request):

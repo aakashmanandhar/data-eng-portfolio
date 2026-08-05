@@ -31,9 +31,10 @@ cur.execute("""
 significant_repos = [r[0] for r in cur.fetchall()]
 
 cur.execute("""
-    SELECT repo_full_name, country_code, percentage
+    SELECT repo_full_name, country_code, AVG(percentage) AS avg_percentage
     FROM dbt_dev_gold.fact_country_tool_signal
     WHERE country_code = ANY(%s) AND repo_full_name = ANY(%s)
+    GROUP BY repo_full_name, country_code
 """, (significant_countries, significant_repos))
 rows = cur.fetchall()
 
@@ -73,40 +74,61 @@ cur.execute("""
         generated_at DATE NOT NULL DEFAULT CURRENT_DATE
     )
 """)
+
 # Cluster IDs from k-means are NOT stable across runs (confirmed: the same
 # semantic grouping can get a different numeric ID depending on the day's
 # exact data) - names are derived from real cluster CONTENT via anchor
 # repos known to always belong to a specific real-world category, not by
 # positional ID, so labels stay correct regardless of how k-means numbers
 # the clusters on any given day.
+
 cluster_members = {}
 for i in range(len(repos)):
     cluster_members.setdefault(int(cluster_labels[i]), []).append(repos[i])
+
+# Safety net #1: a large cluster picking up a specific "anchor" repo by
+# chance isn't really that narrow category (e.g. 85 unrelated repos
+# happening to include dbt-bigquery isn't genuinely "Cloud-Warehouse
+# Adapters") - only give a narrow anchor name to a cluster small/coherent
+# enough to actually be a meaningful, specific grouping.
+MAX_ANCHOR_CLUSTER_SIZE = 20
+MIN_MEANINGFUL_CLUSTER_SIZE = 3
 
 ANCHOR_RULES = [
     ("Apache Big-Data Ecosystem", "apache/flink"),
     ("Cloud-Warehouse Adapters", "dbt-labs/dbt-bigquery"),
 ]
 cluster_id_to_name = {}
-named_clusters = set()
 for name, anchor in ANCHOR_RULES:
     for cid, members in cluster_members.items():
-        if anchor in members and cid not in cluster_id_to_name:
+        if anchor in members and cid not in cluster_id_to_name and len(members) <= MAX_ANCHOR_CLUSTER_SIZE:
             cluster_id_to_name[cid] = name
-            named_clusters.add(cid)
 
+# The single largest cluster not already anchor-named is always
+# "Mainstream Global Tools" - the biggest, most general group. Anything
+# else still unnamed becomes "Emerging & Community-Driven".
 remaining = [cid for cid in cluster_members if cid not in cluster_id_to_name]
 remaining.sort(key=lambda cid: len(cluster_members[cid]), reverse=True)
-remaining_names = ["Mainstream Global Tools", "Emerging & Community-Driven"]
-for cid, name in zip(remaining, remaining_names):
-    cluster_id_to_name[cid] = name
-for cid in remaining[len(remaining_names):]:
-    cluster_id_to_name[cid] = f"Cluster {cid}"  # fallback if k ever changes
+mainstream_cid = remaining[0] if remaining else max(cluster_members, key=lambda c: len(cluster_members[c]))
+cluster_id_to_name[mainstream_cid] = "Mainstream Global Tools"
+for cid in remaining[1:]:
+    cluster_id_to_name[cid] = "Emerging & Community-Driven"
+
+# Safety net #2: any cluster too tiny to be a meaningful "family" (fewer
+# than MIN_MEANINGFUL_CLUSTER_SIZE repos) gets folded into the mainstream
+# group instead of being shown as its own confusing 1-repo category.
+final_labels = [int(l) for l in cluster_labels]
+for cid, members in cluster_members.items():
+    if len(members) < MIN_MEANINGFUL_CLUSTER_SIZE and cid != mainstream_cid:
+        for i in range(len(repos)):
+            if final_labels[i] == cid:
+                final_labels[i] = mainstream_cid
 
 rows_to_insert = [
-    (repos[i], int(cluster_labels[i]), cluster_id_to_name[int(cluster_labels[i])])
+    (repos[i], final_labels[i], cluster_id_to_name[final_labels[i]])
     for i in range(len(repos))
 ]
+
 execute_values(
     cur,
     """INSERT INTO dbt_dev_gold.tool_co_adoption_cluster (repo_full_name, cluster_id, cluster_name) VALUES %s

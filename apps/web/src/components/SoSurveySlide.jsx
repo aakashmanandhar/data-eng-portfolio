@@ -178,7 +178,7 @@ function SoSurveySlide() {
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={forecastComparisonData} margin={{ left: 0, right: 10, top: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="name" tick={{ fill: 'var(--text)', fontSize: 10.5 }} />
+                  <XAxis dataKey="name" interval={0} tick={{ fill: 'var(--text)', fontSize: 10.5 }} />
                   <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} />
                   <Tooltip content={<ChartTooltip unit="%" />} cursor={{ fill: 'rgba(139, 92, 246, 0.08)' }} />
                   <Bar dataKey="current" name="Current" fill="#3B82F6" radius={[4, 4, 0, 0]} />
@@ -201,7 +201,7 @@ function SoSurveySlide() {
                 <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
                   <XAxis type="number" tick={{ fill: 'var(--muted)', fontSize: 11 }} />
-                  <YAxis type="category" dataKey="name" width={isMobile ? 60 : 85} tick={{ fill: 'var(--text)', fontSize: isMobile ? 9.5 : 10.5 }} />
+                  <YAxis type="category" dataKey="name" interval={0} width={isMobile ? 60 : 85} tick={{ fill: 'var(--text)', fontSize: isMobile ? 9.5 : 10.5 }} />
                   <Tooltip content={<ChartTooltip unit="%" />} cursor={{ fill: 'rgba(139, 92, 246, 0.08)' }} />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                     {chartData.map((_, i) => (
