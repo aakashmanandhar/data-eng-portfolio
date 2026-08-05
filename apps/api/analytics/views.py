@@ -567,3 +567,21 @@ class ToolListView(APIView):
         cur.close()
         conn.close()
         return Response(rows)
+
+class ToolMomentumView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT repo_full_name, cohort, stage, avg_daily_growth, current_stars
+            FROM dbt_dev_gold.tool_momentum_stage
+            WHERE status = 'ok'
+            ORDER BY stage, avg_daily_growth DESC
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        by_stage = {}
+        for r in rows:
+            by_stage.setdefault(r['stage'], []).append(r)
+        return Response(by_stage)
