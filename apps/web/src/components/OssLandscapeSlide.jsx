@@ -19,10 +19,12 @@ function OssLandscapeSlide() {
   const [landscape, setLandscape] = useState(null)
   const [gap, setGap] = useState(null)
   const [momentum, setMomentum] = useState(null)
+  const [momentumDetail, setMomentumDetail] = useState(null)
   useEffect(() => {
     fetch(`${API_BASE}/api/oss-landscape-summary/`).then((r) => r.json()).then(setLandscape).catch(console.error)
     fetch(`${API_BASE}/api/sentiment-vs-adoption-gap/`).then((r) => r.json()).then(setGap).catch(console.error)
     fetch(`${API_BASE}/api/momentum-status/`).then((r) => r.json()).then(setMomentum).catch(console.error)
+    fetch(`${API_BASE}/api/tool-momentum/`).then((r) => r.json()).then(setMomentumDetail).catch(console.error)
   }, [])
 
   if (!landscape) return null
@@ -126,9 +128,35 @@ function OssLandscapeSlide() {
             })}
           </div>
         </div>
+
+        {momentumDetail && (
+          <div className="gis-map-panel oss-card oss-card-wide">
+            <div className="so-survey-panel-title">🚀 Tool momentum — where each tool is in its lifecycle</div>
+            <div className="oss-momentum-grid">
+              {[
+                ['Emerging', '🌱', 'Small but growing'],
+                ['Accelerating', '🔥', 'Established and speeding up'],
+                ['Mature', '⚖️', 'Established and steady'],
+                ['Declining', '📉', 'Flat or shrinking'],
+              ].map(([stage, icon, desc]) => (
+                <div key={stage} className="oss-momentum-col">
+                  <div className="oss-momentum-col-header">
+                    <span>{icon}</span> {stage} <span className="oss-cluster-count">({(momentumDetail[stage] || []).length})</span>
+                  </div>
+                  <div className="oss-momentum-col-desc">{desc}</div>
+                  {(momentumDetail[stage] || []).slice(0, 4).map((t) => (
+                    <div key={t.repo_full_name} className="oss-momentum-item">
+                      <span className="oss-momentum-item-name">{t.repo_full_name.split('/')[1] || t.repo_full_name}</span>
+                      <span className="oss-momentum-item-value">{t.avg_daily_growth > 0 ? '+' : ''}{t.avg_daily_growth}/day</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
 }
-
 export default OssLandscapeSlide
