@@ -481,7 +481,7 @@ function GisAiMapSlide() {
                 <MapContainer key={`map-${theme}`} center={[20, 10]} zoom={2} minZoom={2} maxBounds={[[-90, -180], [90, 180]]}
                               style={{ height: '440px', width: '100%', borderRadius: '10px', background: oceanColor }}
                               scrollWheelZoom={false}>
-                  <GeoJSON key={`${activeLayer}-${selectedTool}-${theme}-${archetypeData.length}-${toolData.length}-${countryData.length}`} data={geoJson} style={styleFeature} onEachFeature={onEachFeature} />
+                  <GeoJSON key={`${activeLayer}-${selectedTool}-${theme}-${archetypeData.length}-${toolData.length}-${countryData.length}-${growthForecastData.length}`} data={geoJson} style={styleFeature} onEachFeature={onEachFeature} />
                 </MapContainer>
                 {activeLayer === 'archetype' ? (
                   <div className="archetype-legend">
