@@ -1,12 +1,13 @@
 from django.urls import path
 from .views import (
-    CountryGrowthForecastView, GrowthForecastStatusView, JobMarketView, MomentumStatusView, OssLandscapeSummaryView, SentimentVsAdoptionGapView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
+    CareerFitView, CountryGrowthForecastView, GrowthForecastStatusView, JobMarketView, MomentumStatusView, OssLandscapeSummaryView, SentimentVsAdoptionGapView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
     GitHubRepoRankingView, GitHubCohortTrendView, GitHubPlatformComparisonView, GitHubOrgActivityView,
     AIAdoptionForecastView, VisitorCountView, VisitorHeartbeatView, VisitorStatsView, CountryAISignalView, CountryArchetypeView,
     DeToolSummaryView, DeToolByCountryView, OrgArchetypeSummaryView, CountryToolSignalView, ToolListView, 
 )
 
 urlpatterns = [
+    path('career-fit/', CareerFitView.as_view(), name='career-fit'),
     path('job-market/', JobMarketView.as_view(), name='job-market'),
     path('tool-usage/', ToolUsageView.as_view(), name='tool-usage'),
     path('tool-preference-global/', ToolPreferenceGlobalView.as_view(), name='tool-preference-global'),

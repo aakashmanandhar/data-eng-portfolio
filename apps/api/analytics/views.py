@@ -19,6 +19,52 @@ def get_readonly_connection():
         password="readonlypass123",
     )
 
+COUNTRY_NAME_TO_CODE = {
+    'Australia': 'AU', 'Austria': 'AT', 'Belgium': 'BE', 'Brazil': 'BR', 'Canada': 'CA',
+    'France': 'FR', 'Germany': 'DE', 'India': 'IN', 'Italy': 'IT', 'Mexico': 'MX',
+    'Netherlands': 'NL', 'New Zealand': 'NZ', 'Poland': 'PL', 'Singapore': 'SG',
+    'South Africa': 'ZA', 'Spain': 'ES', 'Switzerland': 'CH', 'United Kingdom': 'GB',
+    'United States of America': 'US',
+}
+
+
+class CareerFitView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT country_code, growth_rate_per_day, current_ai_share_pct
+            FROM dbt_dev_gold.country_growth_forecast
+            WHERE status = 'ok'
+        """)
+        growth_by_code = {r['country_code']: r for r in cur.fetchall()}
+
+        cur.execute("""
+            SELECT country_name, job_count, so_survey_salary_usd
+            FROM dbt_dev_gold.fact_job_market
+            WHERE seniority_level = 'mid' AND so_survey_salary_usd IS NOT NULL
+        """)
+        salary_rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        results = []
+        for row in salary_rows:
+            code = COUNTRY_NAME_TO_CODE.get(row['country_name'])
+            growth = growth_by_code.get(code)
+            if not code or not growth:
+                continue
+            results.append({
+                "country_code": code,
+                "country_name": row['country_name'],
+                "growth_rate_per_day": growth['growth_rate_per_day'],
+                "current_ai_share_pct": growth['current_ai_share_pct'],
+                "mid_salary_usd": row['so_survey_salary_usd'],
+                "job_count": row['job_count'],
+            })
+        results.sort(key=lambda r: r['growth_rate_per_day'], reverse=True)
+        return Response(results)
+
 
 class JobMarketView(APIView):
     def get(self, request):
