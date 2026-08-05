@@ -91,7 +91,7 @@ const LAYERS = [
   { id: 'per-tool', label: 'Per-Tool Breakdown', icon: '🔧', ready: true },
   { id: 'archetype', label: 'Archetype Clusters', icon: '🎯', ready: true },
   { id: 'growth', label: 'Growth Forecast', icon: '📈', ready: true },
-  { id: 'career', label: 'Career Fit', icon: '💼', ready: false },
+  { id: 'career', label: 'Career Fit', icon: '💼', ready: true },
 ]
 
 const TOOL_DISPLAY_NAMES = {
@@ -156,6 +156,7 @@ function GisAiMapSlide() {
   const [theme, setTheme] = useState(document.documentElement.getAttribute('data-theme') || 'light')
   const [growthStatus, setGrowthStatus] = useState(null)
   const [growthForecastData, setGrowthForecastData] = useState([])
+  const [careerFitData, setCareerFitData] = useState([])
 
   console.log('GisAiMapSlide theme:', theme)
 
@@ -191,6 +192,10 @@ function GisAiMapSlide() {
     if (activeLayer === 'growth' && growthForecastData.length === 0) {
       fetch(`${API_BASE}/api/country-growth-forecast/`).then((res) => res.json()).then(setGrowthForecastData)
         .catch((err) => console.error('Failed to load growth forecast data:', err))
+    }
+    if (activeLayer === 'career' && careerFitData.length === 0) {
+      fetch(`${API_BASE}/api/career-fit/`).then((res) => res.json()).then(setCareerFitData)
+        .catch((err) => console.error('Failed to load career fit data:', err))
     }
   }, [activeLayer])
 
@@ -233,6 +238,14 @@ function GisAiMapSlide() {
     growthForecastData.filter((d) => d.status === 'ok').forEach((d) => {
       const iso3 = ISO2_TO_ISO3[d.country_code]; if (iso3) dataByIso3[iso3] = d
     })
+  } else if (activeLayer === 'career') {
+    const rates = careerFitData.map((d) => d.growth_rate_per_day)
+    const minRate = rates.length > 0 ? Math.min(...rates) : 0
+    const maxRate = rates.length > 0 ? Math.max(...rates) : 1
+    careerFitData.forEach((d) => {
+      const iso3 = ISO2_TO_ISO3[d.country_code]
+      if (iso3) dataByIso3[iso3] = { ...d, ratio: maxRate > minRate ? (d.growth_rate_per_day - minRate) / (maxRate - minRate) : 0.5 }
+    })
   } else {
     countryData.forEach((d) => { const iso3 = ISO2_TO_ISO3[d.country_code]; if (iso3) dataByIso3[iso3] = d })
   }
@@ -244,6 +257,7 @@ function GisAiMapSlide() {
       if (activeLayer === 'archetype') fillColor = ARCHETYPE_COLORS[d.archetype] || noDataColor
       else if (activeLayer === 'per-tool') fillColor = toolIntensityColor(d.ratio) || noDataColor
       else if (activeLayer === 'growth') fillColor = aiShareColor(d.predicted_ai_share_pct_30d)
+      else if (activeLayer === 'career') fillColor = toolIntensityColor(d.ratio) || noDataColor
       else fillColor = aiShareColor(d.ai_share_pct)
     }
     const borderColor = theme === 'dark' ? 'rgba(255,255,255,0.35)' : '#334155'
@@ -278,6 +292,13 @@ function GisAiMapSlide() {
         <div class="gis-popup-row">Now: ${(d.current_ai_share_pct * 100).toFixed(1)}% AI-leaning</div>
         <div class="gis-popup-row">${growthArrow} Predicted in 30 days: ${(d.predicted_ai_share_pct_30d * 100).toFixed(1)}%</div>
         <div class="gis-popup-row" style="font-size:10px;color:var(--muted)">${d.days_of_history} days of history, R²=${d.r_squared}</div>
+      </div>`
+    } else if (activeLayer === 'career') {
+      html = `<div class="gis-popup-inner">
+        <div class="gis-popup-title">${flag} ${name}</div>
+        <div class="gis-popup-row">📈 AI growth: ${(d.growth_rate_per_day * 100).toFixed(2)}%/day</div>
+        <div class="gis-popup-row">💰 Mid-level salary: $${d.mid_salary_usd.toLocaleString()}</div>
+        <div class="gis-popup-row">💼 ${d.job_count.toLocaleString()} tracked job postings</div>
       </div>`
     } else {
       html = `<div class="gis-popup-inner">
@@ -367,6 +388,27 @@ function GisAiMapSlide() {
           <div className="gis-side-card gis-side-card-note">
             <div className="gis-side-title">What this means</div>
             <p>A linear regression on each country's real daily AI-share history, projected 30 days forward. Only countries with 7+ days of real accumulated history are shown — no fabricated trends from too little data.</p>
+          </div>
+        </>
+      )
+    }
+    // default: ai-vs-traditional
+    if (activeLayer === 'career') {
+      return (
+        <>
+          <div className="gis-side-card">
+            <div className="gis-side-title">Ranked by AI growth trajectory</div>
+            {careerFitData.map((c, i) => (
+              <div className="gis-rank-row" key={c.country_code}>
+                <span className="gis-rank-num">#{i + 1}</span>
+                <span className="gis-rank-name">{c.country_name}</span>
+                <span className="gis-rank-value">${Math.round(c.mid_salary_usd / 1000)}K</span>
+              </div>
+            ))}
+          </div>
+          <div className="gis-side-card gis-side-card-note">
+            <div className="gis-side-title">What this means</div>
+            <p>Real AI-growth trajectory (from Growth Forecast) shown alongside real mid-level salary and job-posting data for the {careerFitData.length} countries where both exist. This shows correlation, not causation — it doesn't claim growing AI adoption causes higher pay, just shows both real signals side by side so you can judge for yourself.</p>
           </div>
         </>
       )
@@ -481,7 +523,7 @@ function GisAiMapSlide() {
                 <MapContainer key={`map-${theme}`} center={[20, 10]} zoom={2} minZoom={2} maxBounds={[[-90, -180], [90, 180]]}
                               style={{ height: '440px', width: '100%', borderRadius: '10px', background: oceanColor }}
                               scrollWheelZoom={false}>
-                  <GeoJSON key={`${activeLayer}-${selectedTool}-${theme}-${archetypeData.length}-${toolData.length}-${countryData.length}-${growthForecastData.length}`} data={geoJson} style={styleFeature} onEachFeature={onEachFeature} />
+                  <GeoJSON key={`${activeLayer}-${selectedTool}-${theme}-${archetypeData.length}-${toolData.length}-${countryData.length}-${growthForecastData.length}-${careerFitData.length}`} data={geoJson} style={styleFeature} onEachFeature={onEachFeature} />
                 </MapContainer>
                 {activeLayer === 'archetype' ? (
                   <div className="archetype-legend">
@@ -503,6 +545,12 @@ function GisAiMapSlide() {
                     <span>Predicted traditional-leaning</span>
                     <div className="gis-gradient-bar"></div>
                     <span>Predicted AI-leaning</span>
+                  </div>
+                ) : activeLayer === 'career' ? (
+                  <div className="gis-gradient-legend">
+                    <span>Slower AI growth</span>
+                    <div className="gis-gradient-bar" style={{ background: 'linear-gradient(90deg, #1E293B, #8B5CF6)' }}></div>
+                    <span>Faster AI growth</span>
                   </div>
                 ) : (
                   <div className="gis-gradient-legend">
