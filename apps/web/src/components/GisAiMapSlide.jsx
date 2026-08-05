@@ -212,9 +212,7 @@ function GisAiMapSlide() {
        countryData.reduce((sum, d) => sum + d.total_stargazers, 0) * 100).toFixed(1)
     : null
   const topCountries = [...countryData].sort((a, b) => b.total_stargazers - a.total_stargazers).slice(0, 5)
-  const layers = LAYERS.map((l) =>
-    l.id === 'growth' ? { ...l, ready: growthStatus?.ready ?? false } : l
-  )
+  const layers = LAYERS
   const currentLayer = layers.find((l) => l.id === activeLayer)
   const mapReady = currentLayer?.ready
   const noDataColor = theme === 'dark' ? '#1E293B' : '#E2E8F0'
