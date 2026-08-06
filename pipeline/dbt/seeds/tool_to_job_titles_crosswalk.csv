@@ -1,0 +1,76 @@
+canonical_tool,job_title
+Python,Data Scientist
+Python,Machine Learning Engineer
+Python,Data Engineer
+Python,AI Engineer
+SQL,Data Analyst
+SQL,Business Intelligence Analyst
+SQL,Data Engineer
+SQL,Analytics Engineer
+R,Data Scientist
+R,Research Scientist
+R,Applied Scientist
+Scala,Data Engineer
+Scala,Backend Engineer
+Rust,Software Engineer
+Rust,Backend Engineer
+Rust,Systems Engineer
+Go,Software Engineer
+Go,Backend Engineer
+Go,DevOps Engineer
+Java,Software Engineer
+Java,Backend Engineer
+Java,Software Development Engineer
+Julia,Data Scientist
+Julia,Research Scientist
+Julia,Machine Learning Researcher
+Bash/Shell,DevOps Engineer
+Bash/Shell,Systems Engineer
+Bash/Shell,Cloud Engineer
+MySQL,Database Administrator
+MySQL,Data Engineer
+MySQL,Backend Engineer
+PostgreSQL,Data Engineer
+PostgreSQL,Database Administrator
+PostgreSQL,Backend Engineer
+MongoDB,Backend Engineer
+MongoDB,Software Engineer
+MongoDB,Data Engineer
+Redis,Backend Engineer
+Redis,Software Engineer
+Redis,DevOps Engineer
+MariaDB,Database Administrator
+MariaDB,Data Engineer
+Elasticsearch,Data Engineer
+Elasticsearch,Backend Engineer
+Elasticsearch,Software Engineer
+Oracle,Database Administrator
+Oracle,Data Architect
+DynamoDB,Cloud Engineer
+DynamoDB,Backend Engineer
+DynamoDB,Software Engineer
+Cassandra,Data Engineer
+Cassandra,Backend Engineer
+Cassandra,Cloud Database Engineer
+Microsoft SQL Server,Database Administrator
+Microsoft SQL Server,Data Engineer
+Microsoft SQL Server,Business Intelligence Engineer
+Amazon Web Services (AWS),Cloud Engineer
+Amazon Web Services (AWS),Solutions Architect
+Amazon Web Services (AWS),DevOps Engineer
+Amazon Web Services (AWS),Cloud Architect
+Microsoft Azure,Cloud Engineer
+Microsoft Azure,Solutions Architect
+Microsoft Azure,DevOps Engineer
+Docker,DevOps Engineer
+Docker,Software Engineer
+Docker,MLOps Engineer
+Kubernetes,DevOps Engineer
+Kubernetes,Cloud Engineer
+Kubernetes,MLOps Engineer
+Databricks,Data Engineer
+Databricks,Machine Learning Engineer
+Databricks,Analytics Engineer
+Google Cloud Platform,Cloud Engineer
+Google Cloud Platform,Solutions Architect
+Google Cloud Platform,Cloud Architect
