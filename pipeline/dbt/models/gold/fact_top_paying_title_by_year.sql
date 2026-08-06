@@ -6,6 +6,7 @@ WITH ranked AS (
         AVG(salary_in_usd) AS avg_salary_usd,
         ROW_NUMBER() OVER (PARTITION BY work_year ORDER BY AVG(salary_in_usd) DESC) AS rn
     FROM {{ ref('silver_ai_jobs_salaries') }}
+    WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM {{ ref('silver_ai_jobs_salaries') }})
     GROUP BY work_year, job_title
     HAVING COUNT(*) >= 20
 )

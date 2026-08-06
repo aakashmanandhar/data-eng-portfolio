@@ -2,6 +2,7 @@ import json
 from datetime import date
 import psycopg2
 from dotenv import load_dotenv
+from datetime import datetime, timezone
 
 load_dotenv()
 
@@ -16,14 +17,13 @@ cur = conn.cursor()
 
 with open("ai_jobs_salaries_raw_output.json") as f:
     rows = json.load(f)
-
 snapshot_date = date.today().isoformat()
-
+batch_loaded_at = datetime.now(timezone.utc)  # ONE shared timestamp for this whole batch, not per-row now()
 rows_loaded = 0
 for row in rows:
     cur.execute(
-        "INSERT INTO bronze.ai_jobs_salaries_snapshot (raw_data, snapshot_date) VALUES (%s, %s)",
-        (json.dumps(row), snapshot_date),
+        "INSERT INTO bronze.ai_jobs_salaries_snapshot (raw_data, snapshot_date, loaded_at) VALUES (%s, %s, %s)",
+        (json.dumps(row), snapshot_date, batch_loaded_at),
     )
     rows_loaded += 1
 
