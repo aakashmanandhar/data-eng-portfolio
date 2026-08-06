@@ -13,3 +13,4 @@ sources:
       - name: oss_insight_stargazers
       - name: so_survey_historical
       - name: practical_data_survey_2026
+      - name: ai_jobs_salaries_snapshot
