@@ -25,3 +25,31 @@ models:
       - name: role
         tests:
           - not_null
+  - name: silver_ai_jobs_salaries
+    columns:
+      - name: work_year
+        tests:
+          - not_null
+      - name: experience_level
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['EN', 'MI', 'SE', 'EX']
+      - name: employment_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['CT', 'FL', 'FT', 'PT']
+      - name: salary_in_usd
+        tests:
+          - not_null
+      - name: remote_ratio
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 50, 100]
+      - name: company_size
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['S', 'M', 'L']

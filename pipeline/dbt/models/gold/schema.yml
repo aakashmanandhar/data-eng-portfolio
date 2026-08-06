@@ -144,3 +144,31 @@ models:
       - name: rank_overall
         tests:
           - not_null
+  - name: fact_salary_by_experience
+    columns:
+      - name: work_year
+        tests:
+          - not_null
+      - name: experience_level
+        tests:
+          - not_null
+      - name: median_salary_usd
+        tests:
+          - not_null
+  - name: fact_salary_by_tool
+    columns:
+      - name: canonical_tool
+        tests:
+          - not_null
+      - name: job_title
+        tests:
+          - not_null
+  - name: fact_top_paying_title_by_year
+    columns:
+      - name: work_year
+        tests:
+          - not_null
+          - unique
+      - name: job_title
+        tests:
+          - not_null
