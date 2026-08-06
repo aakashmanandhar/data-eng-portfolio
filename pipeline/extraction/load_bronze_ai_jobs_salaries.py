@@ -1,0 +1,35 @@
+import json
+from datetime import date
+import psycopg2
+from dotenv import load_dotenv
+
+load_dotenv()
+
+conn = psycopg2.connect(
+    host="portfolio_postgres",
+    port=5432,
+    dbname="portfolio",
+    user="postgres",
+    password="localdevpassword",
+)
+cur = conn.cursor()
+
+with open("ai_jobs_salaries_raw_output.json") as f:
+    rows = json.load(f)
+
+snapshot_date = date.today().isoformat()
+
+rows_loaded = 0
+for row in rows:
+    cur.execute(
+        "INSERT INTO bronze.ai_jobs_salaries_snapshot (raw_data, snapshot_date) VALUES (%s, %s)",
+        (json.dumps(row), snapshot_date),
+    )
+    rows_loaded += 1
+
+print(f"Loaded {rows_loaded} rows into bronze.ai_jobs_salaries_snapshot (snapshot_date={snapshot_date})")
+
+conn.commit()
+cur.close()
+conn.close()
+print("Done.")
