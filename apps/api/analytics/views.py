@@ -585,3 +585,94 @@ class ToolMomentumView(APIView):
         for r in rows:
             by_stage.setdefault(r['stage'], []).append(r)
         return Response(by_stage)
+
+class SalaryKPISummaryView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT work_year, experience_level, median_salary_usd
+            FROM dbt_dev_gold.fact_salary_by_experience
+            ORDER BY experience_level, work_year
+        """)
+        salary_by_experience = cur.fetchall()
+
+        cur.execute("""
+            SELECT work_year, remote_ratio, SUM(respondent_count) AS respondent_count
+            FROM dbt_dev_gold.fact_remote_ratio_trend
+            GROUP BY work_year, remote_ratio
+            ORDER BY work_year, remote_ratio
+        """)
+        remote_ratio_trend = cur.fetchall()
+
+        cur.execute("""
+            SELECT work_year, job_title, avg_salary_usd, respondent_count
+            FROM dbt_dev_gold.fact_top_paying_title_by_year
+            ORDER BY work_year DESC
+            LIMIT 1
+        """)
+        top_paying_title = cur.fetchone()
+        cur.close()
+        conn.close()
+        return Response({
+            "salary_by_experience": salary_by_experience,
+            "remote_ratio_trend": remote_ratio_trend,
+            "top_paying_title": top_paying_title,
+        })
+
+
+class SalaryToolListView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT DISTINCT canonical_tool FROM dbt_dev.tool_to_job_titles_crosswalk ORDER BY canonical_tool")
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response([r['canonical_tool'] for r in rows])
+
+
+class SalaryByToolView(APIView):
+    def get(self, request):
+        tool = request.query_params.get('tool')
+        if not tool:
+            return Response({"error": "tool query param required"}, status=400)
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        cur.execute("""
+            SELECT work_year, AVG(avg_salary_usd) AS avg_salary_usd, SUM(respondent_count) AS respondent_count
+            FROM dbt_dev_gold.fact_salary_by_tool
+            WHERE canonical_tool = %s
+            GROUP BY work_year
+            ORDER BY work_year
+        """, (tool,))
+        salary_trend = cur.fetchall()
+
+        cur.execute("""
+            SELECT job_title, AVG(avg_salary_usd) AS avg_salary_usd, SUM(respondent_count) AS respondent_count
+            FROM dbt_dev_gold.fact_salary_by_tool
+            WHERE canonical_tool = %s
+            GROUP BY job_title
+            ORDER BY avg_salary_usd DESC
+        """, (tool,))
+        title_breakdown = cur.fetchall()
+
+        cur.execute("""
+            SELECT survey_year,
+                   SUM(respondent_count)::numeric / NULLIF(SUM(total_respondents), 0) AS usage_pct
+            FROM dbt_dev_gold.fact_de_tool_by_country_year
+            WHERE canonical_tool = %s
+            GROUP BY survey_year
+            ORDER BY survey_year
+        """, (tool,))
+        adoption_trend = cur.fetchall()
+
+        cur.close()
+        conn.close()
+        return Response({
+            "tool": tool,
+            "salary_trend": salary_trend,
+            "title_breakdown": title_breakdown,
+            "adoption_trend": adoption_trend,
+        })

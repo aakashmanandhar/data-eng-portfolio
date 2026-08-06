@@ -1,9 +1,9 @@
 from django.urls import path
 from .views import (
-    CareerFitView, CountryGrowthForecastView, GrowthForecastStatusView, JobMarketView, MomentumStatusView, OssLandscapeSummaryView, SentimentVsAdoptionGapView, ToolMomentumView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
+    CareerFitView, CountryGrowthForecastView, GrowthForecastStatusView, JobMarketView, MomentumStatusView, OssLandscapeSummaryView, SalaryKPISummaryView, SalaryToolListView, SentimentVsAdoptionGapView, ToolMomentumView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
     GitHubRepoRankingView, GitHubCohortTrendView, GitHubPlatformComparisonView, GitHubOrgActivityView,
     AIAdoptionForecastView, VisitorCountView, VisitorHeartbeatView, VisitorStatsView, CountryAISignalView, CountryArchetypeView,
-    DeToolSummaryView, DeToolByCountryView, OrgArchetypeSummaryView, CountryToolSignalView, ToolListView, 
+    DeToolSummaryView, DeToolByCountryView, OrgArchetypeSummaryView, CountryToolSignalView, ToolListView, SalaryByToolView,
 )
 
 urlpatterns = [
@@ -34,4 +34,7 @@ urlpatterns = [
     path('country-growth-forecast/', CountryGrowthForecastView.as_view(), name='country-growth-forecast'),
     path('tool-list/', ToolListView.as_view(), name='tool-list'),
     path('tool-momentum/', ToolMomentumView.as_view(), name='tool-momentum'),
+    path('salary-kpi-summary/', SalaryKPISummaryView.as_view(), name='salary-kpi-summary'),
+    path('salary-tool-list/', SalaryToolListView.as_view(), name='salary-tool-list'),
+    path('salary-by-tool/', SalaryByToolView.as_view(), name='salary-by-tool'),
 ]
