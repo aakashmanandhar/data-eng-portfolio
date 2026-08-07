@@ -9,6 +9,17 @@ import SoSurveySlide from '../components/SoSurveySlide'
 import OrgArchetypeSlide from '../components/OrgArchetypeSlide'
 import OssLandscapeSlide from '../components/OssLandscapeSlide'
 
+function relativeTime(dateStr) {
+  const diffMs = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  return `${days}d ago`
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
 function HomePage() {
@@ -34,12 +45,18 @@ function HomePage() {
   const [pipelineRuns, setPipelineRuns] = useState([])
   const [activeSlide, setActiveSlide] = useState(0)
   const [githubPipelineRuns, setGithubPipelineRuns] = useState([])
-
+  const [salaryPipelineRuns, setSalaryPipelineRuns] = useState([])
   useEffect(() => {
     fetch(`${API_BASE}/api/pipeline-runs/?pipeline=github_trends`)
       .then((res) => res.json())
       .then(setGithubPipelineRuns)
       .catch((err) => console.error('Failed to load pipeline runs:', err))
+  }, [])
+  useEffect(() => {
+    fetch(`${API_BASE}/api/pipeline-runs/?pipeline=salary_pipeline`)
+      .then((res) => res.json())
+      .then(setSalaryPipelineRuns)
+      .catch((err) => console.error('Failed to load salary pipeline runs:', err))
   }, [])
 
   useEffect(() => {
@@ -230,50 +247,58 @@ function HomePage() {
       </div>
       
 
-         <div className="analytics-header">
-        <div className="analytics-header-text">
-          <h2>Live Data Engineering Analytics</h2>
-          <p>Real GitHub trends, a decade of tool-adoption history, and organizational behavior — refreshed automatically by live ELT and ML pipelines. Six views into how data engineering is actually evolving.</p>
-        </div>
-        {activeSlide === 2 || activeSlide === 3 || activeSlide === 4 ? (
-          <div className="pipeline-status-widget status-static">
-            <span className="pipeline-status-icon">{activeSlide === 4 ? '🛰️' : '📊'}</span>
-            <div className="pipeline-status-text">
-              <span className="pipeline-status-title">
-                {activeSlide === 2 ? 'Historical Survey Data' : activeSlide === 3 ? 'Community Survey Data' : 'GitHub Ecosystem Data'}
-              </span>
-              <span className="pipeline-status-time">
-                {activeSlide === 2 ? '2016–2025, static snapshot' : activeSlide === 3 ? '2026, static snapshot' : 'Daily GitHub data + survey'}
-              </span>
-            </div>
+      <div className="analytics-header">
+          <div className="analytics-header-text">
+            <h2>Live Data Engineering Analytics</h2>
+            <p>Real salary and career intelligence from a trained ML model, a decade of tool-adoption history, and organizational and geographic AI trends — refreshed automatically by live ELT and ML pipelines. Six views into how data engineering careers and tooling are actually evolving.</p>
           </div>
-        ) : (
-          <div className={`pipeline-status-widget ${
-            activeSlide <= 1
-              ? (githubPipelineRuns.length > 0 ? `status-${githubPipelineRuns[0].status}` : 'status-unknown')
-              : (pipelineRuns.length > 0 ? `status-${pipelineRuns[0].status}` : 'status-unknown')
-          }`}>
-            <span className="pipeline-status-icon">
-              {activeSlide <= 1
-                ? (githubPipelineRuns.length === 0 ? '⏳' : githubPipelineRuns[0].status === 'success' ? '✅' : '❌')
-                : (pipelineRuns.length === 0 ? '⏳' : pipelineRuns[0].status === 'success' ? '✅' : '❌')}
-            </span>
-            <div className="pipeline-status-text">
-              <span className="pipeline-status-title">
-                {activeSlide <= 1 ? 'Airflow Pipeline ' : 'Jenkins Pipeline '}
-                {(activeSlide <= 1 ? githubPipelineRuns : pipelineRuns).length === 0
-                  ? 'No runs yet'
-                  : (activeSlide <= 1 ? githubPipelineRuns : pipelineRuns)[0].status === 'success' ? 'Healthy' : 'Failed'}
-              </span>
-              {(activeSlide <= 1 ? githubPipelineRuns : pipelineRuns).length > 0 && (
-                <span className="pipeline-status-time">
-                  {new Date((activeSlide <= 1 ? githubPipelineRuns : pipelineRuns)[0].finished_at).toLocaleString()}
+          {(() => {
+            const slideConfig = [
+              { kind: 'airflow', runs: salaryPipelineRuns, title: 'Salary Pipeline' },
+              { kind: 'airflow', runs: githubPipelineRuns, title: 'GitHub Trends Pipeline' },
+              { kind: 'airflow', runs: githubPipelineRuns, title: 'AI Adoption Pipeline' },
+              { kind: 'static', icon: '📊', title: 'Historical Survey Data', time: '2016–2025, static snapshot' },
+              { kind: 'static', icon: '📊', title: 'Community Survey Data', time: '2026, static snapshot' },
+              { kind: 'airflow', runs: githubPipelineRuns, title: 'OSS Landscape Pipeline' },
+            ]
+            const cfg = slideConfig[activeSlide] || slideConfig[1]
+            if (cfg.kind === 'static') {
+              return (
+                <div className="pipeline-status-widget status-static">
+                  <span className="pipeline-status-icon-badge">
+                    <span className="pipeline-status-icon">{cfg.icon}</span>
+                  </span>
+                  <div className="pipeline-status-text">
+                    <span className="pipeline-status-title">{cfg.title}</span>
+                    <span className="pipeline-status-time">{cfg.time}</span>
+                  </div>
+                </div>
+              )
+            }
+            const runs = cfg.runs
+            const status = runs.length === 0 ? 'unknown' : runs[0].status
+            return (
+              <div className={`pipeline-status-widget status-${status}`}>
+                <span className="pipeline-status-icon-badge">
+                  <span className="pipeline-status-icon">
+                    {runs.length === 0 ? '⏳' : status === 'success' ? '✓' : '✕'}
+                  </span>
+                  {status === 'success' && <span className="pipeline-status-live-dot"></span>}
                 </span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+                <div className="pipeline-status-text">
+                  <span className="pipeline-status-title">
+                    {cfg.title} {runs.length === 0 ? '· No runs yet' : status === 'success' ? '· Live' : '· Failed'}
+                  </span>
+                  {runs.length > 0 && (
+                    <span className="pipeline-status-time">
+                      Updated {relativeTime(runs[0].finished_at)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+        </div>
       <Carousel
         onSlideChange={setActiveSlide}
         slides={[

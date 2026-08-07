@@ -24,6 +24,12 @@ function KpiTile({ label, value, prefix = '', suffix = '', sparklineData, icon }
 }
 
 function SalaryTrendsSlide() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 480)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 480)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
   const [kpi, setKpi] = useState(null)
   const [toolList, setToolList] = useState([])
   const [selectedTool, setSelectedTool] = useState('Python')
@@ -206,7 +212,7 @@ function SalaryTrendsSlide() {
                 Each dot is a skill. Further right = its pay is rising faster year over year. Higher up = it already pays more today. Only skills with 4+ years of real history are shown — no guessing from too little data.
               </div>
               {skillGrowth && (
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={isMobile ? 220 : 280}>
                   <ScatterChart margin={{ top: 10, right: 20, bottom: 30, left: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis type="number" dataKey="growth_rate_per_year" name="Salary growth" tick={{ fill: 'var(--muted)', fontSize: 10.5 }} tickFormatter={(v) => `$${Math.round(v / 1000)}K/yr`}>
@@ -248,7 +254,7 @@ function SalaryTrendsSlide() {
                 ))}
               </div>
               {forecastData?.[forecastLevel] && (
-                <ResponsiveContainer width="100%" height={260}>
+                <ResponsiveContainer width="100%" height={isMobile ? 200 : 260}>
                   <AreaChart data={forecastData[forecastLevel].map((d) => ({
                     year: d.forecast_year, predicted: Math.round(d.predicted_salary),
                     lower: Math.round(d.lower_bound), upper: Math.round(d.upper_bound),
@@ -289,7 +295,7 @@ function SalaryTrendsSlide() {
               <div className="salary-tab-panel-desc">
                 Job titles grouped by their real pay, remote-friendliness, and typical company size — 4 real patterns found in how careers actually cluster, not assigned by hand.
               </div>
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={isMobile ? 220 : 280}>
                 <RadarChart data={radarChartData}>
                   <PolarGrid stroke="var(--border)" />
                   <PolarAngleAxis dataKey="dimension" tick={{ fill: 'var(--text)', fontSize: 11 }} />
