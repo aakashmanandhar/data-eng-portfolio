@@ -1,3 +1,5 @@
+import joblib
+import os
 import psycopg2
 import psycopg2.extras
 from rest_framework.views import APIView
@@ -625,7 +627,7 @@ class SalaryToolListView(APIView):
     def get(self, request):
         conn = get_readonly_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT DISTINCT canonical_tool FROM dbt_dev.tool_to_job_titles_crosswalk ORDER BY canonical_tool")
+        cur.execute("SELECT DISTINCT canonical_tool FROM dbt_dev_gold.fact_salary_by_tool ORDER BY canonical_tool")
         rows = cur.fetchall()
         cur.close()
         conn.close()
@@ -675,4 +677,110 @@ class SalaryByToolView(APIView):
             "salary_trend": salary_trend,
             "title_breakdown": title_breakdown,
             "adoption_trend": adoption_trend,
+        })
+
+
+class SkillSalaryGrowthView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT canonical_tool, status, years_of_history, growth_rate_per_year, latest_salary, r_squared
+            FROM dbt_dev_gold.skill_salary_growth
+            ORDER BY growth_rate_per_year DESC NULLS LAST
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
+
+
+class SalaryForecastMultiyearView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT experience_level, forecast_year, status, growth_rate_per_year,
+                   predicted_salary, lower_bound, upper_bound
+            FROM dbt_dev_gold.salary_forecast_multiyear
+            ORDER BY experience_level, forecast_year
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        by_level = {}
+        for r in rows:
+            by_level.setdefault(r['experience_level'], []).append(r)
+        return Response(by_level)
+
+
+class CareerArchetypeView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT job_title, archetype, median_salary_usd, avg_remote_ratio, avg_company_size_score, respondent_count
+            FROM dbt_dev_gold.career_archetype
+            ORDER BY archetype, median_salary_usd DESC
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
+
+
+EXPERIENCE_MAP = {"EN": 0, "MI": 1, "SE": 2, "EX": 3}
+SIZE_MAP = {"S": 0, "M": 1, "L": 2}
+_predictor_model = None
+_title_map = None
+
+
+def _load_predictor():
+    global _predictor_model, _title_map
+    if _predictor_model is None:
+        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        _predictor_model = joblib.load(os.path.join(base, 'analytics', 'ml_models', 'salary_predictor.joblib'))
+        _title_map = joblib.load(os.path.join(base, 'analytics', 'ml_models', 'title_map.joblib'))
+    return _predictor_model, _title_map
+
+
+class SalaryPredictorMetaView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT r_squared, mae_usd, trained_on_rows, tested_on_rows FROM dbt_dev_gold.salary_predictor_metadata WHERE id = 1")
+        meta = cur.fetchone()
+        cur.close()
+        conn.close()
+        _, title_map = _load_predictor()
+        return Response({**meta, "available_titles": sorted(title_map.keys())})
+
+
+class SalaryPredictorView(APIView):
+    def get(self, request):
+        experience_level = request.query_params.get('experience_level')
+        remote_ratio = request.query_params.get('remote_ratio')
+        company_size = request.query_params.get('company_size')
+        job_title = request.query_params.get('job_title')
+        if not all([experience_level, remote_ratio, company_size, job_title]):
+            return Response({"error": "experience_level, remote_ratio, company_size, job_title all required"}, status=400)
+
+        model, title_map = _load_predictor()
+        if experience_level not in EXPERIENCE_MAP or company_size not in SIZE_MAP or job_title not in title_map:
+            return Response({"error": "invalid input value"}, status=400)
+
+        features = [[EXPERIENCE_MAP[experience_level], int(remote_ratio), SIZE_MAP[company_size], title_map[job_title]]]
+        prediction = model.predict(features)[0]
+
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT r_squared, mae_usd FROM dbt_dev_gold.salary_predictor_metadata WHERE id = 1")
+        meta = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        return Response({
+            "predicted_salary": round(float(prediction)),
+            "r_squared": float(meta['r_squared']),
+            "mae_usd": float(meta['mae_usd']),
         })
