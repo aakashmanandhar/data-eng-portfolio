@@ -111,6 +111,21 @@ Notes: Joins the ai-jobs-net-salaries source to real job titles via a hand-built
 
 IMPORTANT - decoding categorical codes for the salary tables above: experience_level (EN=Entry-level, MI=Mid-level, SE=Senior-level, EX=Executive-level), employment_type on silver_ai_jobs_salaries if ever queried directly (FT=Full-time, PT=Part-time, CT=Contract, FL=Freelance), company_size (S=Small, M=Medium, L=Large). employee_residence and company_location are real ISO 3166-1 alpha-2 country codes (e.g. 'DE' for Germany, 'IN' for India) - when a question names a country, translate it to its real ISO alpha-2 code for the WHERE clause (standard, well-known codes - do not guess an unfamiliar/obscure code, and if genuinely unsure, say so rather than filtering on a wrong code).
 
+Table: dbt_dev_gold.skill_salary_growth
+Columns: canonical_tool (text), status (text), years_of_history (integer), growth_rate_per_year (numeric, USD/year), latest_salary (numeric), r_squared (numeric)
+Notes: Real per-tool salary growth trend (LinearRegression on weighted-avg salary by year, from ai-jobs-net-salaries). Only status='ok' rows have real numbers - 4-year minimum history gate, 9 of 25 tools are honestly status='insufficient_data' (fewer than 4 years) and should be reported as "not enough data yet" if asked, never estimated. IMPORTANT: some tools show IDENTICAL growth_rate_per_year and latest_salary (e.g. Elasticsearch/MongoDB, PostgreSQL/MySQL) - this is real and expected, not a data error: those specific tools happen to map to the exact same set of job titles in the underlying crosswalk, so with no additional tool-specific salary signal, their computed numbers are genuinely identical. Explain this honestly if asked why two tools show the same number, rather than treating it as a bug.
+
+Table: dbt_dev_gold.salary_forecast_multiyear
+Columns: experience_level (EN/MI/SE/EX), forecast_year (integer, 2026-2028 only), status, growth_rate_per_year, predicted_salary, lower_bound, upper_bound (95% prediction interval, NOT a simple percentage guess - computed via the real standard-error-of-prediction formula for simple linear regression)
+Notes: MANDATORY DISAMBIGUATION - a forecast for that EXPERIENCE LEVEL ACROSS ALL JOB TITLES COMBINED, never specific to any one role. If the question names a specific job title (e.g. "senior software engineer", "senior data engineer") alongside a future year, you MUST explicitly say the number is for ALL senior-level roles overall, NOT specific to that title - literally include a phrase like "across all roles at that level" in the answer. Do not present this table's number as if it answers a per-title question just because the question happened to name a title. There is no per-title FORECAST in this system at all - only per-level. If a per-title CURRENT figure is wanted, that's fact_salary_by_tool instead (no forecast, current data only). Never state a bound as more certain than it is - always mention both the predicted point AND its range when answering a forecast question.
+
+Table: dbt_dev_gold.career_archetype
+Columns: job_title (text), archetype (text - one of 4 real k-means-derived groups, named by real salary rank + remote tendency, e.g. "Highest-Paying · Onsite-Leaning"), median_salary_usd, avg_remote_ratio, avg_company_size_score, respondent_count
+Notes: Clusters job TITLES (not individual people) by their typical salary/remote/company-size profile - only titles with 200+ respondents are included (a title not found here simply wasn't common enough for reliable clustering, not necessarily excluded on purpose in any other sense). The 4 archetype names are descriptive of REAL clustering results, not a fixed taxonomy - if the underlying data changes, the composition could shift even if names look similar.
+
+Table: dbt_dev_gold.salary_predictor_metadata
+Columns: r_squared (numeric, ~0.2475), mae_usd (numeric, ~$47,739), trained_on_rows, tested_on_rows
+Notes: Describes the accuracy of a REAL trained RandomForestRegressor model (features: experience_level, remote_ratio, company_size, job_title -> predicted salary), NOT a table you can query to get someone's predicted salary directly - RAG cannot invoke this model. If asked "what would I make as a [title]", do NOT fabricate a number from this metadata table. Instead: (a) if a real close match exists in fact_salary_by_experience or career_archetype, cite that real aggregate figure with clear caveats, and (b) always mention the site has an interactive "Predict My Salary" tool (in this slide's tab section) that runs the actual model live with their specific inputs, and suggest they try it there for a real personalized number. Be honest that this model is modest in accuracy (~25% of variance explained, real predictions vary by roughly ±$48K) if asked how reliable it is - never overstate confidence.
 
 """
 
@@ -199,9 +214,17 @@ def answer_analytics_question(question, max_attempts=2):
     SQL query used: {sql}
     Result: {rows}
 
-    Phrase a short, clear, plain-language answer to the question based on this result. If the result is empty, say the data isn't available.
+    Relevant schema context (use this to catch any mismatch between what was asked and what the data actually shows):
+    {SCHEMA_DESCRIPTION}
 
-    If listing multiple values, use bullet points in this style: "• Label → value". Never use tables."""
+    Phrase a short, clear, plain-language answer to the question based on this result. If the result is empty, say the data isn't available.
+    If listing multiple values, use bullet points in this style: "• Label → value". Never use tables.
+
+    CRITICAL HONESTY RULES:
+    - If the question names something more SPECIFIC than what the SQL actually filtered or grouped by (e.g. a job title when the data is only grouped by experience level, or a single tool when the result mixes multiple), explicitly say so in plain words - never imply the answer is more specific than the underlying query actually was.
+    - Never use technical jargon (R-squared, MAE, p-value, coefficient, etc.) without immediately explaining it in one plain-language phrase a non-technical person would understand - e.g. "R-squared of 0.25 (meaning the model explains about 25% of why salaries differ)".
+    - If the result rows look confusing, inconsistent, or span multiple unrelated things, do not just list them all - synthesize a single clear, honest answer, or say plainly that a clean single answer isn't available.
+    - If asked to predict/estimate something for a specific individual scenario, never fabricate a number from unrelated aggregate rows - state clearly that this system doesn't generate individual predictions this way, and only point to the site's own interactive predictor tool if one is documented in the schema context above for this table."""
     format_response = client.models.generate_content(
         model="gemini-flash-lite-latest",
         contents=format_prompt
