@@ -2,6 +2,7 @@ import '../App.css'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Carousel from '../components/Carousel'
+import SalaryTrendsSlide from '../components/SalaryTrendsSlide'
 import GitHubTrendsSlide from '../components/GitHubTrendsSlide'
 import GisAiMapSlide from '../components/GisAiMapSlide'
 import SoSurveySlide from '../components/SoSurveySlide'
@@ -277,6 +278,7 @@ function HomePage() {
         onSlideChange={setActiveSlide}
         slides={[
           
+          <SalaryTrendsSlide key="salary-trends" />,
           <GitHubTrendsSlide key="github-trends" />,
           <GisAiMapSlide key="gis-ai-map" />,
           <SoSurveySlide key="so-survey" />,
