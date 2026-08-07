@@ -9,6 +9,9 @@ A live, self-hosted data platform powering [aakashmanandhar.tech](https://aakash
 - **OSS Ecosystem Landscape** — org leaderboard, tool co-adoption clustering, hype-vs-reality gap, tool lifecycle momentum (Apache Airflow, daily, shares the GitHub Trends DAG)
 - **Job Market & Tools Explorer** — the original pipeline (Adzuna + Stack Overflow Survey, Jenkins, every 6 hours) — backend still runs, data is RAG-only now, no dedicated frontend dashboard
 
+### Overall Architecture
+![IOverall Architecture](./docs/Overall_Architecture.png)
+
 ---
 
 ## Repository Structure
