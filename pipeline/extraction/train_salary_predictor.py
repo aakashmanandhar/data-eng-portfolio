@@ -10,6 +10,8 @@ from sklearn.metrics import r2_score, mean_absolute_error
 EXPERIENCE_MAP = {"EN": 0, "MI": 1, "SE": 2, "EX": 3}
 SIZE_MAP = {"S": 0, "M": 1, "L": 2}
 
+os.makedirs("/app/analytics/ml_models", exist_ok=True)  # must happen before any joblib.dump below
+
 conn = psycopg2.connect(
     host="portfolio_postgres", port=5432, dbname="portfolio",
     user="postgres", password="localdevpassword",
@@ -46,7 +48,6 @@ print(f"MAE on held-out test set: ${mae:,.0f}")
 print(f"Feature importances: experience_level={model.feature_importances_[0]:.3f}, remote_ratio={model.feature_importances_[1]:.3f}, company_size={model.feature_importances_[2]:.3f}, job_title={model.feature_importances_[3]:.3f}")
 print(f"Number of distinct job titles used: {len(distinct_titles)}")
 
-os.makedirs("/app/analytics/ml_models", exist_ok=True)
 joblib.dump(model, "/app/analytics/ml_models/salary_predictor.joblib")
 print("Saved model to /app/analytics/ml_models/salary_predictor.joblib")
 
