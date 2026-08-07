@@ -1,9 +1,13 @@
 # Data Engineering Portfolio
 
-A live, self-hosted data platform powering [aakashmanandhar.tech](https://aakashmanandhar.tech) — two independently-orchestrated pipelines sharing one Django/React/Postgres stack, plus a Gemini-powered RAG assistant spanning both.
+A live, self-hosted data platform powering [aakashmanandhar.tech](https://aakashmanandhar.tech) — six independently-orchestrated pipelines sharing one Django/React/Postgres stack, plus a Gemini-powered RAG assistant spanning all of them.
 
-- **Pipeline 1** — Job Market & Tools Explorer (Adzuna + Stack Overflow Survey, Jenkins, every 6 hours)
-- **Pipeline 2** — GitHub Trends: The Shift to AI Data Engineering (GitHub API, Apache Airflow, daily)
+- **Salary & Career Trends** — real salary survey data, a live trained ML predictor, forecasting, and clustering (ai-jobs-net-salaries, Apache Airflow, weekly) — the site's newest and most feature-dense pipeline
+- **GitHub Trends** — the shift to AI-native data engineering tooling (GitHub API, Apache Airflow, daily)
+- **Interactive AI/ML GIS Map** — geographic AI adoption, built on top of GitHub Trends' own data (Apache Airflow, daily, shares the same DAG)
+- **Historical Survey Analytics** — a decade of Stack Overflow tool-adoption data + a 2026 industry survey (manual-trigger, no public API for either source)
+- **OSS Ecosystem Landscape** — org leaderboard, tool co-adoption clustering, hype-vs-reality gap, tool lifecycle momentum (Apache Airflow, daily, shares the GitHub Trends DAG)
+- **Job Market & Tools Explorer** — the original pipeline (Adzuna + Stack Overflow Survey, Jenkins, every 6 hours) — backend still runs, data is RAG-only now, no dedicated frontend dashboard
 
 ---
 
@@ -16,59 +20,103 @@ Both pipelines share the same repo and Postgres instance, but keep their extract
 ```text
 pipeline/
 ├── extraction/
-│   ├── extract_adzuna.py                [P1] salary histograms + job counts, 19 countries
-│   ├── extract_so_survey.py             [P1] Stack Overflow Developer Survey
-│   ├── load_bronze.py                   [P1] loads both P1 sources into bronze
+│   ├── extract_adzuna.py                    [P1] salary histograms + job counts, 19 countries
+│   ├── extract_so_survey.py                 [P1] Stack Overflow Developer Survey (single-year)
+│   ├── load_bronze.py                       [P1] loads both P1 sources into bronze
 │   ├── data/
-│   │   └── so_survey_2025.csv           [P1] raw survey export
+│   │   └── so_survey_2025.csv               [P1] raw survey export
 │   │
-│   ├── extract_github.py                [P2] fixed-list extraction, 57 repos across 11 cohorts
-│   ├── discover_github_topics.py        [P2] GitHub Search API, 65 dynamically-found repos
-│   ├── extract_github_orgs.py           [P2] paginated org aggregate stats (4 orgs)
-│   ├── load_bronze_github.py            [P2]
-│   ├── load_bronze_github_discovery.py  [P2]
-│   ├── load_bronze_github_orgs.py       [P2]
+│   ├── extract_github.py                    [P2] fixed-list extraction, 57 repos across 11 cohorts
+│   ├── discover_github_topics.py            [P2] GitHub Search API, 65 dynamically-found repos
+│   ├── extract_github_orgs.py               [P2] paginated org aggregate stats (4 orgs)
+│   ├── load_bronze_github.py                [P2]
+│   ├── load_bronze_github_discovery.py      [P2]
+│   ├── load_bronze_github_orgs.py           [P2]
 │   │
-│   ├── extract_arxiv.py                 [Forecast] cs.DB/cs.SE vs cs.AI/cs.LG paper counts
-│   ├── extract_hackernews.py            [Forecast] Algolia search API, per-keyword summed
-│   ├── load_bronze_arxiv.py             [Forecast]
-│   ├── load_bronze_hackernews.py        [Forecast]
-│   ├── forecast_ai_adoption.py          [Forecast] scikit-learn linear regression, honest data-sufficiency gate
+│   ├── extract_arxiv.py                     [Forecast] cs.DB/cs.SE vs cs.AI/cs.LG paper counts
+│   ├── extract_hackernews.py                [Forecast] Algolia search API, per-keyword summed
+│   ├── load_bronze_arxiv.py                 [Forecast]
+│   ├── load_bronze_hackernews.py            [Forecast]
+│   ├── forecast_ai_adoption.py              [Forecast] scikit-learn linear regression, honest data-sufficiency gate
 │   │
-│   ├── embed_case_studies.py            [RAG] embeds case study content into pgvector
+│   ├── extract_oss_insight.py               [GIS] per-country stargazer breakdown, ~122 tracked repos
+│   ├── load_bronze_oss_insight.py           [GIS]
+│   ├── build_country_shapes.py              [GIS] real boundary SVG paths, per-country normalized
+│   ├── forecast_country_growth.py           [GIS] per-country AI-share LinearRegression, 7-day gate
+│   ├── cluster_country_archetypes.py        [GIS] k-means, 4 country archetypes
+│   │
+│   ├── extract_so_survey_historical.py      [Survey] 2016-2025, 720K respondents, 3 naming eras harmonized
+│   ├── so_survey_column_map.py              [Survey] column-naming-era crosswalk logic
+│   ├── load_bronze_so_survey_historical.py  [Survey]
+│   ├── forecast_de_tool_adoption.py         [Survey] per-country + overall tool forecast, 4-year gate
+│   ├── load_bronze_practical_data_survey.py [Survey] 2026 org survey, 1,101 respondents
+│   ├── cluster_org_maturity.py              [Survey] k-means, 4 org archetypes (tooling philosophy, not maturity)
+│   │
+│   ├── cluster_tool_co_adoption.py          [OSS] k-means on country-adoption pattern, anchor-repo naming
+│   ├── tool_momentum_staging.py             [OSS] lifecycle staging (Emerging/Accelerating/Mature/Declining)
+│   │
+│   ├── extract_ai_jobs_salaries.py          [Salary] 151,445 respondents, weekly-updated GitHub CSV
+│   ├── load_bronze_ai_jobs_salaries.py      [Salary]
+│   ├── skill_salary_growth.py               [Salary] per-tool salary growth rate, 4-year gate
+│   ├── forecast_salary_multiyear.py         [Salary] 3-year forecast, real statistical prediction intervals
+│   ├── cluster_career_archetypes.py         [Salary] k-means, 4 career archetypes by job title
+│   ├── train_salary_predictor.py            [Salary] RandomForestRegressor, saved for live API predictions
+│   │
+│   ├── embed_case_studies.py                [RAG] embeds case study content into pgvector
 │   └── test_adzuna.py, test_gemini.py, test_router.py   - ad hoc verification scripts
 │
 ├── dbt/
 │   ├── dbt_project.yml
-│   ├── profiles.yml                     - Postgres connection (not committed)
+│   ├── profiles.yml                         - Postgres connection (not committed)
 │   ├── Dockerfile
 │   ├── seeds/
-│   │   └── country_mapping.csv          [P1] Adzuna code → country name bridge
+│   │   ├── country_mapping.csv              [P1] Adzuna code → country name bridge
+│   │   ├── so_survey_country_crosswalk.csv  [Survey] 18 naming-variant exceptions
+│   │   ├── so_survey_to_geojson_country.csv [GIS] country-name → map-boundary bridge
+│   │   ├── so_survey_tool_crosswalk.csv     [Survey] canonical DE/AI-DE tool whitelist (25 tools)
+│   │   └── tool_to_job_titles_crosswalk.csv [Salary] tool → associated real job titles (75 rows)
 │   └── models/
 │       ├── silver/
-│       │   ├── silver_job_market.sql              [P1]
-│       │   ├── silver_tool_usage.sql               [P1]
-│       │   ├── silver_preferred_tools_global.sql   [P1]
-│       │   ├── silver_github_repo_snapshot.sql      [P2]
-│       │   ├── silver_github_org_snapshot.sql       [P2]
-│       │   ├── silver_arxiv_snapshot.sql            [Forecast]
-│       │   ├── silver_hackernews_snapshot.sql       [Forecast]
-│       │   └── sources.yml                          - registers bronze tables, ALL sources
+│       │   ├── silver_job_market.sql                [P1]
+│       │   ├── silver_tool_usage.sql                 [P1]
+│       │   ├── silver_preferred_tools_global.sql     [P1]
+│       │   ├── silver_github_repo_snapshot.sql       [P2]
+│       │   ├── silver_github_org_snapshot.sql        [P2]
+│       │   ├── silver_arxiv_snapshot.sql             [Forecast]
+│       │   ├── silver_hackernews_snapshot.sql        [Forecast]
+│       │   ├── silver_oss_insight_stargazers.sql     [GIS]
+│       │   ├── silver_so_survey_historical.sql       [Survey]
+│       │   ├── silver_practical_data_survey.sql      [Survey]
+│       │   ├── silver_ai_jobs_salaries.sql           [Salary]
+│       │   └── sources.yml                           - registers bronze tables, ALL sources
 │       └── gold/
-│           ├── dim_country.sql, dim_tool.sql        [P1]
-│           ├── fact_job_market.sql                  [P1]
-│           ├── fact_tool_preference_global.sql      [P1]
-│           ├── dim_github_repo.sql                  [P2] latest snapshot per repo (deduped)
-│           ├── dim_github_org.sql                   [P2] latest snapshot per org (deduped)
-│           ├── fact_github_repo_trend.sql           [P2] LAG()-based star growth (deduped)
-│           ├── fact_github_org_trend.sql            [P2]
-│           ├── fact_ai_adoption_signal.sql          [Forecast] GitHub+arXiv+HN joined by cohort/day
-│           └── schema.yml                            - tests for every model above
+│           ├── dim_country.sql, dim_tool.sql         [P1]
+│           ├── fact_job_market.sql                   [P1]
+│           ├── fact_tool_preference_global.sql       [P1]
+│           ├── dim_github_repo.sql                   [P2] latest snapshot per repo (deduped)
+│           ├── dim_github_org.sql                    [P2] latest snapshot per org (deduped)
+│           ├── fact_github_repo_trend.sql            [P2] LAG()-based star growth (deduped)
+│           ├── fact_github_org_trend.sql             [P2]
+│           ├── fact_ai_adoption_signal.sql           [Forecast] GitHub+arXiv+HN joined by cohort/day
+│           ├── fact_country_ai_signal.sql            [GIS] per-country AI vs traditional share
+│           ├── fact_country_tool_signal.sql          [GIS] per-repo-per-country breakdown
+│           ├── fact_de_tool_by_country_year.sql      [Survey] per-country tool usage_pct, 2016-2025
+│           ├── fact_de_tool_ranking.sql              [Survey] rank_in_country + rank_overall
+│           ├── fact_salary_by_experience.sql         [Salary] real EN/MI/SE/EX progression
+│           ├── fact_salary_by_tool.sql                [Salary] joins 25 SO Survey tools to real job titles
+│           ├── fact_remote_ratio_trend.sql            [Salary]
+│           ├── fact_top_paying_title_by_year.sql      [Salary] 20-respondent reliability floor
+│           └── schema.yml                             - tests for every model above
 │
 └── airflow/
     └── dags/
-        └── github_trends_dag.py         [P2+Forecast] 5-branch parallel fan-out/fan-in DAG,
-                                          dbt run/test, then forecast_ai_adoption.py
+        ├── github_trends_dag.py    [P2+Forecast+GIS+OSS] 5-branch parallel fan-out/fan-in,
+        │                           dbt run/test, forecast_ai_adoption.py, extract_oss_insight,
+        │                           cluster_tool_co_adoption.py, tool_momentum_staging.py — @daily
+        ├── survey_pipelines_dag.py [Survey] SO Survey + Practical Data — manual-trigger only,
+        │                           no public API for either source
+        └── salary_pipeline_dag.py  [Salary] its own dedicated DAG — @weekly, matches this
+                                    source's real update cadence
 
 infra/
 ├── jenkins/
@@ -89,6 +137,35 @@ infra/
 │
 └── terraform/
     └── main.tf                          - every container as code, all pipelines
+
+apps/
+├── api/
+│   └── analytics/
+│       └── ml_models/                   [Salary] trained model artifacts (gitignored, regenerated
+│                                         by train_salary_predictor.py — not committed to source control)
+│           ├── salary_predictor.joblib
+│           └── title_map.joblib
+│
+└── web/src/
+    ├── components/
+    │   ├── SalaryTrendsSlide.jsx        [Salary] bento hero + 4-tab analytics, first carousel slide
+    │   ├── GitHubTrendsSlide.jsx        [P2]
+    │   ├── GisAiMapSlide.jsx            [GIS]
+    │   ├── SoSurveySlide.jsx            [Survey]
+    │   ├── OrgArchetypeSlide.jsx        [Survey]
+    │   ├── OssLandscapeSlide.jsx        [OSS]
+    │   ├── Carousel.jsx                 - single-active-slide-in-DOM carousel shell
+    │   ├── ChatWidget.jsx               [RAG] chat interface
+    │   ├── VisitorWidget.jsx            - live visitor count
+    │   └── Sparkline.jsx                [Salary] tiny inline SVG sparkline, reused across KPI tiles
+    ├── pages/
+    │   ├── HomePage.jsx                 - carousel host, hero, per-slide pipeline-status widget
+    │   ├── ArchitecturePage.jsx         - full site architecture deep-dive
+    │   └── CaseStudyDetailPage.jsx
+    └── utils/
+        ├── countryNames.js              - shared ISO-code → country-name map (~190 countries),
+        │                                 used by both GisAiMapSlide and SalaryTrendsSlide
+        └── useCountUp.js                [Salary] animated count-up number hook
 ```
 
 ---
@@ -414,6 +491,168 @@ docker build -t portfolio-react:latest apps/web
 docker stop portfolio_react && docker rm portfolio_react
 cd infra/terraform && terraform apply
 ```
+
+---
+
+## Pipeline 4 — Historical Survey Analytics
+
+Two static survey sources, deliberately **not** on a live schedule — neither has a public API, so a human downloads a new year's data first, then this DAG handles everything after that.
+
+### Stack Overflow Developer Survey (Historical)
+
+- **Source**: 2016–2025 (10 years, 720,140 respondents), CSVs from `StackExchange/Survey`. 2011–2015 excluded (broken headers).
+- **3 naming eras harmonized** via `so_survey_column_map.py` — column names changed twice across the decade.
+- **Real bugs found & fixed**: a `csv` module `field_size_limit` crash on the 2025 file; `'NA'` string vs a real `None` (fixed via an explicit `clean_scalar()` cleaning step).
+- A country-name crosswalk seed (`so_survey_country_crosswalk.csv`, 18 naming-variant exceptions) and a 25-tool DE/AI-DE whitelist enforced structurally via an `INNER JOIN` in the silver model — theme filtering is a database constraint, not a UI afterthought.
+- **`fact_de_tool_by_country_year`** — per-country/per-year `usage_pct` (respondent_count / total_respondents, not share-of-mentions).
+- **`fact_de_tool_ranking`** — `rank_in_country` + `rank_overall` per tool/year/category.
+- **Tool adoption forecast** (`forecast_de_tool_adoption.py`) — per-country and overall LinearRegression, 4-year minimum history gate, predictions clamped to [0,1]. Self-creates its own gold table on first run.
+
+### Practical Data Community Survey (2026)
+
+- **Source**: a single 2026 snapshot (1,101 respondents, joereis.github.io) — no time axis, so no forecasting here, only clustering.
+- **Real bug found & fixed**: multi-select fields were being comma-split at the *bronze* layer (violates medallion discipline) with a naive split that broke on values like `"Writing Code (SQL, Python, etc)"` — fixed by keeping bronze raw and doing placeholder-swap splitting in the silver model instead.
+- **`cluster_org_maturity.py`** — k-means (k=4) on org_size + ai_adoption (ordinal) + architecture_trend + orchestration (one-hot). Real finding, stated honestly: clusters split by *tooling philosophy* (Airflow-Orchestrated / Custom-Tooling / Cloud-Native Lakehouse / Ad-Hoc Warehouse Teams), not a maturity gradient — average org_size and ai_adoption barely differ between clusters.
+
+### Setup — Local
+
+```bash
+docker exec portfolio_django python extract_so_survey_historical.py
+docker exec portfolio_django python load_bronze_so_survey_historical.py
+docker exec portfolio_django python load_bronze_practical_data_survey.py
+
+docker exec portfolio_dbt dbt run --select silver_so_survey_historical silver_practical_data_survey fact_de_tool_by_country_year fact_de_tool_ranking
+docker exec portfolio_dbt dbt test --select silver_so_survey_historical silver_practical_data_survey fact_de_tool_by_country_year fact_de_tool_ranking
+
+docker cp pipeline/extraction/forecast_de_tool_adoption.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python forecast_de_tool_adoption.py
+
+docker cp pipeline/extraction/cluster_org_maturity.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python cluster_org_maturity.py
+```
+
+### Scheduling — Airflow (manual-trigger only)
+
+`survey_pipelines_dag.py`, `schedule_interval=None` — no public API to poll for either source, so this DAG only ever runs when manually triggered after new data is downloaded.
+
+### Frontend
+
+`SoSurveySlide.jsx` (top DE tools bar chart, current-vs-predicted forecast comparison, adoption trend line chart) and `OrgArchetypeSlide.jsx` (plain-language archetype descriptions + an AI Adoption Journey stepper).
+
+---
+
+## Pipeline 5 — OSS Ecosystem Landscape
+
+Wired directly into the existing daily `github_trends_dag` — no new orchestration, reuses the same repo universe Pipeline 2 already tracks.
+
+### Tool Co-Adoption Clustering
+
+- **`cluster_tool_co_adoption.py`** — k-means clustering *repos* by their country-adoption *pattern* (% of stargazers per country), not overall popularity.
+- **Real bug found & fixed**: k-means cluster IDs are not stable across runs, so a naive `{0: "name"}` mapping broke on a re-run. Fixed with anchor-repo detection (e.g. `apache/flink` always → Apache Big-Data Ecosystem) plus two safety nets found through later testing: a large, incoherent cluster can't steal a narrow anchor name (size cap), and clusters under 3 members merge into the mainstream group instead of showing as their own confusing "family."
+
+### Tool Lifecycle Momentum
+
+- **`tool_momentum_staging.py`** — classifies each tracked repo into Emerging / Accelerating / Mature / Declining, using two real signals: absolute size (median-star threshold) and trend direction (first-half vs. second-half average daily growth over the accumulated window). 10-day minimum history gate.
+
+### Hype vs. Reality Gap
+
+Compares real-world Stack Overflow Survey usage against GitHub star counts — genuinely scoped to only the 8 tools with a real name match in both datasets (all databases: Cassandra, Elasticsearch, MariaDB, Microsoft SQL Server, MongoDB, MySQL, PostgreSQL, Redis).
+
+### Setup — Local
+
+```bash
+docker cp pipeline/extraction/cluster_tool_co_adoption.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python cluster_tool_co_adoption.py
+
+docker cp pipeline/extraction/tool_momentum_staging.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python tool_momentum_staging.py
+```
+
+### Frontend
+
+`OssLandscapeSlide.jsx` — org leaderboard, tool-family cluster cards, hype-vs-reality paired bars, and a momentum panel (4-column grid, sample tools with real daily growth rates per stage).
+
+---
+
+## Pipeline 6 — Salary & Career Intelligence
+
+The newest and most feature-dense pipeline on the site — a genuinely new source, its own dedicated orchestration schedule, its own warehouse layer, and five real ML models, built end to end in a single extended session. The first carousel slide, by explicit design.
+
+### Interactive Salary & Career Intelligence Architecture
+![Interactive Salary & Career Intelligence Architecture](./docs/SalaryCareerPipeline.png)
+
+### Interactive Salary & Career Intelligence Dashboard
+![Interactive Salary & Career Intelligence Dashboard2](./docs/salarycareer1.png)
+![Interactive Salary & Career Intelligence Dashboard3](./docs/salarycareer2.png)
+![Interactive Salary & Career Intelligence Dashboard4](./docs/salarycareer3.png)
+![Interactive Salary & Career Intelligence Dashboard4](./docs/salarycareer4.png)
+![Interactive Salary & Career Intelligence Dashboard4](./docs/salarycareer5.png)
+
+### Data Source
+
+- **`foorilla/ai-jobs-net-salaries`** (GitHub repo) — a weekly-updated public salary survey, 2021–2025+, openly licensed for reuse. 151,445 respondents.
+- Real fields: `work_year`, `experience_level` (EN/MI/SE/EX), `employment_type` (CT/FL/FT/PT), `job_title`, `salary`/`salary_currency`/`salary_in_usd`, `employee_residence`/`company_location` (raw ISO codes — resolved to names only at the frontend, via a shared `countryNames.js` module extracted from `GisAiMapSlide.jsx`), `remote_ratio` (0/50/100), `company_size` (S/M/L).
+
+### Medallion Architecture
+
+- **Bronze** (`bronze.ai_jobs_salaries_snapshot`) — populated by plain Python (`load_bronze_ai_jobs_salaries.py`), raw JSONB, one row per respondent per weekly pull.
+- **Silver/Gold** — built by dbt (`silver_ai_jobs_salaries.sql` + 4 gold models: `fact_salary_by_experience`, `fact_salary_by_tool`, `fact_remote_ratio_trend`, `fact_top_paying_title_by_year`), 18 passing dbt tests.
+- **4 additional gold tables**, self-created by their own Python scripts (not dbt models): `skill_salary_growth`, `salary_forecast_multiyear`, `career_archetype`, `salary_predictor_metadata`.
+
+### Real bug found & fixed — double counting
+
+Running the DAG twice in one calendar day created two identical bronze batches, undetected by `snapshot_date` (date-only granularity — both loads got the same date). Every gold model silently summed both batches, doubling every respondent count (Rust showed 36,374 instead of the real 18,187). Root cause fixed properly: the load script now captures **one shared batch timestamp** before its row loop, instead of relying on each row's own INSERT-time default — making `loaded_at` a genuine, reusable batch identifier. `snapshot_date = MAX(snapshot_date)` filtering was also added to all 4 gold models as defense in depth.
+
+### The 5 ML Models
+
+| Model | What it does |
+|---|---|
+| Skill vs. adoption pairing | Real-time synced comparison — SO Survey adoption trend alongside this dataset's salary trend, for any of the 25 tracked tools |
+| Skill growth ranking | `skill_salary_growth.py` — regression slope of salary over time per tool, 4-year minimum history gate |
+| 3-year salary forecast | `forecast_salary_multiyear.py` — genuine statistical prediction intervals (manual OLS, standard-error-of-prediction formula), not an arbitrary heuristic — the uncertainty band widens the further out it predicts |
+| Career archetype clustering | `cluster_career_archetypes.py` — k-means on 93 job titles (≥200 respondents each) by salary/remote-ratio/company-size profile |
+| Live salary predictor | `train_salary_predictor.py` — a real `RandomForestRegressor`, trained on all 151K respondents, saved and loaded once by Django to serve live predictions per-request |
+
+### Real bug found & fixed — the predictor's naming collision
+
+`cluster_career_archetypes.py`'s initial naming logic used a simple above/below-average threshold on 2 dimensions — but nothing guaranteed k-means' 4 real clusters would land in 4 different quadrants, so two genuinely different clusters ended up sharing the same name. Fixed with rank-based naming (salary rank 1st–4th is inherently unique) plus a remote-tendency qualifier.
+
+### Real bug found & fixed — a genuinely weak first model
+
+The predictor's initial 3-feature model (`experience_level`, `remote_ratio`, `company_size`) was honest but weak — R² of just 0.109. Diagnosed via `feature_importances_` that `job_title` was the missing signal; adding it as a 4th feature more than doubled accuracy to R²=0.2475. The frontend shows this real accuracy in plain language alongside every prediction, never overstating confidence.
+
+### Setup — Local
+
+```bash
+docker exec portfolio_django python extract_ai_jobs_salaries.py
+docker exec portfolio_django python load_bronze_ai_jobs_salaries.py
+
+docker exec portfolio_dbt dbt seed --select tool_to_job_titles_crosswalk
+docker exec portfolio_dbt dbt run --select silver_ai_jobs_salaries fact_salary_by_tool fact_salary_by_experience fact_remote_ratio_trend fact_top_paying_title_by_year
+docker exec portfolio_dbt dbt test --select silver_ai_jobs_salaries fact_salary_by_experience fact_salary_by_tool fact_top_paying_title_by_year
+
+docker cp pipeline/extraction/skill_salary_growth.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python skill_salary_growth.py
+
+docker cp pipeline/extraction/forecast_salary_multiyear.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python forecast_salary_multiyear.py
+
+docker cp pipeline/extraction/cluster_career_archetypes.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python cluster_career_archetypes.py
+
+docker cp pipeline/extraction/train_salary_predictor.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python train_salary_predictor.py
+```
+
+### Scheduling — Airflow
+
+`salary_pipeline_dag.py`, `@weekly` — a genuinely separate DAG, not folded into the daily `github_trends_dag`, because `@weekly` is this source's real update cadence.
+
+### Frontend
+
+`SalaryTrendsSlide.jsx` — bento layout, 3 animated KPI tiles with inline sparklines, an interactive skill-picker hero (two synced Recharts strips, permanent correlational-not-causal microcopy), and a 4-tab section below (scatter plot, gradient-uncertainty-band forecast, radar-chart archetypes, slider-driven live predictor).
+
+---
 
 
 ## Shared Infrastructure
