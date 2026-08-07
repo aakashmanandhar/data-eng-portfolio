@@ -750,10 +750,18 @@ class SalaryPredictorMetaView(APIView):
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT r_squared, mae_usd, trained_on_rows, tested_on_rows FROM dbt_dev_gold.salary_predictor_metadata WHERE id = 1")
         meta = cur.fetchone()
+        # Curate the dropdown to common, canonical titles only - the raw 422 distinct
+        # strings include many rare company-specific leveling variants (e.g. "Data
+        # Engineer 4") that are real training signal but clutter a visitor-facing list.
+        cur.execute("""
+            SELECT job_title FROM dbt_dev_silver.silver_ai_jobs_salaries
+            WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM dbt_dev_silver.silver_ai_jobs_salaries)
+            GROUP BY job_title HAVING COUNT(*) >= 200 ORDER BY job_title
+        """)
+        common_titles = [r['job_title'] for r in cur.fetchall()]
         cur.close()
         conn.close()
-        _, title_map = _load_predictor()
-        return Response({**meta, "available_titles": sorted(title_map.keys())})
+        return Response({**meta, "available_titles": common_titles})
 
 
 class SalaryPredictorView(APIView):

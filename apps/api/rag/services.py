@@ -64,7 +64,7 @@ Notes: Countries are grouped into 4 archetypes using k-means clustering on AI-sh
 
 Table: dbt_dev_gold.fact_de_tool_by_country_year
 Columns: survey_year (integer, 2016-2025), country (text, full country name e.g. 'United States', 'Germany' — NOT an ISO code), canonical_tool (text, e.g. 'Python', 'PostgreSQL', 'Docker'), tool_category (text: 'language', 'database', or 'platform'), respondent_count (integer), total_respondents (integer — total survey respondents for this country/year, the correct denominator), usage_pct (numeric 0-1, respondent_count/total_respondents)
-Notes: This is Stack Overflow Developer Survey data (2016-2025, ~720K respondents, restricted to a whitelist of ~25 data-engineering-relevant tools), completely separate from the GitHub-based tables above (dim_github_repo, fact_country_ai_signal, etc.) — do NOT conflate "which tool is most used" (this table, self-reported survey usage) with "which tool has the most GitHub stars" (dim_github_repo, actual repo activity); these are different signals answering different questions. IMPORTANT: country here uses FULL country names, not ISO codes — do NOT join this to fact_country_ai_signal/fact_country_tool_signal/dim_country_archetype (all ISO-code-keyed) or assume the same country string format as fact_job_market (Adzuna job-market data — coincidentally also full names, but a completely different dataset about hiring/salary, not tool usage). Always use usage_pct for "what % use X" questions, never respondent_count alone (that's an absolute count, not comparable across countries of different sizes).
+Notes: This is Stack Overflow Developer Survey data (2016-2025, ~720K respondents, restricted to a whitelist of ~25 data-engineering-relevant tools), completely separate from the GitHub-based tables above (dim_github_repo, fact_country_ai_signal, etc.) — do NOT conflate "which tool is most used" (this table, self-reported survey usage) with "which tool has the most GitHub stars" (dim_github_repo, actual repo activity); these are different signals answering different questions. IMPORTANT: country here uses FULL country names, not ISO codes — do NOT join this to fact_country_ai_signal/fact_country_tool_signal/dim_country_archetype (all ISO-code-keyed) or assume the same country string format as fact_job_market (Adzuna job-market data — coincidentally also full names, but a completely different dataset about hiring/salary, not tool usage). Always use usage_pct for "what % use X" questions, never respondent_count alone (that's an absolute count, not comparable across countries of different sizes). CRITICAL - GLOBAL/OVERALL TRENDS: this table is genuinely per-country grain ONLY - there is NO 'Global' or NULL country row, and no scope column here (that only exists on de_tool_forecast below, a different table - do not confuse the two). For "how has X's adoption changed overall/worldwide/globally" questions, you MUST aggregate across all countries yourself: SELECT survey_year, SUM(respondent_count)::numeric / SUM(total_respondents) AS usage_pct FROM dbt_dev_gold.fact_de_tool_by_country_year WHERE canonical_tool = 'X' GROUP BY survey_year ORDER BY survey_year. Never filter WHERE country = 'Global' or WHERE country IS NULL - both return zero rows and would incorrectly suggest no data exists when real data does.
 
 Table: dbt_dev_gold.fact_de_tool_ranking
 Columns: survey_year (integer), country (text, full name), canonical_tool (text), tool_category (text), respondent_count (integer), total_respondents (integer), usage_pct (numeric 0-1), overall_respondent_count (integer), rank_in_country (integer — this tool's rank among all tools in THIS country for this year), rank_overall (integer — this tool's rank globally, across all countries combined, for this year and category)
@@ -127,6 +127,10 @@ Table: dbt_dev_gold.salary_predictor_metadata
 Columns: r_squared (numeric, ~0.2475), mae_usd (numeric, ~$47,739), trained_on_rows, tested_on_rows
 Notes: Describes the accuracy of a REAL trained RandomForestRegressor model (features: experience_level, remote_ratio, company_size, job_title -> predicted salary), NOT a table you can query to get someone's predicted salary directly - RAG cannot invoke this model. If asked "what would I make as a [title]", do NOT fabricate a number from this metadata table. Instead: (a) if a real close match exists in fact_salary_by_experience or career_archetype, cite that real aggregate figure with clear caveats, and (b) always mention the site has an interactive "Predict My Salary" tool (in this slide's tab section) that runs the actual model live with their specific inputs, and suggest they try it there for a real personalized number. Be honest that this model is modest in accuracy (~25% of variance explained, real predictions vary by roughly ±$48K) if asked how reliable it is - never overstate confidence.
 
+Table: dbt_dev_gold.tool_momentum_stage
+Columns: repo_full_name (text), cohort (text), status (text), days_of_history (integer), stage (text - one of 'Emerging', 'Accelerating', 'Mature', 'Declining'), avg_daily_growth (numeric), first_half_avg_growth (numeric), second_half_avg_growth (numeric), current_stars (integer)
+Notes: This is the CORRECT and ONLY table for "momentum" questions - momentum specifically means real GROWTH-RATE ACCELERATION (comparing recent daily star growth to earlier daily star growth over a 14-day window), NOT raw popularity or total star count. Do NOT answer a "strongest momentum" question using dim_github_repo's raw stars alone - a repo can have huge total stars but flat or declining momentum, or modest stars but genuinely accelerating momentum; these are different questions. 10-day minimum history gate (status='ok' required). For "which tool has the strongest momentum" questions, filter stage='Accelerating' and sort by avg_daily_growth descending - report the actual growth rate number, not just the tool name, since that's the real evidence behind the "momentum" claim.
+
 """
 
 
@@ -153,6 +157,7 @@ Rules:
 - ONLY a SELECT statement, nothing else
 - No semicolons
 - Use ILIKE for text matching on country_name (e.g. country_name ILIKE '%germany%') since exact names may vary
+- If the question mentions "momentum" or "lifecycle stage", you MUST query dbt_dev_gold.tool_momentum_stage - NEVER answer a momentum question using dim_github_repo.stars alone, momentum means growth-rate acceleration, not raw popularity
 - Respond with ONLY the raw SQL, no markdown formatting, no explanation
 - Double-check spelling of SQL keywords (SELECT, FROM, WHERE, ILIKE, GROUP BY, ORDER BY) before responding{retry_note}
 
@@ -183,7 +188,16 @@ def is_safe_select(sql):
 
 
 def answer_analytics_question(question, max_attempts=2):
-    sql = generate_sql(question)
+    # Special-cased: momentum questions repeatedly confused two similarly-shaped
+    # tables even with explicit schema/rule guidance (gemini-flash-lite-latest
+    # hallucinated correct column names attached to the wrong table name) -
+    # a hardcoded query is more reliable than continued prompt tuning here.
+    if 'momentum' in question.lower() or 'lifecycle stage' in question.lower():
+        sql = ("SELECT repo_full_name, stage, avg_daily_growth, current_stars "
+               "FROM dbt_dev_gold.tool_momentum_stage WHERE status = 'ok' "
+               "ORDER BY avg_daily_growth DESC LIMIT 5")
+    else:
+        sql = generate_sql(question)
     last_error = None
 
     for attempt in range(max_attempts):

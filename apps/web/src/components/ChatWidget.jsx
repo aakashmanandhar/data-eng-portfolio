@@ -36,9 +36,13 @@ function ChatWidget() {
   }, [])
 
   const examples = [
-    'What is the average senior salary in Germany?',
-    'What stack did you use for the German Car Market project?',
-    'Top tools used in the USA?',
+    'What data pipelines power this site?',
+    'Which skill\'s salary is growing the fastest?',
+    'Is AI tooling on GitHub growing faster than traditional tools?',
+    'Which country is predicted to become more AI-leaning soon?',
+    'How has Python\'s adoption changed over the last decade?',
+    'What are the most common organizational archetypes for data teams?',
+    'Which open-source tool has the strongest momentum right now?',
   ]
 
   const sendMessage = async (text) => {
