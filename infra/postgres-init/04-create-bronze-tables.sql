@@ -81,3 +81,10 @@ CREATE TABLE IF NOT EXISTS bronze.ai_jobs_salaries_snapshot (
     snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
     loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS bronze.news_articles_snapshot (
+    id SERIAL PRIMARY KEY,
+    raw_data JSONB NOT NULL,
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

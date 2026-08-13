@@ -144,7 +144,8 @@ with DAG(
             "silver_github_repo_snapshot dim_github_repo fact_github_repo_trend "
             "silver_github_org_snapshot fact_github_org_trend dim_github_org "
             "silver_arxiv_snapshot silver_hackernews_snapshot fact_ai_adoption_signal "
-            "silver_oss_insight_stargazers fact_country_ai_signal fact_country_tool_signal"
+            "silver_oss_insight_stargazers fact_country_ai_signal fact_country_tool_signal "
+            "silver_news_articles dim_keyword dim_source fact_keyword_mention"
         ),
     )
 
@@ -173,10 +174,53 @@ with DAG(
         ),
     )
 
+    extract_de_ai_news = BashOperator(
+    task_id="extract_de_ai_news",
+    bash_command=(
+        "docker cp /repo/pipeline/extraction/extract_de_ai_news.py portfolio_django:/tmp/extract_de_ai_news.py && "
+        "docker exec -e CURRENTS_API_KEY=$(grep CURRENTS_API_KEY /repo/.env | cut -d '=' -f2) -w /tmp portfolio_django python extract_de_ai_news.py"
+        ),
+    )
+
+    load_bronze_de_ai_news = BashOperator(
+    task_id="load_bronze_de_ai_news",
+    bash_command=(
+        "docker cp /repo/pipeline/extraction/load_bronze_de_ai_news.py portfolio_django:/tmp/load_bronze_de_ai_news.py && "
+        "docker exec -w /tmp portfolio_django python load_bronze_de_ai_news.py"
+        ),
+    )
+    score_news_sentiment = BashOperator(
+    task_id="score_news_sentiment",
+    bash_command=(
+        "docker cp /repo/pipeline/extraction/score_news_sentiment.py portfolio_django:/tmp/score_news_sentiment.py && "
+        "docker exec -e HUGGINGFACE_API_KEY=$(grep HUGGINGFACE_API_KEY /repo/.env | cut -d '=' -f2) -w /tmp portfolio_django python score_news_sentiment.py"
+        ),
+    )
+    dbt_run_sentiment_trend = BashOperator(
+        task_id="dbt_run_sentiment_trend",
+        bash_command="docker exec portfolio_dbt dbt run --select fact_keyword_sentiment_trend",
+    )
+    news_keyword_growth = BashOperator(
+        task_id="news_keyword_growth",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/news_keyword_growth.py portfolio_django:/tmp/news_keyword_growth.py && "
+            "docker exec -w /tmp portfolio_django python news_keyword_growth.py"
+        ),
+    )
+    news_keyword_breakout = BashOperator(
+        task_id="news_keyword_breakout",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/news_keyword_breakout.py portfolio_django:/tmp/news_keyword_breakout.py && "
+            "docker exec -w /tmp portfolio_django python news_keyword_breakout.py"
+        ),
+    )
+
     extract_fixed >> load_bronze_fixed
     discover_topics >> load_bronze_discovery
     extract_orgs >> load_bronze_orgs
     extract_arxiv >> load_bronze_arxiv
     extract_hackernews >> load_bronze_hackernews
     extract_oss_insight >> load_bronze_oss_insight
-    [load_bronze_fixed, load_bronze_discovery, load_bronze_orgs, load_bronze_arxiv, load_bronze_hackernews, load_bronze_oss_insight] >> dbt_run >> dbt_test >> [forecast_ai_adoption, cluster_tool_co_adoption]
+    extract_de_ai_news >> load_bronze_de_ai_news
+    [load_bronze_fixed, load_bronze_discovery, load_bronze_orgs, load_bronze_arxiv, load_bronze_hackernews, load_bronze_oss_insight, load_bronze_de_ai_news] >> dbt_run >> dbt_test >> [forecast_ai_adoption, cluster_tool_co_adoption, score_news_sentiment]
+    score_news_sentiment >> dbt_run_sentiment_trend >> [news_keyword_growth, news_keyword_breakout]

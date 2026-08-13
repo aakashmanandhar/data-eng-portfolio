@@ -792,3 +792,138 @@ class SalaryPredictorView(APIView):
             "r_squared": float(meta['r_squared']),
             "mae_usd": float(meta['mae_usd']),
         })
+
+class NewsKeywordListView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT keyword_id, keyword, category
+            FROM dbt_dev_gold.dim_keyword
+            ORDER BY keyword
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
+
+
+class NewsKeywordMentionsView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT dk.keyword, dk.category, fm.mention_date, SUM(fm.mention_count) as mention_count
+            FROM dbt_dev_gold.fact_keyword_mention fm
+            JOIN dbt_dev_gold.dim_keyword dk ON fm.keyword_id = dk.keyword_id
+            GROUP BY dk.keyword, dk.category, fm.mention_date
+            ORDER BY fm.mention_date, dk.keyword
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
+
+
+class NewsSentimentTrendView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT dk.keyword, dk.category, t.sentiment_date, t.mention_count,
+                   t.weighted_sentiment, t.avg_confidence
+            FROM dbt_dev_gold.fact_keyword_sentiment_trend t
+            JOIN dbt_dev_gold.dim_keyword dk ON t.keyword_id = dk.keyword_id
+            ORDER BY t.sentiment_date, dk.keyword
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
+
+
+class NewsKeywordGrowthView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT dk.keyword, dk.category, g.status, g.days_of_history,
+                   g.growth_rate_per_day, g.r_squared, g.predicted_mentions_7d
+            FROM dbt_dev_gold.news_keyword_growth g
+            JOIN dbt_dev_gold.dim_keyword dk ON g.keyword_id = dk.keyword_id
+            ORDER BY g.growth_rate_per_day DESC NULLS LAST
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
+
+
+class NewsKeywordBreakoutView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT dk.keyword, dk.category, b.status, b.days_of_history,
+                   b.today_mentions, b.baseline_avg, b.is_breakout
+            FROM dbt_dev_gold.news_keyword_breakout b
+            JOIN dbt_dev_gold.dim_keyword dk ON b.keyword_id = dk.keyword_id
+            ORDER BY b.is_breakout DESC NULLS LAST, b.today_mentions DESC NULLS LAST
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
+
+
+class NewsArticleFeedView(APIView):
+    def get(self, request):
+        keyword = request.query_params.get('keyword')
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        base_query = """
+            SELECT a.title, a.url, a.source_domain, a.published_at, a.matched_keyword,
+                   s.sentiment_label, s.sentiment_score
+            FROM dbt_dev_silver.silver_news_articles a
+            LEFT JOIN dbt_dev_gold.news_article_sentiment s ON a.article_id = s.article_id
+        """
+        params = []
+        if keyword:
+            base_query += " WHERE a.matched_keyword = %s"
+            params.append(keyword)
+        base_query += " ORDER BY a.published_at DESC LIMIT 50"
+        cur.execute(base_query, params)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return Response(rows)
+
+
+class NewsKPISummaryView(APIView):
+    def get(self, request):
+        conn = get_readonly_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT COUNT(*) as total_articles FROM dbt_dev_silver.silver_news_articles")
+        total_articles = cur.fetchone()["total_articles"]
+
+        cur.execute("""
+            SELECT dk.keyword, SUM(fm.mention_count) as total_mentions
+            FROM dbt_dev_gold.fact_keyword_mention fm
+            JOIN dbt_dev_gold.dim_keyword dk ON fm.keyword_id = dk.keyword_id
+            GROUP BY dk.keyword ORDER BY total_mentions DESC LIMIT 1
+        """)
+        top_keyword = cur.fetchone()
+
+        cur.execute("""
+            SELECT round(AVG(weighted_sentiment)::numeric, 3) as overall_sentiment
+            FROM dbt_dev_gold.fact_keyword_sentiment_trend
+        """)
+        overall_sentiment = cur.fetchone()["overall_sentiment"]
+
+        cur.close()
+        conn.close()
+        return Response({
+            "total_articles": total_articles,
+            "top_keyword": top_keyword,
+            "overall_sentiment": overall_sentiment,
+        })

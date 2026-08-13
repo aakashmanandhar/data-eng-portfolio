@@ -131,6 +131,33 @@ Table: dbt_dev_gold.tool_momentum_stage
 Columns: repo_full_name (text), cohort (text), status (text), days_of_history (integer), stage (text - one of 'Emerging', 'Accelerating', 'Mature', 'Declining'), avg_daily_growth (numeric), first_half_avg_growth (numeric), second_half_avg_growth (numeric), current_stars (integer)
 Notes: This is the CORRECT and ONLY table for "momentum" questions - momentum specifically means real GROWTH-RATE ACCELERATION (comparing recent daily star growth to earlier daily star growth over a 14-day window), NOT raw popularity or total star count. Do NOT answer a "strongest momentum" question using dim_github_repo's raw stars alone - a repo can have huge total stars but flat or declining momentum, or modest stars but genuinely accelerating momentum; these are different questions. 10-day minimum history gate (status='ok' required). For "which tool has the strongest momentum" questions, filter stage='Accelerating' and sort by avg_daily_growth descending - report the actual growth rate number, not just the tool name, since that's the real evidence behind the "momentum" claim.
 
+Table: dbt_dev_gold.dim_keyword
+Columns: keyword_id (integer), keyword (text - one of 70 curated DE/AI-DE terms), category (text - Orchestration/Processing/Streaming/Warehouse/Database/Data Quality/BI/Cloud Platform/AI-DE Crossover/Broader Concept)
+Notes: The tracked term list for the News & Sentiment Intelligence pipeline. Many of these keywords (Apache Airflow, Databricks, Snowflake, PostgreSQL, etc.) also appear as tool names in fact_github_repo_trend (GitHub stars), fact_de_tool_by_country_year (SO Survey adoption), and fact_salary_by_tool (salary data) - these are ALL DIFFERENT SIGNALS about the same tool name, never mix them. This table specifically is about NEWS COVERAGE VOLUME AND TONE, nothing else.
+
+Table: dbt_dev_gold.dim_source
+Columns: source_id (integer), source_domain (text, e.g. 'dev.to', 'vulners.com'), source_type (text, currently always 'news' - Hacker News as a second source type is a deliberate future addition, not yet built)
+
+Table: dbt_dev_gold.fact_keyword_mention
+Columns: keyword_id (integer, FK to dim_keyword), source_id (integer, FK to dim_source), mention_date (date), mention_count (integer)
+Notes: Real daily article-mention counts per keyword per source domain, refreshed daily. For "how much news coverage did X get" questions, SUM(mention_count) across all sources for that keyword. This is coverage VOLUME only - for coverage TONE, use fact_keyword_sentiment_trend instead; they answer different questions.
+
+Table: dbt_dev_gold.news_article_sentiment
+Columns: article_id (text), keyword_id (integer), source_id (integer), sentiment_label (text: 'positive'/'negative'/'neutral'), sentiment_score (numeric, the model's own confidence in that label), published_at (timestamptz)
+Notes: Built by a standalone Python script (score_news_sentiment.py), not a dbt model - real per-article sentiment from a Hugging Face transformer (cardiffnlp/twitter-roberta-base-sentiment-latest), trained on short social/headline-style text. This is the ONLY sentiment-based table on this entire site - do not confuse "sentiment" here with any other concept. sentiment_score is the model's confidence in its OWN label (e.g. 0.97 confidence that an article is 'positive'), NOT a -1-to-+1 polarity score - do not average sentiment_score directly as if it were a signed value. MANDATORY: never report sentiment_score alone - a bare number like "0.77" is meaningless without its label, since it could mean 77% confident positive OR 77% confident negative. Always report both together, e.g. "77% confidence it's positive."
+
+Table: dbt_dev_gold.fact_keyword_sentiment_trend
+Columns: keyword_id (integer), sentiment_date (date), mention_count (integer), avg_confidence (numeric), weighted_sentiment (numeric, -1 to +1, where +1 is fully positive and -1 is fully negative)
+Notes: The REAL aggregated daily sentiment trend per keyword, built from news_article_sentiment by confidence-weighting each article's label (a high-confidence label pulls the daily average more than a low-confidence one) - this weighted_sentiment column IS the correct -1-to-+1 signed value to report for "is coverage of X positive or negative" questions, not sentiment_score from the article-level table. Values near 0 mean genuinely mixed/neutral coverage, not "no data" - check mention_count separately to distinguish "neutral coverage" from "no coverage that day".
+
+Table: dbt_dev_gold.news_keyword_growth
+Columns: keyword_id (integer), status (text: 'ok' or 'insufficient_data'), days_of_history (integer), growth_rate_per_day (numeric, may be NULL), r_squared (numeric, may be NULL), predicted_mentions_7d (numeric, may be NULL)
+Notes: MANDATORY DISAMBIGUATION - this is NEWS MENTION growth (is a topic getting more or less news coverage over time), completely unrelated to skill_salary_growth (salary growth) despite the similar name and similar keyword overlap - never conflate the two if a question mentions "growth" ambiguously near a tool name. 5-day minimum real history gate, deliberately short since news topic churn moves in days not years - the forecast horizon is 7 days, not multi-year. This pipeline is brand new as of today, so status is honestly 'insufficient_data' for every keyword right now - report this honestly rather than guessing, and it's expected to start returning real 'ok' results within about a week of daily runs.
+
+Table: dbt_dev_gold.news_keyword_breakout
+Columns: keyword_id (integer), status (text: 'ok' or 'insufficient_data'), days_of_history (integer), today_mentions (integer, may be NULL), baseline_avg (numeric, may be NULL), is_breakout (boolean, may be NULL)
+Notes: A DIFFERENT question from news_keyword_growth - whether TODAY's mention count spikes well above (2x+) a keyword's own recent baseline, regardless of its long-term trend direction. 4-day minimum real history gate. Same as news_keyword_growth, this pipeline is brand new, so status is honestly 'insufficient_data' for every keyword right now.
+
 """
 
 

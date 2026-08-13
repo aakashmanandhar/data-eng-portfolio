@@ -1,0 +1,80 @@
+keyword,category
+Apache Airflow,Orchestration
+dbt,Orchestration
+Dagster,Orchestration
+Prefect,Orchestration
+Mage data,Orchestration
+Luigi Spotify,Orchestration
+Apache Spark,Processing
+Apache Flink,Processing
+Apache Beam,Processing
+PySpark,Processing
+Ray distributed,Processing
+Dask,Processing
+Apache NiFi,Processing
+Apache Kafka,Streaming
+Apache Pulsar,Streaming
+Redpanda streaming,Streaming
+Apache Airbyte,Streaming
+Meltano,Streaming
+Snowflake,Warehouse
+Databricks,Warehouse
+Google BigQuery,Warehouse
+Amazon Redshift,Warehouse
+Apache Iceberg,Warehouse
+Delta Lake,Warehouse
+Apache Hudi,Warehouse
+DuckDB,Warehouse
+ClickHouse,Warehouse
+Trino,Warehouse
+Apache Presto,Warehouse
+StarRocks,Warehouse
+PostgreSQL,Database
+MySQL,Database
+MongoDB,Database
+Redis,Database
+Apache Cassandra,Database
+Elasticsearch,Database
+MariaDB,Database
+Microsoft SQL Server,Database
+CockroachDB,Database
+Great Expectations data,Data Quality
+Monte Carlo data observability,Data Quality
+Soda data quality,Data Quality
+Apache Superset,BI
+Grafana,BI
+Looker,BI
+Tableau,BI
+Power BI,BI
+Metabase,BI
+AWS Glue,Cloud Platform
+Azure Data Factory,Cloud Platform
+Google Cloud Dataflow,Cloud Platform
+Microsoft Fabric,Cloud Platform
+Azure Synapse,Cloud Platform
+LangChain,AI-DE Crossover
+LlamaIndex,AI-DE Crossover
+vector database,AI-DE Crossover
+pgvector,AI-DE Crossover
+Weaviate,AI-DE Crossover
+Milvus vector,AI-DE Crossover
+Qdrant,AI-DE Crossover
+Chroma vector database,AI-DE Crossover
+Pinecone vector,AI-DE Crossover
+MLflow,AI-DE Crossover
+Haystack AI,AI-DE Crossover
+Feast feature store,AI-DE Crossover
+LiteLLM,AI-DE Crossover
+RAG retrieval augmented generation,AI-DE Crossover
+LLM data pipeline,AI-DE Crossover
+feature store,AI-DE Crossover
+MLOps,AI-DE Crossover
+data mesh,AI-DE Crossover
+lakehouse architecture,AI-DE Crossover
+data engineering,Broader Concept
+data pipeline,Broader Concept
+ETL pipeline,Broader Concept
+ELT pipeline,Broader Concept
+data warehouse,Broader Concept
+data governance,Broader Concept
+machine learning engineering,Broader Concept

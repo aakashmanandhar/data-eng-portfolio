@@ -1,9 +1,9 @@
 from django.urls import path
 from .views import (
-    CareerArchetypeView, CareerFitView, CountryGrowthForecastView, GrowthForecastStatusView, JobMarketView, MomentumStatusView, OssLandscapeSummaryView, SalaryForecastMultiyearView, SalaryKPISummaryView, SalaryPredictorMetaView, SalaryPredictorView, SalaryToolListView, SentimentVsAdoptionGapView, SkillSalaryGrowthView, ToolMomentumView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
+    CareerArchetypeView, CareerFitView, CountryGrowthForecastView, GrowthForecastStatusView, JobMarketView, MomentumStatusView, NewsKPISummaryView, NewsKeywordBreakoutView, NewsKeywordGrowthView, NewsKeywordListView, NewsKeywordMentionsView, NewsSentimentTrendView, OssLandscapeSummaryView, SalaryForecastMultiyearView, SalaryKPISummaryView, SalaryPredictorMetaView, SalaryPredictorView, SalaryToolListView, SentimentVsAdoptionGapView, SkillSalaryGrowthView, ToolMomentumView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
     GitHubRepoRankingView, GitHubCohortTrendView, GitHubPlatformComparisonView, GitHubOrgActivityView,
     AIAdoptionForecastView, VisitorCountView, VisitorHeartbeatView, VisitorStatsView, CountryAISignalView, CountryArchetypeView,
-    DeToolSummaryView, DeToolByCountryView, OrgArchetypeSummaryView, CountryToolSignalView, ToolListView, SalaryByToolView,
+    DeToolSummaryView, DeToolByCountryView, OrgArchetypeSummaryView, CountryToolSignalView, ToolListView, SalaryByToolView, NewsArticleFeedView,
 )
 
 urlpatterns = [
@@ -42,4 +42,11 @@ urlpatterns = [
     path('career-archetype-salary/', CareerArchetypeView.as_view(), name='career-archetype-salary'),
     path('salary-predictor-meta/', SalaryPredictorMetaView.as_view(), name='salary-predictor-meta'),
     path('salary-predictor/', SalaryPredictorView.as_view(), name='salary-predictor'),
+    path('news-kpi-summary/', NewsKPISummaryView.as_view(), name='news-kpi-summary'),
+    path('news-keyword-list/', NewsKeywordListView.as_view(), name='news-keyword-list'),
+    path('news-keyword-mentions/', NewsKeywordMentionsView.as_view(), name='news-keyword-mentions'),
+    path('news-sentiment-trend/', NewsSentimentTrendView.as_view(), name='news-sentiment-trend'),
+    path('news-keyword-growth/', NewsKeywordGrowthView.as_view(), name='news-keyword-growth'),
+    path('news-keyword-breakout/', NewsKeywordBreakoutView.as_view(), name='news-keyword-breakout'),
+    path('news-articles/', NewsArticleFeedView.as_view(), name='news-articles'),
 ]

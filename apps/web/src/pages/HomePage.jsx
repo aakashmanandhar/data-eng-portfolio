@@ -8,6 +8,7 @@ import GisAiMapSlide from '../components/GisAiMapSlide'
 import SoSurveySlide from '../components/SoSurveySlide'
 import OrgArchetypeSlide from '../components/OrgArchetypeSlide'
 import OssLandscapeSlide from '../components/OssLandscapeSlide'
+import NewsIntelligenceSlide from '../components/NewsIntelligenceSlide'
 
 function relativeTime(dateStr) {
   const diffMs = Date.now() - new Date(dateStr).getTime()
@@ -201,6 +202,7 @@ function HomePage() {
           <div className="hero-btns">
             <button className="btn-primary" onClick={() => window.dispatchEvent(new Event('open-chat-widget'))}>Talk to Assistant →</button>
             <a href="#explorer" className="btn-secondary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })); setTimeout(() => document.getElementById('explorer')?.scrollIntoView({ behavior: 'smooth' }), 50) }}>Explore the Data</a>
+            <a href="#explorer" className="btn-primary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 6 } })); setTimeout(() => document.getElementById('explorer')?.scrollIntoView({ behavior: 'smooth' }), 50) }}>Latest DE & AI News</a>
           </div>
         </div>
 
@@ -250,7 +252,7 @@ function HomePage() {
       <div className="analytics-header">
           <div className="analytics-header-text">
             <h2>Live Data Engineering Analytics</h2>
-            <p>Real salary and career intelligence from a trained ML model, a decade of tool-adoption history, and organizational and geographic AI trends — refreshed automatically by live ELT and ML pipelines. Six views into how data engineering careers and tooling are actually evolving.</p>
+            <p>Live DE/AI-DE news and sentiment intelligence, real salary and career intelligence from a trained ML model, a decade of tool-adoption history, and organizational and geographic AI trends — refreshed automatically by live ELT and ML pipelines. Seven views into how data engineering careers and tooling are actually evolving.</p>
           </div>
           {(() => {
             const slideConfig = [
@@ -260,6 +262,7 @@ function HomePage() {
               { kind: 'static', icon: '📊', title: 'Historical Survey Data', time: '2016–2025, static snapshot' },
               { kind: 'static', icon: '📊', title: 'Community Survey Data', time: '2026, static snapshot' },
               { kind: 'airflow', runs: githubPipelineRuns, title: 'OSS Landscape Pipeline' },
+              { kind: 'airflow', runs: githubPipelineRuns, title: 'News Intelligence Pipeline' },
             ]
             const cfg = slideConfig[activeSlide] || slideConfig[1]
             if (cfg.kind === 'static') {
@@ -309,6 +312,7 @@ function HomePage() {
           <SoSurveySlide key="so-survey" />,
           <OrgArchetypeSlide key="org-archetype" />,
           <OssLandscapeSlide key="oss-landscape" />,
+          <NewsIntelligenceSlide key="news-intelligence" />,
         ]}
       />
 
