@@ -66,7 +66,13 @@ function BubbleChart({ data, width, height, onSelect }) {
         const showLabel = leaf.r > 22
         return (
           <g key={i} onClick={() => onSelect(leaf.data.name)} style={{ cursor: 'pointer' }}>
-            <circle cx={leaf.x} cy={leaf.y} r={leaf.r} fill={sentimentColor(leaf.data.sentiment)} fillOpacity={0.85} stroke="var(--bg-alt)" strokeWidth={2.5} />
+            <circle
+              className="news-bubble-circle"
+              cx={leaf.x} cy={leaf.y} r={leaf.r}
+              fill={sentimentColor(leaf.data.sentiment)}
+              fillOpacity={Math.max(0.45, Math.min(1, Math.abs(leaf.data.sentiment)))}
+              stroke="var(--bg-alt)" strokeWidth={2.5}
+            />
             {showLabel && (
               <text x={leaf.x} y={leaf.y + 4} textAnchor="middle" fontSize={Math.min(leaf.r * 0.24, 12)} fill="#fff" fontWeight={700}>
                 {leaf.data.name.length > 14 ? leaf.data.name.slice(0, 12) + '…' : leaf.data.name}

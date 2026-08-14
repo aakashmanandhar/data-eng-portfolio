@@ -2733,6 +2733,17 @@ footer a:hover {
 .news-bubble-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 .news-bubble-insight { font-size: 11px; color: var(--muted); line-height: 1.6; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
 
+.news-bubble-circle {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.15s ease, stroke-width 0.15s ease;
+  cursor: pointer;
+}
+.news-bubble-circle:hover {
+  transform: scale(1.08);
+  stroke-width: 3.5px;
+}
+
 @media (max-width: 850px) {
   .news-main-grid { grid-template-columns: 1fr; }
   .news-kpi-row { grid-template-columns: repeat(3, 1fr); }
