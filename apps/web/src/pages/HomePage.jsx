@@ -176,7 +176,7 @@ function HomePage() {
         <strong>Aakash Manandhar</strong>
         <div className="nav-links">
           <a href="#projects">Projects</a>
-          <a href="#explorer" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })); setTimeout(() => document.getElementById('explorer')?.scrollIntoView({ behavior: 'smooth' }), 50) }}>Explorer</a>
+          <a href="#explorer" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })) }}>Explorer</a>
           <Link to="/architecture">Architecture</Link>
           <a href="#adrs">ADRs</a>
           <a href="#about">About</a>
@@ -201,8 +201,8 @@ function HomePage() {
           <p className="hero-sub">{subtext}</p>
           <div className="hero-btns">
             <button className="btn-primary" onClick={() => window.dispatchEvent(new Event('open-chat-widget'))}>Talk to Assistant →</button>
-            <a href="#explorer" className="btn-secondary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })); setTimeout(() => document.getElementById('explorer')?.scrollIntoView({ behavior: 'smooth' }), 50) }}>Explore the Data</a>
-            <a href="#explorer" className="btn-primary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 6 } })); setTimeout(() => document.getElementById('explorer')?.scrollIntoView({ behavior: 'smooth' }), 50) }}>Latest DE & AI News</a>
+            <a href="#explorer" className="btn-secondary" onClick={(e)=> { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })) }}>Explore the Data</a>
+            <a href="#explorer" className="btn-primary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 6 } })) }}>Latest DE & AI News</a>
           </div>
         </div>
 
