@@ -882,7 +882,7 @@ class NewsArticleFeedView(APIView):
         conn = get_readonly_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         base_query = """
-            SELECT a.title, a.url, a.source_domain, a.published_at, a.matched_keyword,
+            SELECT a.title, a.description, a.url, a.source_domain, a.published_at, a.matched_keyword,
                    s.sentiment_label, s.sentiment_score
             FROM dbt_dev_silver.silver_news_articles a
             LEFT JOIN dbt_dev_gold.news_article_sentiment s ON a.article_id = s.article_id

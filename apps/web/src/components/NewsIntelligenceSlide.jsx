@@ -3,43 +3,17 @@ import { hierarchy, pack } from 'd3-hierarchy'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
-const CATEGORY_ICONS = {
-  'Orchestration': '🔀', 'Processing': '⚡', 'Streaming': '🌊', 'Warehouse': '🏔️',
-  'Database': '🗄️', 'Data Quality': '✅', 'BI': '📊', 'Cloud Platform': '☁️',
-  'AI-DE Crossover': '🤖', 'Broader Concept': '💡',
-}
-
-const TECH_ICON_SLUGS = {
-  'Apache Airflow': 'apacheairflow', 'dbt': 'dbt', 'Dagster': 'dagster', 'Prefect': 'prefect',
-  'Apache Spark': 'apachespark', 'Apache Flink': 'apacheflink', 'PySpark': 'apachespark',
-  'Apache Kafka': 'apachekafka', 'Apache Airbyte': 'airbyte',
-  'Snowflake': 'snowflake', 'Databricks': 'databricks', 'Google BigQuery': 'googlebigquery',
-  'Amazon Redshift': 'amazonredshift', 'DuckDB': 'duckdb', 'ClickHouse': 'clickhouse',
-  'Trino': 'trino', 'PostgreSQL': 'postgresql', 'MySQL': 'mysql', 'MongoDB': 'mongodb',
-  'Redis': 'redis', 'Apache Cassandra': 'apachecassandra', 'Elasticsearch': 'elasticsearch',
-  'MariaDB': 'mariadb', 'CockroachDB': 'cockroachlabs',
-  'Apache Superset': 'apachesuperset', 'Grafana': 'grafana', 'Looker': 'looker',
-  'Tableau': 'tableau', 'Power BI': 'powerbi', 'Metabase': 'metabase',
-  'AWS Glue': 'amazonaws', 'Azure Data Factory': 'microsoftazure', 'Microsoft Fabric': 'microsoftazure',
-  'Azure Synapse': 'microsoftazure', 'Google Cloud Dataflow': 'googlecloud',
-  'LangChain': 'langchain', 'MLflow': 'mlflow', 'Qdrant': 'qdrant', 'pgvector': 'postgresql',
-}
-
-// Theme-consistent sentiment colors: positive ties directly to the site's
-// own teal accent, neutral uses the site's own muted gray - only negative
-// is a new color, kept because red-for-negative is a universal, functional
-// convention worth preserving regardless of theme.
-const NEGATIVE_COLOR = '#D14545'
+const SENTIMENT_COLORS = { positive: '#3B6D11', negative: '#D14545', neutral: '#8A8875' }
 
 function sentimentColor(score) {
-  if (score > 0.15) return 'var(--accent2)'
-  if (score < -0.15) return NEGATIVE_COLOR
-  return 'var(--muted)'
+  if (score > 0.15) return SENTIMENT_COLORS.positive
+  if (score < -0.15) return SENTIMENT_COLORS.negative
+  return SENTIMENT_COLORS.neutral
 }
 function sentimentLabel(score) {
-  if (score > 0.15) return 'leaning positive'
-  if (score < -0.15) return 'leaning negative'
-  return 'mixed / neutral'
+  if (score > 0.15) return 'Leaning Positive'
+  if (score < -0.15) return 'Leaning Negative'
+  return 'Mixed / Neutral'
 }
 function timeAgo(dateStr) {
   const diffMs = Date.now() - new Date(dateStr).getTime()
@@ -58,47 +32,43 @@ function dedupeArticles(articles) {
   return Object.values(byTitle)
 }
 
-function TechIcon({ keyword, category, size = 16 }) {
-  const slug = TECH_ICON_SLUGS[keyword]
-  const [failed, setFailed] = useState(false)
-  if (!slug || failed) return <span style={{ fontSize: size }}>{CATEGORY_ICONS[category] || '📌'}</span>
+function SentimentGauge({ score, size = 68 }) {
+  const pct = Math.max(0, Math.min(100, ((score + 1) / 2) * 100))
+  const radius = size / 2 - 6
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference * (1 - pct / 100)
+  const color = sentimentColor(score)
   return (
-    <img src={`https://cdn.simpleicons.org/${slug}`} alt="" width={size} height={size}
-         style={{ objectFit: 'contain', display: 'inline-block', verticalAlign: 'middle' }}
-         onError={() => setFailed(true)} />
+    <div style={{ position: 'relative', width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--bg)" strokeWidth={6} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={6}
+                strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
+      </svg>
+      <div style={{
+        position: 'absolute', top: 0, left: 0, width: size, height: size,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: size * 0.24, fontWeight: 800, color: 'var(--text)',
+      }}>
+        {Math.round(pct)}%
+      </div>
+    </div>
   )
-}
-
-function BubbleIcon({ keyword, category, x, y, size }) {
-  const slug = TECH_ICON_SLUGS[keyword]
-  const [failed, setFailed] = useState(false)
-  if (!slug || failed) {
-    return <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={size * 0.7}>{CATEGORY_ICONS[category] || '📌'}</text>
-  }
-  return <image href={`https://cdn.simpleicons.org/${slug}/ffffff`} x={x - size / 2} y={y - size / 2} width={size} height={size} onError={() => setFailed(true)} />
 }
 
 function BubbleChart({ data, width, height, onSelect }) {
   const root = hierarchy({ children: data }).sum(d => d.value)
   const packLayout = pack().size([width, height]).padding(5)
   const leaves = packLayout(root).leaves()
-
   return (
     <svg width="100%" viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }}>
       {leaves.map((leaf, i) => {
-        const color = sentimentColor(leaf.data.sentiment)
-        const showLabel = leaf.r > 26
-        const showIcon = leaf.r > 16
+        const showLabel = leaf.r > 22
         return (
           <g key={i} onClick={() => onSelect(leaf.data.name)} style={{ cursor: 'pointer' }}>
-            <circle cx={leaf.x} cy={leaf.y} r={leaf.r} fill={color} fillOpacity={0.85} stroke="var(--bg-alt)" strokeWidth={2.5} />
-            {showIcon && (
-              <BubbleIcon keyword={leaf.data.name} category={leaf.data.category} x={leaf.x}
-                          y={showLabel ? leaf.y - leaf.r * 0.28 : leaf.y} size={Math.min(leaf.r * 0.6, 22)} />
-            )}
+            <circle cx={leaf.x} cy={leaf.y} r={leaf.r} fill={sentimentColor(leaf.data.sentiment)} fillOpacity={0.85} stroke="var(--bg-alt)" strokeWidth={2.5} />
             {showLabel && (
-              <text x={leaf.x} y={leaf.y + leaf.r * 0.45} textAnchor="middle"
-                    fontSize={Math.min(leaf.r * 0.22, 12)} fill="#fff" fontWeight={700}>
+              <text x={leaf.x} y={leaf.y + 4} textAnchor="middle" fontSize={Math.min(leaf.r * 0.24, 12)} fill="#fff" fontWeight={700}>
                 {leaf.data.name.length > 14 ? leaf.data.name.slice(0, 12) + '…' : leaf.data.name}
               </text>
             )}
@@ -106,8 +76,6 @@ function BubbleChart({ data, width, height, onSelect }) {
         )
       })}
     </svg>
-    
-    
   )
 }
 
@@ -123,6 +91,7 @@ function NewsIntelligenceSlide() {
   const [sentimentTrend, setSentimentTrend] = useState([])
   const [articles, setArticles] = useState([])
   const [selectedKeyword, setSelectedKeyword] = useState(null)
+  const [expandedIdx, setExpandedIdx] = useState(null)
 
   useEffect(() => {
     fetch(`${API_BASE}/api/news-kpi-summary/`).then(r => r.json()).then(setKpi).catch(console.error)
@@ -147,16 +116,24 @@ function NewsIntelligenceSlide() {
     )
   }
 
-  const keywordMeta = {}
   const byKeyword = {}
   sentimentTrend.forEach(row => {
-    keywordMeta[row.keyword] = row.category
     if (!byKeyword[row.keyword] || row.sentiment_date > byKeyword[row.keyword].sentiment_date) byKeyword[row.keyword] = row
   })
   const ranked = Object.values(byKeyword).filter(k => k.mention_count > 0)
     .sort((a, b) => b.mention_count - a.mention_count).slice(0, isMobile ? 10 : 16)
   const topSignals = ranked.slice(0, 6)
-  const bubbleData = ranked.map(k => ({ name: k.keyword, value: k.mention_count, sentiment: k.weighted_sentiment, category: k.category }))
+  const bubbleData = ranked.map(k => ({ name: k.keyword, value: k.mention_count, sentiment: k.weighted_sentiment }))
+
+  const bySentiment = [...ranked].filter(k => k.mention_count >= 2)
+  const mostPositive = [...bySentiment].sort((a, b) => b.weighted_sentiment - a.weighted_sentiment)[0]
+  const mostNegative = [...bySentiment].sort((a, b) => a.weighted_sentiment - b.weighted_sentiment)[0]
+
+  const positiveCount = ranked.filter(k => k.weighted_sentiment > 0.15).length
+  const negativeCount = ranked.filter(k => k.weighted_sentiment < -0.15).length
+  const insightText = ranked.length > 0
+    ? `${ranked[0].keyword} leads this week's coverage with ${ranked[0].mention_count} mentions. Across the ${ranked.length} most-discussed topics, ${positiveCount} lean positive and ${negativeCount} lean negative — the rest read as mixed or neutral.`
+    : ''
 
   return (
     <div className="news-slide">
@@ -164,9 +141,8 @@ function NewsIntelligenceSlide() {
         <span className="news-signals-label">Top signals today</span>
         <div className="news-signals-pills">
           {topSignals.map((k, i) => (
-            <span key={i} className="news-signal-pill">
-              <TechIcon keyword={k.keyword} category={k.category} size={13} /> {k.keyword}
-              <span className="news-signal-dot" style={{ background: sentimentColor(k.weighted_sentiment) }}></span>
+            <span key={i} className="news-signal-pill" style={{ borderColor: sentimentColor(k.weighted_sentiment) }}>
+              {k.keyword}
             </span>
           ))}
         </div>
@@ -174,73 +150,84 @@ function NewsIntelligenceSlide() {
 
       <div className="news-kpi-row">
         <div className="news-kpi-tile">
-          <span className="news-kpi-tile-icon">📰</span>
-          <span className="news-kpi-tile-label">Articles tracked, last 7 days</span>
+          <span className="news-kpi-tile-label">Articles</span>
           <span className="news-kpi-tile-value">{kpi.total_articles}</span>
         </div>
         <div className="news-kpi-tile">
-          <span className="news-kpi-tile-icon"><TechIcon keyword={kpi.top_keyword?.keyword} category={keywordMeta[kpi.top_keyword?.keyword]} size={18} /></span>
-          <span className="news-kpi-tile-label">Most-covered topic this week</span>
+          <span className="news-kpi-tile-label">Top Topic</span>
           <span className="news-kpi-tile-value news-kpi-tile-value-text">{kpi.top_keyword?.keyword}</span>
         </div>
-        <div className="news-kpi-tile">
-          <span className="news-kpi-tile-icon">🎭</span>
-          <span className="news-kpi-tile-label">News sentiment, last 7 days</span>
-          <div className="news-gauge-track">
-            <div className="news-gauge-fill" style={{
-              width: `${Math.max(0, Math.min(100, ((kpi.overall_sentiment + 1) / 2) * 100))}%`,
-              background: sentimentColor(kpi.overall_sentiment)
-            }}></div>
-          </div>
-          <span className="news-kpi-tile-sub" style={{ color: sentimentColor(kpi.overall_sentiment) }}>
-            Coverage is {sentimentLabel(kpi.overall_sentiment)}
-          </span>
+        <div className="news-kpi-tile news-kpi-tile-gauge">
+          <span className="news-kpi-tile-label">Sentiment</span>
+          <SentimentGauge score={kpi.overall_sentiment} />
         </div>
+        {mostPositive && (
+          <div className="news-kpi-tile">
+            <span className="news-kpi-tile-label">Most Positive</span>
+            <span className="news-kpi-tile-value news-kpi-tile-value-text" style={{ color: SENTIMENT_COLORS.positive }}>
+              {mostPositive.keyword}
+            </span>
+          </div>
+        )}
+        {mostNegative && (
+          <div className="news-kpi-tile">
+            <span className="news-kpi-tile-label">Most Negative</span>
+            <span className="news-kpi-tile-value news-kpi-tile-value-text" style={{ color: SENTIMENT_COLORS.negative }}>
+              {mostNegative.keyword}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="news-main-grid">
         <div className="news-wire">
           <div className="news-wire-header">
-            <span>📰 Live Wire</span>
+            <span>Live Wire</span>
             {selectedKeyword && <button className="news-wire-clear" onClick={() => setSelectedKeyword(null)}>× {selectedKeyword}</button>}
           </div>
-          <div className="news-wire-feed">
-            {articles.map((a, i) => (
-              <a key={i} href={a.url} target="_blank" rel="noopener noreferrer" className="news-wire-card">
-                <div className="news-wire-avatar">
-                  <TechIcon keyword={a.matched_keyword} category={keywordMeta[a.matched_keyword]} size={20} />
-                </div>
-                <div className="news-wire-content">
-                  <div className="news-wire-title">{a.title}</div>
-                  <div className="news-wire-meta">
-                    <span className="news-wire-keyword-pill">{a.matched_keyword}</span>
-                    <span>{a.sources.length > 1 ? `${a.sources.length} sources` : a.source_domain} · {timeAgo(a.published_at)}</span>
+          <div className="news-wire-timeline">
+            {articles.map((a, i) => {
+              const isOpen = expandedIdx === i
+              return (
+                <div key={i} className="news-wire-row">
+                  <div className="news-wire-rail">
+                    <span className="news-wire-dot" style={{ background: sentimentColor(a.sentiment_score - 0.5) }}></span>
+                    {i < articles.length - 1 && <span className="news-wire-line"></span>}
+                  </div>
+                  <div className="news-wire-item" onClick={() => setExpandedIdx(isOpen ? null : i)}>
+                    <div className="news-wire-item-head">
+                      <span className="news-wire-title">{a.title}</span>
+                      <span className={`news-wire-caret ${isOpen ? 'news-wire-caret-open' : ''}`}>▾</span>
+                    </div>
+                    <div className="news-wire-meta">
+                      <span className="news-wire-keyword-pill">{a.matched_keyword}</span>
+                      <span>{a.sources.length > 1 ? `${a.sources.length} sources` : a.source_domain} · {timeAgo(a.published_at)}</span>
+                    </div>
+                    {isOpen && (
+                      <div className="news-wire-expand">
+                        {a.description && <p className="news-wire-desc">{a.description}</p>}
+                        <a href={a.url} target="_blank" rel="noopener noreferrer" className="news-wire-readmore">
+                          Read full article →
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <span className="news-wire-sentiment-dot" style={{ background: sentimentColor(a.sentiment_score - 0.5) }}></span>
-              </a>
-            ))}
+              )
+            })}
           </div>
         </div>
 
         <div className="news-bubble-panel">
           <div className="news-bubble-header">Most-discussed topics</div>
-          <div className="news-bubble-desc">Bubble size = article volume, color = coverage tone, last 7 days</div>
-          <BubbleChart data={bubbleData} width={isMobile ? 300 : 380} height={isMobile ? 240 : 300} onSelect={setSelectedKeyword} />
+          <div className="news-bubble-desc">Circle size = article volume · color = coverage tone, last 7 days</div>
+          <BubbleChart data={bubbleData} width={isMobile ? 300 : 380} height={isMobile ? 220 : 260} onSelect={setSelectedKeyword} />
           <div className="news-bubble-legend">
-            <div className="news-bubble-legend-title">How to read this</div>
-            <div className="news-bubble-legend-row">
-              <span className="news-bubble-legend-dot" style={{ background: 'var(--accent2)' }}></span>
-              Positive coverage
-              <span className="news-bubble-legend-dot" style={{ background: NEGATIVE_COLOR }}></span>
-              Negative coverage
-              <span className="news-bubble-legend-dot" style={{ background: 'var(--muted)' }}></span>
-              Mixed / neutral
-            </div>
-            <p className="news-bubble-legend-text">
-              Each bubble is a tracked technology or topic. Bigger bubbles mean more news coverage this week; color shows whether that coverage has leaned positive, negative, or mixed. Click any bubble to filter the Live Wire feed to just that topic.
-            </p>
+            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: 'var(--accent2)' }}></span>Positive</span>
+            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: '#D14545' }}></span>Negative</span>
+            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: 'var(--muted)' }}></span>Mixed</span>
           </div>
+          {insightText && <p className="news-bubble-insight">{insightText}</p>}
         </div>
       </div>
     </div>

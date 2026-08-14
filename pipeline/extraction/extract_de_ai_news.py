@@ -68,7 +68,7 @@ KEYWORDS = [
 ]
 
 
-def fetch_articles_for_keyword(keyword, page_size=20):
+def fetch_articles_for_keyword(keyword, page_size=20, max_retries=2):
     params = {
         "query": f'"{keyword}"',  # quoted = exact phrase match, not loose keyword matching
         "language": "en",
@@ -76,10 +76,21 @@ def fetch_articles_for_keyword(keyword, page_size=20):
         "page_size": page_size,
         "apiKey": CURRENTS_API_KEY,
     }
-    resp = requests.get(BASE_URL, params=params, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-    return data.get("news", [])
+    for attempt in range(max_retries):
+        resp = requests.get(BASE_URL, params=params, timeout=30)
+        if resp.status_code == 429:
+            wait = 20 * (attempt + 1)  # capped much lower - fewer, shorter retries so one
+                                        # stubborn keyword can't burn 7+ minutes on its own;
+                                        # this pipeline runs daily, so a keyword that fails
+                                        # today genuinely gets another chance tomorrow
+            print(f"    rate limited, waiting {wait}s before retry ({attempt + 1}/{max_retries})...")
+            time.sleep(wait)
+            continue
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("news", [])
+    print(f"    still rate limited after {max_retries} retries, skipping this keyword for today")
+    return []
 
 
 def is_genuinely_relevant(article, keyword):
@@ -106,8 +117,10 @@ def main():
             print(f"  {kw!r}: {kept}/{len(articles)} kept after relevance filter")
         except requests.exceptions.RequestException as e:
             print(f"  {kw!r}: FAILED - {e}")
-        time.sleep(1)  # be a respectful API citizen, matching this project's established pattern
-
+        time.sleep(8)  # front-loading more delay to genuinely prevent 429s, rather than
+                        # relying on expensive reactive retries - trades a longer minimum
+                        # runtime for a much lower, bounded worst case
+                        
     print(f"\nTotal articles kept: {len(all_results)}")
     print(f"Total filtered out as false positives: {filtered_out_count}")
     with open("de_ai_news_raw_output.json", "w") as f:
