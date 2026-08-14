@@ -137,6 +137,11 @@ with DAG(
         ),
     )
 
+    dbt_seed = BashOperator(
+        task_id="dbt_seed",
+        bash_command="docker exec portfolio_dbt dbt seed --select news_keyword_categories",
+    )
+
     dbt_run = BashOperator(
         task_id="dbt_run",
         bash_command=(
@@ -222,5 +227,5 @@ with DAG(
     extract_hackernews >> load_bronze_hackernews
     extract_oss_insight >> load_bronze_oss_insight
     extract_de_ai_news >> load_bronze_de_ai_news
-    [load_bronze_fixed, load_bronze_discovery, load_bronze_orgs, load_bronze_arxiv, load_bronze_hackernews, load_bronze_oss_insight, load_bronze_de_ai_news] >> dbt_run >> dbt_test >> [forecast_ai_adoption, cluster_tool_co_adoption, score_news_sentiment]
+    [load_bronze_fixed, load_bronze_discovery, load_bronze_orgs, load_bronze_arxiv, load_bronze_hackernews, load_bronze_oss_insight, load_bronze_de_ai_news] >> dbt_seed >> dbt_run >> dbt_test >> [forecast_ai_adoption, cluster_tool_co_adoption, score_news_sentiment]
     score_news_sentiment >> dbt_run_sentiment_trend >> [news_keyword_growth, news_keyword_breakout]
