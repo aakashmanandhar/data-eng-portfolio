@@ -237,14 +237,16 @@ function HomePage() {
               <img src="https://cdn.simpleicons.org/apachespark/E25A1C" alt="PySpark" title="PySpark (Apache Spark)" />
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="now-card">
-        <div className="now-dot"></div>
-        <div className="now-content">
-          <span className="label">Now building</span>
-          <span>{nowBuilding}</span>
+          <div className="now-card">
+            <div className="now-icon-badge">
+              <span className="now-icon-pulse"></span>
+              🛠️
+            </div>
+            <div className="now-content">
+              <span className="now-label">Now Building</span>
+              <span className="now-text">{nowBuilding}</span>
+            </div>
+          </div>
         </div>
       </div>
       
