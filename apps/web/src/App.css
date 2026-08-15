@@ -2719,6 +2719,7 @@ footer a:hover {
   text-align: center; gap: 8px;
 }
 .news-kpi-tile-label { font-size: 9.5px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+.news-kpi-tile-sublabel { font-size: 8.5px; color: var(--muted); font-weight: 500; margin-top: 2px; }
 .news-kpi-tile-value { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
 .news-kpi-tile-value-text { font-size: 15px; line-height: 1.35; }
 .news-kpi-tile-gauge { padding: 12px 10px; }

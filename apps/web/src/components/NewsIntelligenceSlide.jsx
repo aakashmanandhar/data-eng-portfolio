@@ -56,14 +56,14 @@ function SentimentGauge({ score, size = 68 }) {
   )
 }
 
-function BubbleChart({ data, width, height, onSelect }) {
+function BubbleChart({ data, width, height, onSelect, highlightNames = [] }) {
   const root = hierarchy({ children: data }).sum(d => d.value)
   const packLayout = pack().size([width, height]).padding(5)
   const leaves = packLayout(root).leaves()
   return (
     <svg width="100%" viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }}>
       {leaves.map((leaf, i) => {
-        const showLabel = leaf.r > 22
+        const showLabel = leaf.r > 22 || highlightNames.includes(leaf.data.name)
         return (
           <g key={i} onClick={() => onSelect(leaf.data.name)} style={{ cursor: 'pointer' }}>
             <circle
@@ -173,6 +173,7 @@ function NewsIntelligenceSlide() {
             <span className="news-kpi-tile-value news-kpi-tile-value-text" style={{ color: SENTIMENT_COLORS.positive }}>
               {mostPositive.keyword}
             </span>
+            <span className="news-kpi-tile-sublabel">among topics with 2+ mentions</span>
           </div>
         )}
         {mostNegative && (
@@ -181,6 +182,7 @@ function NewsIntelligenceSlide() {
             <span className="news-kpi-tile-value news-kpi-tile-value-text" style={{ color: SENTIMENT_COLORS.negative }}>
               {mostNegative.keyword}
             </span>
+            <span className="news-kpi-tile-sublabel">among topics with 2+ mentions</span>
           </div>
         )}
       </div>
@@ -226,10 +228,10 @@ function NewsIntelligenceSlide() {
 
         <div className="news-bubble-panel">
           <div className="news-bubble-header">Most-discussed topics</div>
-          <div className="news-bubble-desc">Circle size = article volume · color = coverage tone, last 7 days</div>
-          <BubbleChart data={bubbleData} width={isMobile ? 300 : 380} height={isMobile ? 220 : 260} onSelect={setSelectedKeyword} />
+          <div className="news-bubble-desc">Circle size = article volume · color intensity = sentiment strength, last 7 days</div>
+          <BubbleChart data={bubbleData} width={isMobile ? 300 : 380} height={isMobile ? 220 : 260} onSelect={setSelectedKeyword} highlightNames={[mostPositive?.keyword, mostNegative?.keyword].filter(Boolean)} />
           <div className="news-bubble-legend">
-            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: 'var(--accent2)' }}></span>Positive</span>
+            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: SENTIMENT_COLORS.positive }}></span>Positive</span>
             <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: '#D14545' }}></span>Negative</span>
             <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: 'var(--muted)' }}></span>Mixed</span>
           </div>
