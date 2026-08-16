@@ -172,3 +172,34 @@ models:
       - name: job_title
         tests:
           - not_null
+  - name: dim_research_source
+    columns:
+      - name: source_id
+        tests:
+          - unique
+          - not_null
+      - name: source_name
+        tests:
+          - unique
+          - not_null
+  - name: fact_research_signal
+    columns:
+      - name: external_id
+        tests:
+          - not_null
+      - name: title
+        tests:
+          - not_null
+      - name: source_name
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['arxiv', 'github', 'hackernews']
+  - name: fact_tool_adoption
+    columns:
+      - name: tool_name
+        tests:
+          - not_null
+      - name: last_month_downloads
+        tests:
+          - not_null

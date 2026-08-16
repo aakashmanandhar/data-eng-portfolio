@@ -53,3 +53,35 @@ models:
           - not_null
           - accepted_values:
               values: ['S', 'M', 'L']
+  - name: silver_research_papers
+    columns:
+      - name: external_id
+        tests:
+          - unique
+          - not_null
+      - name: title
+        tests:
+          - not_null
+  - name: silver_research_repos
+    columns:
+      - name: external_id
+        tests:
+          - unique
+          - not_null
+      - name: title
+        tests:
+          - not_null
+  - name: silver_research_hn
+    columns:
+      - name: external_id
+        tests:
+          - unique
+          - not_null
+      - name: title
+        tests:
+          - not_null
+  - name: silver_pypi_trends
+    columns:
+      - name: tool_name
+        tests:
+          - not_null

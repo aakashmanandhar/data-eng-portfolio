@@ -9,6 +9,7 @@ import SoSurveySlide from '../components/SoSurveySlide'
 import OrgArchetypeSlide from '../components/OrgArchetypeSlide'
 import OssLandscapeSlide from '../components/OssLandscapeSlide'
 import NewsIntelligenceSlide from '../components/NewsIntelligenceSlide'
+import AIAgentPipelineSlide from '../components/AIAgentPipelineSlide'
 
 function relativeTime(dateStr) {
   const diffMs = Date.now() - new Date(dateStr).getTime()
@@ -47,6 +48,7 @@ function HomePage() {
   const [activeSlide, setActiveSlide] = useState(0)
   const [githubPipelineRuns, setGithubPipelineRuns] = useState([])
   const [salaryPipelineRuns, setSalaryPipelineRuns] = useState([])
+  const [aiAgentPipelineRuns, setAiAgentPipelineRuns] = useState([])
   useEffect(() => {
     fetch(`${API_BASE}/api/pipeline-runs/?pipeline=github_trends`)
       .then((res) => res.json())
@@ -58,6 +60,12 @@ function HomePage() {
       .then((res) => res.json())
       .then(setSalaryPipelineRuns)
       .catch((err) => console.error('Failed to load salary pipeline runs:', err))
+  }, [])
+  useEffect(() => {
+    fetch(`${API_BASE}/api/pipeline-runs/?pipeline=ai_dataeng_trends`)
+      .then((res) => res.json())
+      .then(setAiAgentPipelineRuns)
+      .catch((err) => console.error('Failed to load AI agent pipeline runs:', err))
   }, [])
 
   useEffect(() => {
@@ -200,9 +208,10 @@ function HomePage() {
           })()}
           <p className="hero-sub">{subtext}</p>
           <div className="hero-btns">
-            <button className="btn-primary" onClick={() => window.dispatchEvent(new Event('open-chat-widget'))}>Talk to Assistant →</button>
-            <a href="#explorer" className="btn-secondary" onClick={(e)=> { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })) }}>Explore the Data</a>
-            <a href="#explorer" className="btn-primary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 6 } })) }}>Latest DE & AI News</a>
+            <button className="btn-primary" onClick={() => window.dispatchEvent(new Event('open-chat-widget'))}>Talk to Assistant</button>
+            <a href="#explorer" className="btn-secondary" onClick={(e)=> { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })) }}>Explore Data</a>
+            <a href="#explorer" className="btn-primary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 6 } })) }}>DE & AI News</a>
+            <a href="#explorer" className="btn-secondary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 7 } })) }}>AI & DE Research</a>
           </div>
         </div>
 
@@ -265,6 +274,7 @@ function HomePage() {
               { kind: 'static', icon: '📊', title: 'Community Survey Data', time: '2026, static snapshot' },
               { kind: 'airflow', runs: githubPipelineRuns, title: 'OSS Landscape Pipeline' },
               { kind: 'airflow', runs: githubPipelineRuns, title: 'News Intelligence Pipeline' },
+              { kind: 'airflow', runs: aiAgentPipelineRuns, title: 'AI & DE Research Pipeline' },
             ]
             const cfg = slideConfig[activeSlide] || slideConfig[1]
             if (cfg.kind === 'static') {
@@ -315,6 +325,7 @@ function HomePage() {
           <OrgArchetypeSlide key="org-archetype" />,
           <OssLandscapeSlide key="oss-landscape" />,
           <NewsIntelligenceSlide key="news-intelligence" />,
+          <AIAgentPipelineSlide key="ai-agent-pipeline" />,
         ]}
       />
 

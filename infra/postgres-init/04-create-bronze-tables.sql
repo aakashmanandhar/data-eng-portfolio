@@ -87,4 +87,32 @@ CREATE TABLE IF NOT EXISTS bronze.news_articles_snapshot (
     raw_data JSONB NOT NULL,
     snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
     loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);CREATE TABLE IF NOT EXISTS bronze.research_papers (
+    id SERIAL PRIMARY KEY,
+    external_id TEXT NOT NULL UNIQUE,
+    raw_data JSONB NOT NULL,
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS bronze.research_repos (
+    id SERIAL PRIMARY KEY,
+    external_id TEXT NOT NULL UNIQUE,
+    raw_data JSONB NOT NULL,
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS bronze.research_hn (
+    id SERIAL PRIMARY KEY,
+    external_id TEXT NOT NULL UNIQUE,
+    raw_data JSONB NOT NULL,
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS bronze.pypi_trends (
+    id SERIAL PRIMARY KEY,
+    tool_name TEXT NOT NULL,
+    raw_data JSONB NOT NULL,
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    loaded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(tool_name, snapshot_date)
 );

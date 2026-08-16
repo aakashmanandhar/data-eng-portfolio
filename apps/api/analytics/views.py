@@ -927,3 +927,66 @@ class NewsKPISummaryView(APIView):
             "top_keyword": top_keyword,
             "overall_sentiment": overall_sentiment,
         })
+
+from .models import AgentDiagnosis, DataQualityAction, ResearchSignal, ToolAdoptionTrend
+from .serializers import AgentDiagnosisSerializer, DataQualityActionSerializer, ResearchSignalSerializer, ToolAdoptionTrendSerializer
+
+
+class AgentDiagnosisCreateView(APIView):
+    def post(self, request):
+        serializer = AgentDiagnosisSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+
+class AgentDiagnosisListView(generics.ListAPIView):
+    serializer_class = AgentDiagnosisSerializer
+    queryset = AgentDiagnosis.objects.all()[:20]
+
+
+class DataQualityActionCreateView(APIView):
+    def post(self, request):
+        serializer = DataQualityActionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+
+class DataQualityActionListView(generics.ListAPIView):
+    serializer_class = DataQualityActionSerializer
+    queryset = DataQualityAction.objects.all()[:20]
+
+
+class ResearchSignalListView(APIView):
+    def get(self, request):
+        source = request.query_params.get('source')
+        qs = ResearchSignal.objects.all().order_by('-published_at')
+        if source:
+            qs = qs.filter(source=source)
+        qs = qs[:100]
+        return Response(ResearchSignalSerializer(qs, many=True).data)
+
+
+class ToolAdoptionTrendListView(APIView):
+    def get(self, request):
+        qs = ToolAdoptionTrend.objects.all().order_by('-download_count')
+        return Response(ToolAdoptionTrendSerializer(qs, many=True).data)
+
+
+class AgentActivitySummaryView(APIView):
+    def get(self, request):
+        from django.db.models import Count, Avg
+        total_diagnoses = AgentDiagnosis.objects.count()
+        auto_retried = AgentDiagnosis.objects.filter(auto_retried=True).count()
+        total_dq_actions = DataQualityAction.objects.count()
+        avg_confidence = DataQualityAction.objects.aggregate(avg=Avg('confidence'))['avg'] or 0
+        return Response({
+            "total_diagnoses": total_diagnoses,
+            "auto_retried": auto_retried,
+            "self_healing_rate": round((auto_retried / total_diagnoses * 100), 1) if total_diagnoses else 0,
+            "total_dq_actions": total_dq_actions,
+            "avg_confidence": round(avg_confidence, 2),
+        })

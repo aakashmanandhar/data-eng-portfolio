@@ -15,6 +15,10 @@ sources:
       - name: practical_data_survey_2026
       - name: ai_jobs_salaries_snapshot
       - name: news_articles_snapshot
+      - name: research_papers
+      - name: research_repos
+      - name: research_hn
+      - name: pypi_trends
   - name: gold_python
     schema: dbt_dev_gold
     tables:

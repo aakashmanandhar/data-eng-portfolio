@@ -2,6 +2,8 @@ from django.urls import path
 from .views import (
     CareerArchetypeView, CareerFitView, CountryGrowthForecastView, GrowthForecastStatusView, JobMarketView, MomentumStatusView, NewsKPISummaryView, NewsKeywordBreakoutView, NewsKeywordGrowthView, NewsKeywordListView, NewsKeywordMentionsView, NewsSentimentTrendView, OssLandscapeSummaryView, SalaryForecastMultiyearView, SalaryKPISummaryView, SalaryPredictorMetaView, SalaryPredictorView, SalaryToolListView, SentimentVsAdoptionGapView, SkillSalaryGrowthView, ToolMomentumView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
     GitHubRepoRankingView, GitHubCohortTrendView, GitHubPlatformComparisonView, GitHubOrgActivityView,
+    AgentDiagnosisCreateView, AgentDiagnosisListView, DataQualityActionCreateView, DataQualityActionListView,
+    ResearchSignalListView, ToolAdoptionTrendListView, AgentActivitySummaryView,
     AIAdoptionForecastView, VisitorCountView, VisitorHeartbeatView, VisitorStatsView, CountryAISignalView, CountryArchetypeView,
     DeToolSummaryView, DeToolByCountryView, OrgArchetypeSummaryView, CountryToolSignalView, ToolListView, SalaryByToolView, NewsArticleFeedView,
 )
@@ -49,4 +51,11 @@ urlpatterns = [
     path('news-keyword-growth/', NewsKeywordGrowthView.as_view(), name='news-keyword-growth'),
     path('news-keyword-breakout/', NewsKeywordBreakoutView.as_view(), name='news-keyword-breakout'),
     path('news-articles/', NewsArticleFeedView.as_view(), name='news-articles'),
+    path('agent-diagnosis/', AgentDiagnosisCreateView.as_view(), name='agent-diagnosis-create'),
+    path('agent-diagnosis-log/', AgentDiagnosisListView.as_view(), name='agent-diagnosis-list'),
+    path('data-quality-action/', DataQualityActionCreateView.as_view(), name='data-quality-action-create'),
+    path('data-quality-log/', DataQualityActionListView.as_view(), name='data-quality-list'),
+    path('research-signals/', ResearchSignalListView.as_view(), name='research-signals'),
+    path('tool-adoption-trends/', ToolAdoptionTrendListView.as_view(), name='tool-adoption-trends'),
+    path('agent-activity-summary/', AgentActivitySummaryView.as_view(), name='agent-activity-summary'),
 ]

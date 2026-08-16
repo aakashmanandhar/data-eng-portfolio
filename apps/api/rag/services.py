@@ -13,7 +13,7 @@ def classify_question(question):
     """
     prompt = f"""Classify this question into exactly one category: "analytics" or "project".
 
-"analytics" = questions about data engineering salaries, job postings, tool popularity, statistics by country, GitHub repo/star/contributor data, cohort comparisons (AI vs traditional tooling), or the AI adoption forecast model (growth rates, predictions, confidence scores, days of history, crossover timing) — e.g. "what's the average salary in Germany?", "what are the top tools in the US?", "how many stars does LangChain have?", "how confident is the forecast model?", "how many days of history is the forecast based on?"
+"analytics" = questions about data engineering salaries, job postings, tool popularity, statistics by country, GitHub repo/star/contributor data, cohort comparisons (AI vs traditional tooling), the AI adoption forecast model (growth rates, predictions, confidence scores, days of history, crossover timing), latest AI/data-engineering research papers and tooling signals (arXiv/GitHub/Hacker News), real PyPI tool download/adoption numbers, or the self-healing pipeline's own agent activity (failure diagnoses, data quality checks it ran) — e.g. "what's the average salary in Germany?", "what are the top tools in the US?", "how many stars does LangChain have?", "how confident is the forecast model?", "how many days of history is the forecast based on?", "what's the latest research on AI agents?", "which tool has the most downloads?", "has the pipeline fixed itself lately?"
 
 "project" = questions about how this portfolio site itself was built — its architecture, tech stack, or engineering decisions (e.g. "what stack did you use?", "how does the RAG assistant work?", "why did you choose Airflow over Jenkins?")
 Question: {question}
@@ -157,6 +157,30 @@ Notes: MANDATORY DISAMBIGUATION - this is NEWS MENTION growth (is a topic gettin
 Table: dbt_dev_gold.news_keyword_breakout
 Columns: keyword_id (integer), status (text: 'ok' or 'insufficient_data'), days_of_history (integer), today_mentions (integer, may be NULL), baseline_avg (numeric, may be NULL), is_breakout (boolean, may be NULL)
 Notes: A DIFFERENT question from news_keyword_growth - whether TODAY's mention count spikes well above (2x+) a keyword's own recent baseline, regardless of its long-term trend direction. 4-day minimum real history gate. Same as news_keyword_growth, this pipeline is brand new, so status is honestly 'insufficient_data' for every keyword right now.
+
+
+Table: dbt_dev_gold.fact_research_signal
+Columns: external_id (text), title (text), url (text), topic_tags (text, comma-separated or a single tag, may be NULL for arXiv papers), score (integer - GitHub stars or Hacker News points, 0 for arXiv papers which have no score concept), published_at (timestamptz), source_id (integer, FK to dim_research_source), source_name (text: 'arxiv', 'github', or 'hackernews')
+Notes: This is the AI & Data Engineering Research pipeline's unified signal feed - real papers (arXiv), trending repos (GitHub, filtered to AI-agent/RAG/MLOps/data-quality/data-mesh topics), and real discussions (Hacker News), refreshed daily via a self-healing Airflow DAG (ai_dataeng_trends_pipeline). This is a DIFFERENT, separate pipeline from the older dim_github_repo/fact_github_repo_trend tables (Pipeline 2, which tracks a fixed curated list of data-engineering repos) - do not conflate the two; this one specifically covers emerging AI-agent and AI-in-data-engineering research/tooling signals. For "most popular/most discussed" questions filter source_name and sort by score DESC; for "latest" questions sort by published_at DESC. Use source_name = 'arxiv' specifically when a question asks about "research" or "papers".
+
+Table: dbt_dev_gold.dim_research_source
+Columns: source_id (integer), source_name (text: 'arxiv', 'github', 'hackernews'), source_type (text: 'research', 'code', 'discussion')
+
+Table: dbt_dev_gold.dim_research_topic
+Columns: topic_name (text)
+Notes: Distinct topic tags seen across GitHub repos and Hacker News stories in the research signal feed (e.g. 'llm-agents', 'rag', 'mlops', 'data-quality'). arXiv papers do not have topic tags in this table.
+
+Table: dbt_dev_gold.fact_tool_adoption
+Columns: tool_name (text, e.g. 'pandas', 'langchain', 'dbt-core', 'dagster', 'crewai'), last_month_downloads (bigint, real PyPI download count for the last 30 days), snapshot_date (date), prev_month_downloads (bigint, may be NULL), growth_pct (numeric, may be NULL - month-over-month % change)
+Notes: Real PyPI download statistics (via pypistats.org) for ~20 curated AI/data-engineering Python packages, refreshed daily. This is a genuine usage/adoption signal (actual installs), distinct from fact_github_repo_trend (GitHub stars, a popularity/attention signal, not installs) and fact_de_tool_by_country_year (Stack Overflow Survey self-reported usage) - all three answer different questions about the same tool names, never mix them. For "most adopted/most downloaded" questions sort by last_month_downloads DESC.
+
+Table: analytics_agentdiagnosis
+Columns: id (integer), task_id (text), dag_run_id (text), error_summary (text), diagnosis (text - the AI agent's own explanation of the root cause), suggested_fix (text), severity (text: 'low', 'medium', 'high'), auto_retried (boolean - whether the agent judged this safe to automatically retry, e.g. a transient timeout, vs needing a human), resolved (boolean), created_at (timestamptz)
+Notes: Real log of the self-healing pipeline's own failure-diagnosis agent (a Gemini-powered agent that reads a task's error and explains what went wrong, separate from and unrelated to this RAG assistant you are currently running as). Use this table for "has anything gone wrong with the research pipeline" or "what did the agent fix" type questions. If this table is empty, that honestly means the pipeline hasn't hit a failure yet - say so plainly, do not imply the self-healing feature doesn't exist just because there's no data yet.
+
+Table: analytics_dataqualityaction
+Columns: id (integer), table_name (text), action_type (text: 'dedup', 'null_fill', 'outlier_flag', 'schema_drift'), rows_affected (integer), confidence (numeric 0-1 - the agent's own confidence in this finding/action), reasoning (text), created_at (timestamptz)
+Notes: Real log of the self-healing pipeline's automated data-quality checks (duplicate detection, null checks, volume-anomaly checks) run after every daily bronze load for the research pipeline. Same honesty rule as analytics_agentdiagnosis - an empty table means no data quality issues have been found yet (a healthy sign), not a missing feature.
 
 """
 
