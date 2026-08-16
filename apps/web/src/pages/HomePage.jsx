@@ -249,11 +249,10 @@ function HomePage() {
           </div>
           <div className="now-card">
             <div className="now-icon-badge">
-              <span className="now-icon-pulse"></span>
-              <Wrench size={24} color="white" strokeWidth={2.2} />
+              <Wrench size={34} color="white" strokeWidth={2} />
             </div>
             <div className="now-content">
-              <span className="now-label"><Sparkles size={11} /> Now Building</span>
+              <span className="now-label"><Sparkles size={11} /> Now Building <span className="now-live-dot"></span></span>
               <span className="now-text">{nowBuilding}</span>
             </div>
           </div>
