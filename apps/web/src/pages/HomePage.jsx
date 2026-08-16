@@ -10,6 +10,7 @@ import OrgArchetypeSlide from '../components/OrgArchetypeSlide'
 import OssLandscapeSlide from '../components/OssLandscapeSlide'
 import NewsIntelligenceSlide from '../components/NewsIntelligenceSlide'
 import AIAgentPipelineSlide from '../components/AIAgentPipelineSlide'
+import { CheckCircle2, XCircle, Clock, BarChart3, Sparkles, Newspaper, DollarSign, Globe2, Bot, MessageCircle, FileSearch, Wrench } from 'lucide-react'
 
 function relativeTime(dateStr) {
   const diffMs = Date.now() - new Date(dateStr).getTime()
@@ -208,10 +209,10 @@ function HomePage() {
           })()}
           <p className="hero-sub">{subtext}</p>
           <div className="hero-btns">
-            <button className="btn-primary" onClick={() => window.dispatchEvent(new Event('open-chat-widget'))}>Talk to Assistant</button>
-            <a href="#explorer" className="btn-secondary" onClick={(e)=> { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })) }}>Explore Data</a>
-            <a href="#explorer" className="btn-primary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 6 } })) }}>DE & AI News</a>
-            <a href="#explorer" className="btn-secondary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 7 } })) }}>AI & DE Research</a>
+            <button className="btn-primary" onClick={() => window.dispatchEvent(new Event('open-chat-widget'))}><MessageCircle size={13} /> Talk to Assistant</button>
+            <a href="#explorer" className="btn-secondary" onClick={(e)=> { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })) }}><BarChart3 size={13} /> Explore Data</a>
+            <a href="#explorer" className="btn-primary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 6 } })) }}><Newspaper size={13} /> DE & AI News</a>
+            <a href="#explorer" className="btn-secondary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 7 } })) }}><FileSearch size={13} /> AI & DE Research</a>
           </div>
         </div>
 
@@ -249,10 +250,10 @@ function HomePage() {
           <div className="now-card">
             <div className="now-icon-badge">
               <span className="now-icon-pulse"></span>
-              🛠️
+              <Wrench size={24} color="white" strokeWidth={2.2} />
             </div>
             <div className="now-content">
-              <span className="now-label">Now Building</span>
+              <span className="now-label"><Sparkles size={11} /> Now Building</span>
               <span className="now-text">{nowBuilding}</span>
             </div>
           </div>
@@ -262,8 +263,15 @@ function HomePage() {
 
       <div className="analytics-header">
           <div className="analytics-header-text">
-            <h2>Live Data Engineering Analytics</h2>
-            <p>Live DE/AI-DE news and sentiment intelligence, real salary and career intelligence from a trained ML model, a decade of tool-adoption history, organizational and geographic AI trends, and a self-healing AI research pipeline tracking the latest in data engineering — refreshed automatically by live ELT and ML pipelines. Eight views into how data engineering careers and tooling are actually evolving.</p>
+            <span className="analytics-kicker"><Sparkles size={11} /> LIVE ANALYTICS</span>
+            <h2>Data engineering, tracked in real time</h2>
+            <p className="analytics-subtext">Eight views into how DE careers and tooling are actually evolving — refreshed automatically by live ELT and ML pipelines.</p>
+            <div className="analytics-chip-row">
+              <span className="analytics-chip"><Newspaper size={12} /> News &amp; Sentiment</span>
+              <span className="analytics-chip"><DollarSign size={12} /> Salary ML</span>
+              <span className="analytics-chip"><Globe2 size={12} /> Geographic AI</span>
+              <span className="analytics-chip"><Bot size={12} /> Self-Healing Agents</span>
+            </div>
           </div>
           {(() => {
             const slideConfig = [
@@ -281,7 +289,7 @@ function HomePage() {
               return (
                 <div className="pipeline-status-widget status-static">
                   <span className="pipeline-status-icon-badge">
-                    <span className="pipeline-status-icon">{cfg.icon}</span>
+                    <BarChart3 size={14} />
                   </span>
                   <div className="pipeline-status-text">
                     <span className="pipeline-status-title">{cfg.title}</span>
@@ -292,12 +300,11 @@ function HomePage() {
             }
             const runs = cfg.runs
             const status = runs.length === 0 ? 'unknown' : runs[0].status
+            const StatusIcon = runs.length === 0 ? Clock : status === 'success' ? CheckCircle2 : XCircle
             return (
               <div className={`pipeline-status-widget status-${status}`}>
                 <span className="pipeline-status-icon-badge">
-                  <span className="pipeline-status-icon">
-                    {runs.length === 0 ? '⏳' : status === 'success' ? '✓' : '✕'}
-                  </span>
+                  <StatusIcon size={14} />
                   {status === 'success' && <span className="pipeline-status-live-dot"></span>}
                 </span>
                 <div className="pipeline-status-text">
