@@ -263,7 +263,7 @@ function HomePage() {
       <div className="analytics-header">
           <div className="analytics-header-text">
             <h2>Live Data Engineering Analytics</h2>
-            <p>Live DE/AI-DE news and sentiment intelligence, real salary and career intelligence from a trained ML model, a decade of tool-adoption history, and organizational and geographic AI trends — refreshed automatically by live ELT and ML pipelines. Seven views into how data engineering careers and tooling are actually evolving.</p>
+            <p>Live DE/AI-DE news and sentiment intelligence, real salary and career intelligence from a trained ML model, a decade of tool-adoption history, organizational and geographic AI trends, and a self-healing AI research pipeline tracking the latest in data engineering — refreshed automatically by live ELT and ML pipelines. Eight views into how data engineering careers and tooling are actually evolving.</p>
           </div>
           {(() => {
             const slideConfig = [
