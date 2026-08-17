@@ -127,10 +127,17 @@ def search_works(query, max_retries=3):
 
 
 def extract_date(item):
+    # Crossref's own metadata occasionally has garbage years (some publisher
+    # deposits carry placeholder dates like 2121 or 2200) - reject anything
+    # implausibly far in the future rather than trust it blindly.
+    import datetime
+    max_year = datetime.date.today().year + 2
     for field in ("published-print", "published-online", "issued"):
         parts = item.get(field, {}).get("date-parts", [[None]])[0]
         if parts and parts[0]:
             y = parts[0]
+            if not (1900 <= y <= max_year):
+                continue
             m = parts[1] if len(parts) > 1 else 1
             d = parts[2] if len(parts) > 2 else 1
             return f"{y:04d}-{m:02d}-{d:02d}"

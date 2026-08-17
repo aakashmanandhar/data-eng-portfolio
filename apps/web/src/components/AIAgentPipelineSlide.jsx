@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
-import { FileText, MessageSquare, Wrench, ShieldCheck, Sparkles, TrendingUp, Bot, ExternalLink, Activity, HelpCircle, Package, BookOpen, Library, Link2, Database, Rocket, Archive, Quote, Layers } from 'lucide-react'
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts'
+import { FileText, Wrench, ShieldCheck, Sparkles, Bot, ExternalLink, HelpCircle, BookOpen, Library, Link2, Database, Rocket, Archive, Quote, Layers, Zap, Users } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -12,9 +12,7 @@ const SOURCE_META = {
   dblp: { label: 'DBLP', color: '#0891B2', Icon: Database },
   hf_papers: { label: 'Hugging Face', color: '#D97706', Icon: Rocket },
   zenodo: { label: 'Zenodo', color: '#64748B', Icon: Archive },
-  hackernews: { label: 'Hacker News', color: '#F97316', Icon: MessageSquare },
 }
-const PAPER_SOURCES = ['arxiv', 'semantic_scholar', 'openalex', 'crossref', 'dblp', 'hf_papers', 'zenodo']
 
 const STOPWORDS = new Set(['the', 'a', 'an', 'of', 'for', 'and', 'to', 'in', 'on', 'with', 'via', 'using', 'from', 'based', 'is', 'are', 'this', 'towards', 'toward', 'new', 'study', 'analysis', 'approach', 'system', 'systems', 'model', 'models', 'data'])
 
@@ -27,21 +25,14 @@ function timeAgo(dateStr) {
   return `${Math.floor(hrs / 24)}d ago`
 }
 
-function formatDownloads(n) {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
-  if (n >= 1000) return `${(n / 1000).toFixed(0)}K`
-  return n
-}
-
-function topKeyword(signals) {
+function topKeywords(signals, n) {
   const counts = {}
-  signals.slice(0, 300).forEach(s => {
+  signals.slice(0, 400).forEach(s => {
     (s.title || '').toLowerCase().match(/[a-z][a-z-]{3,}/g)?.forEach(w => {
       if (!STOPWORDS.has(w)) counts[w] = (counts[w] || 0) + 1
     })
   })
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
-  return sorted[0]?.[0] || '—'
+  return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, n).map(([w]) => w)
 }
 
 function KpiTile({ icon, label, help, children }) {
@@ -62,42 +53,58 @@ function KpiTile({ icon, label, help, children }) {
   )
 }
 
+function SourceRing({ label, color, Icon, value, pct }) {
+  const data = [{ v: pct, fill: color }]
+  return (
+    <div className="agent-source-ring">
+      <div style={{ position: 'relative', width: 52, height: 52 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <RadialBarChart innerRadius="72%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
+            <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+            <RadialBar background={{ fill: 'var(--border)' }} dataKey="v" cornerRadius={6} />
+          </RadialBarChart>
+        </ResponsiveContainer>
+        <div className="agent-source-ring-icon"><Icon size={15} color={color} /></div>
+      </div>
+      <span className="agent-source-ring-label">{label}</span>
+      <span className="agent-source-ring-value">{value}</span>
+    </div>
+  )
+}
 function SourceDistributionBar({ bySource }) {
   const total = Object.values(bySource).reduce((a, b) => a + b, 0) || 1
   const entries = Object.entries(bySource).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1])
   return (
-    <div className="agent-source-dist">
-      <div className="agent-source-dist-track">
-        {entries.map(([key, val]) => (
-          <div key={key} style={{ width: `${(val / total) * 100}%`, background: SOURCE_META[key].color }} title={`${SOURCE_META[key].label}: ${val}`}></div>
-        ))}
-      </div>
-      <div className="agent-source-dist-legend">
-        {entries.map(([key, val]) => (
-          <span key={key} className="agent-source-dist-item">
-            <span className="agent-source-dist-dot" style={{ background: SOURCE_META[key].color }}></span>
-            {SOURCE_META[key].label} <b>{val}</b>
-          </span>
-        ))}
-      </div>
+    <div className="agent-source-ring-grid">
+      {entries.map(([key, val]) => (
+        <SourceRing key={key} label={SOURCE_META[key].label} color={SOURCE_META[key].color} Icon={SOURCE_META[key].Icon} value={val} pct={Math.round((val / total) * 100)} />
+      ))}
     </div>
   )
 }
-
-function ToolLeaderboard({ tools }) {
-  const max = Math.max(...tools.map(t => t.downloads), 1)
+function TopAuthors({ papers }) {
+  const counts = {}
+  papers.forEach(s => {
+    (s.authors || '').split(',').forEach(a => {
+      const name = a.trim()
+      if (name) counts[name] = (counts[name] || 0) + 1
+    })
+  })
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6)
+  if (top.length === 0) return <div className="agent-activity-empty">Not enough author data yet.</div>
+  const max = top[0][1]
   return (
     <div className="agent-leaderboard">
-      {tools.map((t, i) => (
+      {top.map(([name, count], i) => (
         <div key={i} className="agent-leaderboard-row">
           <span className="agent-leaderboard-rank">#{i + 1}</span>
           <div className="agent-leaderboard-main">
             <div className="agent-leaderboard-top">
-              <span className="agent-leaderboard-name">{t.name}</span>
-              <span className="agent-leaderboard-value">{formatDownloads(t.downloads)}/mo</span>
+              <span className="agent-leaderboard-name">{name}</span>
+              <span className="agent-leaderboard-value">{count} papers</span>
             </div>
             <div className="agent-leaderboard-track">
-              <div className="agent-leaderboard-fill" style={{ width: `${(t.downloads / max) * 100}%` }}></div>
+              <div className="agent-leaderboard-fill" style={{ width: `${(count / max) * 100}%` }}></div>
             </div>
           </div>
         </div>
@@ -106,14 +113,24 @@ function ToolLeaderboard({ tools }) {
   )
 }
 
+function citationStats(signals) {
+  const scores = signals.map(s => s.score || 0).sort((a, b) => a - b)
+  const n = scores.length
+  const median = n === 0 ? 0 : n % 2 === 1 ? scores[(n - 1) / 2] : Math.round((scores[n / 2 - 1] + scores[n / 2]) / 2)
+  const citedCount = scores.filter(s => s > 0).length
+  const citedPct = n ? Math.round((citedCount / n) * 100) : 0
+  const highlyCited = scores.filter(s => s > 20).length
+  return { median, citedPct, highlyCited }
+}
+
 function AIAgentPipelineSlide() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 480)
   const [signals, setSignals] = useState([])
-  const [trends, setTrends] = useState([])
   const [summary, setSummary] = useState(null)
   const [diagnoses, setDiagnoses] = useState([])
   const [dqActions, setDqActions] = useState([])
-  const [feedTab, setFeedTab] = useState('papers')
+  const [sourceFilter, setSourceFilter] = useState(null)
+  const [filteredSignals, setFilteredSignals] = useState([])
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= 480)
@@ -123,43 +140,48 @@ function AIAgentPipelineSlide() {
 
   useEffect(() => {
     fetch(`${API_BASE}/api/research-signals/`).then(r => r.json()).then(setSignals).catch(console.error)
-    fetch(`${API_BASE}/api/tool-adoption-trends/`).then(r => r.json()).then(setTrends).catch(console.error)
     fetch(`${API_BASE}/api/agent-activity-summary/`).then(r => r.json()).then(setSummary).catch(console.error)
     fetch(`${API_BASE}/api/agent-diagnosis-log/`).then(r => r.json()).then(setDiagnoses).catch(console.error)
     fetch(`${API_BASE}/api/data-quality-log/`).then(r => r.json()).then(setDqActions).catch(console.error)
   }, [])
 
+  useEffect(() => {
+    if (!sourceFilter) return
+    fetch(`${API_BASE}/api/research-signals/?source=${sourceFilter}`).then(r => r.json()).then(setFilteredSignals).catch(console.error)
+  }, [sourceFilter])
+
   if (!summary) {
     return (
       <div className="agent-slide">
         <div className="layer-pending">
-          <span className="layer-pending-icon">🤖</span>
+          <span className="layer-pending-icon">📚</span>
           <div className="layer-pending-title">Booting up the research agents…</div>
         </div>
       </div>
     )
   }
 
+  const papers = signals.filter(s => SOURCE_META[s.source])
+
   const bySource = {}
   Object.keys(SOURCE_META).forEach(k => { bySource[k] = 0 })
-  signals.forEach(s => { if (bySource[s.source] !== undefined) bySource[s.source]++ })
+  papers.forEach(s => { if (bySource[s.source] !== undefined) bySource[s.source]++ })
 
-  const paperCount = PAPER_SOURCES.reduce((sum, k) => sum + (bySource[k] || 0), 0)
+  const now = Date.now()
+  const freshCount = papers.filter(s => (now - new Date(s.published_at).getTime()) / 86400000 <= 7).length
+  const freshPct = papers.length ? Math.round((freshCount / papers.length) * 100) : 0
 
-  const feedSignals = (feedTab === 'papers'
-    ? signals.filter(s => PAPER_SOURCES.includes(s.source))
-    : signals.filter(s => s.source === 'hackernews')
-  ).slice(0, isMobile ? 5 : 7)
+  const uniqueAuthors = new Set()
+  papers.forEach(s => (s.authors || '').split(',').forEach(a => { if (a.trim()) uniqueAuthors.add(a.trim().toLowerCase()) }))
 
-  const mostCited = [...signals].filter(s => PAPER_SOURCES.includes(s.source)).sort((a, b) => (b.score || 0) - (a.score || 0))[0]
+  const keywords = topKeywords(papers, 4)
 
-  const topTools = [...trends]
-    .sort((a, b) => b.download_count - a.download_count)
-    .slice(0, 6)
-    .map(t => ({ name: t.tool_name, downloads: t.download_count }))
+  const feedSignals = sourceFilter ? filteredSignals.filter(s => SOURCE_META[s.source]) : papers.slice(0, isMobile ? 30 : 50)
+
+  const mostCited = [...papers].sort((a, b) => (b.score || 0) - (a.score || 0))[0]
 
   const dayCounts = {}
-  signals.forEach(s => {
+  papers.forEach(s => {
     const day = (s.published_at || '').slice(0, 10)
     if (day) dayCounts[day] = (dayCounts[day] || 0) + 1
   })
@@ -167,6 +189,8 @@ function AIAgentPipelineSlide() {
     .sort((a, b) => a[0].localeCompare(b[0]))
     .slice(-14)
     .map(([day, count]) => ({ day: day.slice(5), count }))
+
+  const citeStats = citationStats(papers)
 
   const activityFeed = [
     ...diagnoses.map(d => ({ type: 'diagnosis', ...d, ts: d.created_at })),
@@ -181,28 +205,34 @@ function AIAgentPipelineSlide() {
           <span>Self-Healing Research Pipeline</span>
         </div>
         <p className="agent-intro-text">
-          AI agents track the latest research and tools in data engineering across 7 real academic sources —
+          AI agents track the latest research on data engineering and AI across 7 real academic databases —
           then watch their own pipeline, diagnosing failures and catching data issues automatically.
         </p>
       </div>
 
       <div className="agent-kpi-row">
         <KpiTile icon={<FileText size={16} color="var(--accent1)" />} label="Papers Tracked" help="Real papers indexed across arXiv, Semantic Scholar, OpenAlex, Crossref, DBLP, Hugging Face, and Zenodo">
-          <span className="agent-kpi-value">{paperCount.toLocaleString()}</span>
+          <span className="agent-kpi-value">{papers.length.toLocaleString()}</span>
         </KpiTile>
-        <KpiTile icon={<Layers size={16} color="var(--accent2)" />} label="Sources" help="Distinct research databases and APIs this pipeline pulls from">
-          <span className="agent-kpi-value">{Object.keys(SOURCE_META).length}</span>
+        <KpiTile icon={<Zap size={16} color="#D97706" />} label="Published This Week" help="Share of tracked papers published in the last 7 days — how current this collection is">
+          <span className="agent-kpi-value">{freshPct}%</span>
         </KpiTile>
-        <KpiTile icon={<Sparkles size={16} color="#7C3AED" />} label="Top Keyword" help="Most frequent meaningful word across the 300 latest paper titles">
-          <span className="agent-kpi-value agent-kpi-value-text">{topKeyword(signals)}</span>
+        <KpiTile icon={<Users size={16} color="#0D9488" />} label="Unique Authors" help="Distinct author names appearing across all tracked papers">
+          <span className="agent-kpi-value">{uniqueAuthors.size.toLocaleString()}</span>
+        </KpiTile>
+        <KpiTile icon={<Sparkles size={16} color="#7C3AED" />} label="Trending Terms" help="Most frequent meaningful words across the 400 latest paper titles">
+          <span className="agent-kpi-value agent-kpi-value-text">{keywords[0] || '—'}</span>
         </KpiTile>
         <KpiTile icon={<ShieldCheck size={16} color="var(--green)" />} label="Self-Healing Rate" help="Share of pipeline failures the agent fixed automatically, with no human needed">
           <span className="agent-kpi-value" style={{ color: 'var(--green)' }}>{summary.self_healing_rate}%</span>
         </KpiTile>
-        <KpiTile icon={<TrendingUp size={16} color="#D97706" />} label="Top Tool" help="The AI/data tool with the most downloads last month, by PyPI installs">
-          <span className="agent-kpi-value agent-kpi-value-text">{topTools[0]?.name || '—'}</span>
-        </KpiTile>
       </div>
+
+      {keywords.length > 0 && (
+        <div className="agent-keyword-row">
+          {keywords.map((k, i) => <span key={i} className="agent-keyword-pill">#{k}</span>)}
+        </div>
+      )}
 
       {mostCited && (
         <div className="agent-featured-card">
@@ -218,15 +248,42 @@ function AIAgentPipelineSlide() {
         </div>
       )}
 
-      <div className="agent-panel">
-        <h3 className="agent-panel-title"><Layers size={14} /> Signal Sources</h3>
-        <p className="agent-panel-sub">Where today's research and tooling signals are coming from.</p>
-        <SourceDistributionBar bySource={bySource} />
+      <div className="agent-triple-grid">
+        <div className="agent-panel">
+          <h3 className="agent-panel-title"><Layers size={14} /> Where Papers Come From</h3>
+          <p className="agent-panel-sub">Distribution across the 7 tracked academic sources.</p>
+          <SourceDistributionBar bySource={bySource} />
+        </div>
+
+        <div className="agent-panel">
+          <h3 className="agent-panel-title"><Quote size={14} /> Citation Health</h3>
+          <p className="agent-panel-sub">How well-cited this tracked collection is overall.</p>
+          <div className="agent-cite-stats">
+            <div className="agent-cite-stat">
+              <span className="agent-cite-stat-value">{citeStats.median}</span>
+              <span className="agent-cite-stat-label">Median citations</span>
+            </div>
+            <div className="agent-cite-stat">
+              <span className="agent-cite-stat-value">{citeStats.citedPct}%</span>
+              <span className="agent-cite-stat-label">Cited at least once</span>
+            </div>
+            <div className="agent-cite-stat">
+              <span className="agent-cite-stat-value">{citeStats.highlyCited}</span>
+              <span className="agent-cite-stat-label">Highly cited (20+)</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="agent-panel">
+          <h3 className="agent-panel-title"><Users size={14} /> Most Prolific Authors</h3>
+          <p className="agent-panel-sub">Researchers appearing most often across tracked papers.</p>
+          <TopAuthors papers={papers} />
+        </div>
       </div>
 
       <div className="agent-panel">
         <h3 className="agent-panel-title"><Sparkles size={14} /> Signal Growth</h3>
-        <p className="agent-panel-sub">New research signals discovered each day — a rising line means the field is heating up.</p>
+        <p className="agent-panel-sub">New papers discovered each day — a rising line means the field is heating up.</p>
         <ResponsiveContainer width="100%" height={90}>
           <AreaChart data={trendData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
             <defs>
@@ -246,26 +303,22 @@ function AIAgentPipelineSlide() {
 
       <div className="agent-main-grid">
         <div className="agent-panel">
-          <h3 className="agent-panel-title"><FileText size={14} /> Latest Research & Tooling Signals</h3>
-          <p className="agent-panel-sub">Fresh papers and discussions on data engineering &amp; AI, updated daily.</p>
-          <div className="agent-feed-tabs">
-            <button
-              className={`agent-feed-tab ${feedTab === 'papers' ? 'agent-feed-tab-active' : ''}`}
-              style={feedTab === 'papers' ? { background: 'var(--accent1)', borderColor: 'var(--accent1)' } : { borderColor: 'var(--accent1)', color: 'var(--accent1)' }}
-              onClick={() => setFeedTab('papers')}
-            >
-              <FileText size={12} /> Papers ({paperCount})
-            </button>
-            <button
-              className={`agent-feed-tab ${feedTab === 'hackernews' ? 'agent-feed-tab-active' : ''}`}
-              style={feedTab === 'hackernews' ? { background: SOURCE_META.hackernews.color, borderColor: SOURCE_META.hackernews.color } : { borderColor: SOURCE_META.hackernews.color, color: SOURCE_META.hackernews.color }}
-              onClick={() => setFeedTab('hackernews')}
-            >
-              <MessageSquare size={12} /> Hacker News ({bySource.hackernews})
-            </button>
+          <h3 className="agent-panel-title"><FileText size={14} /> Latest Research Papers</h3>
+          <p className="agent-panel-sub">Fresh papers on data engineering &amp; AI, updated daily.</p>
+          <div className="agent-source-filters">
+            {Object.entries(SOURCE_META).map(([key, meta]) => (
+              <button
+                key={key}
+                className={`agent-source-pill ${sourceFilter === key ? 'agent-source-pill-active' : ''}`}
+                style={sourceFilter === key ? { background: meta.color, borderColor: meta.color, color: '#fff' } : { borderColor: meta.color, color: meta.color }}
+                onClick={() => setSourceFilter(sourceFilter === key ? null : key)}
+              >
+                <meta.Icon size={11} /> {meta.label} ({bySource[key]})
+              </button>
+            ))}
           </div>
           <div className="agent-signal-feed">
-            {feedSignals.length === 0 && <div className="agent-activity-empty">No signals in this category yet.</div>}
+            {feedSignals.length === 0 && <div className="agent-activity-empty">No papers in this category yet.</div>}
             {feedSignals.map((s, i) => {
               const meta = SOURCE_META[s.source]
               return (
@@ -279,7 +332,7 @@ function AIAgentPipelineSlide() {
                     <div className="agent-signal-meta">
                       <span style={{ color: meta.color, fontWeight: 700 }}>{meta.label}</span>
                       {s.authors && <span>· {s.authors.split(',').slice(0, 2).join(',')}{s.authors.split(',').length > 2 ? ' et al.' : ''}</span>}
-                      {s.score > 0 && <span>· {s.score.toLocaleString()} {PAPER_SOURCES.includes(s.source) ? 'citations' : 'pts'}</span>}
+                      {s.score > 0 && <span>· {s.score.toLocaleString()} citations</span>}
                       <span>· {timeAgo(s.published_at)}</span>
                     </div>
                   </div>
@@ -287,12 +340,6 @@ function AIAgentPipelineSlide() {
               )
             })}
           </div>
-        </div>
-
-        <div className="agent-panel">
-          <h3 className="agent-panel-title"><Package size={14} /> Tool Adoption Leaderboard</h3>
-          <p className="agent-panel-sub">Most-downloaded AI &amp; data tools on PyPI last month.</p>
-          <ToolLeaderboard tools={topTools} />
         </div>
 
         <div className="agent-panel agent-activity-panel">

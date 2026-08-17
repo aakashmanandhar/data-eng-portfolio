@@ -1,6 +1,6 @@
 import re
 import json
-from datetime import datetime, timezone as dt_timezone
+from datetime import datetime, timezone as dt_timezone, timedelta
 from django.core.management.base import BaseCommand
 from django.db import connection
 from analytics.models import ResearchSignal, ToolAdoptionTrend
@@ -16,6 +16,16 @@ def parse_dt(value):
         dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=dt_timezone.utc)
+        # Several sources' metadata carries implausible future dates -
+        # some clearly garbage (year 2121/2200 from Crossref), others a
+        # milder "ahead of print" placeholder (OpenAlex/DBLP/Zenodo have
+        # been seen with dates months to years out). Reject anything more
+        # than 90 days beyond now rather than trust it blindly - that's
+        # generous enough for genuine forthcoming-issue dates while
+        # excluding clearly bad metadata that would otherwise dominate
+        # "most recent" sorting.
+        if dt > datetime.now(dt_timezone.utc) + timedelta(days=90):
+            return None
         return dt
     except (ValueError, AttributeError):
         return None

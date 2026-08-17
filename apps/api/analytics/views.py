@@ -960,14 +960,31 @@ class DataQualityActionListView(generics.ListAPIView):
     queryset = DataQualityAction.objects.all()[:20]
 
 
+PAPER_SOURCES = ['arxiv', 'semantic_scholar', 'openalex', 'crossref', 'dblp', 'hf_papers', 'zenodo']
+
+
 class ResearchSignalListView(APIView):
     def get(self, request):
         source = request.query_params.get('source')
-        qs = ResearchSignal.objects.all().order_by('-published_at')
         if source:
-            qs = qs.filter(source=source)
-        qs = qs[:100]
-        return Response(ResearchSignalSerializer(qs, many=True).data)
+            # A specific source is being browsed - return up to 500 of its
+            # own papers so the frontend can show a genuinely complete list,
+            # not just whatever fit in the combined top-N sample.
+            qs = ResearchSignal.objects.filter(source=source).order_by('-published_at')[:500]
+            return Response(ResearchSignalSerializer(qs, many=True).data)
+
+        # No filter: a single ORDER BY published_at DESC across all sources
+        # would structurally favor whichever source's date field happens to
+        # skew recent (a real bug we hit - some sources' timestamps reflect
+        # deposit/indexing date rather than the paper's actual age), starving
+        # out other genuinely large sources entirely. Fetch a fair, bounded
+        # slice PER source instead, so every real source gets real
+        # representation regardless of its date semantics.
+        combined = []
+        for src in PAPER_SOURCES:
+            combined.extend(ResearchSignal.objects.filter(source=src).order_by('-published_at')[:60])
+        combined.sort(key=lambda s: s.published_at, reverse=True)
+        return Response(ResearchSignalSerializer(combined, many=True).data)
 
 
 class ToolAdoptionTrendListView(APIView):

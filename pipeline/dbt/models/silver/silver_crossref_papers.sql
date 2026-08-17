@@ -9,3 +9,4 @@ SELECT
     snapshot_date,
     loaded_at
 FROM {{ source('bronze', 'crossref_papers') }}
+WHERE (raw_data->>'published_at')::TIMESTAMPTZ <= now() + INTERVAL '2 years'
