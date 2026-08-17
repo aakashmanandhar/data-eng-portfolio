@@ -10,8 +10,13 @@ def parse_dt(value):
     if not value:
         return None
     try:
-        # arXiv format: 2026-08-15T12:00:00Z
-        return datetime.fromisoformat(value.replace('Z', '+00:00'))
+        # arXiv format: 2026-08-15T12:00:00Z; other sources may give a plain
+        # date like 2026-08-15 with no timezone - always attach UTC so we
+        # never save an ambiguous naive datetime.
+        dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=dt_timezone.utc)
+        return dt
     except (ValueError, AttributeError):
         return None
 
@@ -81,6 +86,144 @@ class Command(BaseCommand):
                         url=raw.get("url", "")[:500],
                         authors="",
                         topic_tags=raw.get("topic_tags", "")[:300],
+                        published_at=pub,
+                        score=raw.get("score", 0) or 0,
+                    ),
+                )
+                created += was_created
+                updated += not was_created
+
+            # Semantic Scholar papers
+            cur.execute("SELECT raw_data FROM bronze.semantic_scholar_papers")
+            for (raw,) in cur.fetchall():
+                raw = json.loads(raw) if isinstance(raw, str) else raw
+                pub = parse_dt(raw.get("published_at"))
+                if not pub:
+                    continue
+                obj, was_created = ResearchSignal.objects.update_or_create(
+                    external_id=raw["external_id"],
+                    defaults=dict(
+                        source="semantic_scholar",
+                        title=raw.get("title", "")[:500],
+                        summary=raw.get("summary", ""),
+                        url=raw.get("url", "")[:500],
+                        authors=raw.get("authors", "")[:500],
+                        topic_tags="",
+                        published_at=pub,
+                        score=raw.get("score", 0) or 0,
+                    ),
+                )
+                created += was_created
+                updated += not was_created
+
+            # OpenAlex works
+            cur.execute("SELECT raw_data FROM bronze.openalex_papers")
+            for (raw,) in cur.fetchall():
+                raw = json.loads(raw) if isinstance(raw, str) else raw
+                pub = parse_dt(raw.get("published_at"))
+                if not pub:
+                    continue
+                obj, was_created = ResearchSignal.objects.update_or_create(
+                    external_id=raw["external_id"],
+                    defaults=dict(
+                        source="openalex",
+                        title=raw.get("title", "")[:500],
+                        summary=raw.get("summary", ""),
+                        url=raw.get("url", "")[:500],
+                        authors=raw.get("authors", "")[:500],
+                        topic_tags="",
+                        published_at=pub,
+                        score=raw.get("score", 0) or 0,
+                    ),
+                )
+                created += was_created
+                updated += not was_created
+
+            # Crossref works
+            cur.execute("SELECT raw_data FROM bronze.crossref_papers")
+            for (raw,) in cur.fetchall():
+                raw = json.loads(raw) if isinstance(raw, str) else raw
+                pub = parse_dt(raw.get("published_at"))
+                if not pub:
+                    continue
+                obj, was_created = ResearchSignal.objects.update_or_create(
+                    external_id=raw["external_id"],
+                    defaults=dict(
+                        source="crossref",
+                        title=raw.get("title", "")[:500],
+                        summary=raw.get("summary", ""),
+                        url=raw.get("url", "")[:500],
+                        authors=raw.get("authors", "")[:500],
+                        topic_tags="",
+                        published_at=pub,
+                        score=raw.get("score", 0) or 0,
+                    ),
+                )
+                created += was_created
+                updated += not was_created
+
+            # DBLP publications
+            cur.execute("SELECT raw_data FROM bronze.dblp_papers")
+            for (raw,) in cur.fetchall():
+                raw = json.loads(raw) if isinstance(raw, str) else raw
+                pub = parse_dt(raw.get("published_at"))
+                if not pub:
+                    continue
+                obj, was_created = ResearchSignal.objects.update_or_create(
+                    external_id=raw["external_id"],
+                    defaults=dict(
+                        source="dblp",
+                        title=raw.get("title", "")[:500],
+                        summary=raw.get("summary", ""),
+                        url=raw.get("url", "")[:500],
+                        authors=raw.get("authors", "")[:500],
+                        topic_tags="",
+                        published_at=pub,
+                        score=raw.get("score", 0) or 0,
+                    ),
+                )
+                created += was_created
+                updated += not was_created
+
+            # Hugging Face papers
+            cur.execute("SELECT raw_data FROM bronze.hf_papers")
+            for (raw,) in cur.fetchall():
+                raw = json.loads(raw) if isinstance(raw, str) else raw
+                pub = parse_dt(raw.get("published_at"))
+                if not pub:
+                    continue
+                obj, was_created = ResearchSignal.objects.update_or_create(
+                    external_id=raw["external_id"],
+                    defaults=dict(
+                        source="hf_papers",
+                        title=raw.get("title", "")[:500],
+                        summary=raw.get("summary", ""),
+                        url=raw.get("url", "")[:500],
+                        authors=raw.get("authors", "")[:500],
+                        topic_tags="",
+                        published_at=pub,
+                        score=raw.get("score", 0) or 0,
+                    ),
+                )
+                created += was_created
+                updated += not was_created
+
+            # Zenodo records
+            cur.execute("SELECT raw_data FROM bronze.zenodo_papers")
+            for (raw,) in cur.fetchall():
+                raw = json.loads(raw) if isinstance(raw, str) else raw
+                pub = parse_dt(raw.get("published_at"))
+                if not pub:
+                    continue
+                obj, was_created = ResearchSignal.objects.update_or_create(
+                    external_id=raw["external_id"],
+                    defaults=dict(
+                        source="zenodo",
+                        title=raw.get("title", "")[:500],
+                        summary=raw.get("summary", ""),
+                        url=raw.get("url", "")[:500],
+                        authors=raw.get("authors", "")[:500],
+                        topic_tags="",
                         published_at=pub,
                         score=raw.get("score", 0) or 0,
                     ),

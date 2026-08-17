@@ -194,7 +194,7 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['arxiv', 'github', 'hackernews']
+              values: ['arxiv', 'github', 'hackernews', 'semantic_scholar', 'openalex', 'crossref', 'dblp', 'hf_papers', 'zenodo']
   - name: fact_tool_adoption
     columns:
       - name: tool_name

@@ -85,3 +85,57 @@ models:
       - name: tool_name
         tests:
           - not_null
+  - name: silver_semantic_scholar_papers
+    columns:
+      - name: external_id
+        tests:
+          - unique
+          - not_null
+      - name: title
+        tests:
+          - not_null
+  - name: silver_openalex_papers
+    columns:
+      - name: external_id
+        tests:
+          - unique
+          - not_null
+      - name: title
+        tests:
+          - not_null
+  - name: silver_crossref_papers
+    columns:
+      - name: external_id
+        tests:
+          - unique
+          - not_null
+      - name: title
+        tests:
+          - not_null
+  - name: silver_dblp_papers
+    columns:
+      - name: external_id
+        tests:
+          - unique
+          - not_null
+      - name: title
+        tests:
+          - not_null
+  - name: silver_hf_papers
+    columns:
+      - name: external_id
+        tests:
+          - unique
+          - not_null
+      - name: title
+        tests:
+          - not_null
+  - name: silver_zenodo_papers
+    columns:
+      - name: external_id
+        tests:
+          - unique
+          - not_null
+      - name: title
+        tests:
+          - not_null

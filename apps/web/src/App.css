@@ -2921,3 +2921,22 @@ footer a:hover {
   .hero-btns { gap: 8px; }
   .hero-btns .btn-primary, .hero-btns .btn-secondary { padding: 8px 10px; font-size: 11px; text-align: center; box-sizing: border-box; }
 }
+
+.agent-featured-card { background: linear-gradient(135deg, color-mix(in srgb, var(--accent1) 8%, var(--bg-alt)), var(--bg-alt)); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+.agent-featured-badge { display: inline-flex; align-items: center; gap: 5px; width: fit-content; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--accent1); }
+.agent-featured-title { font-size: 14px; font-weight: 700; color: var(--text); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; line-height: 1.4; }
+.agent-featured-title:hover { text-decoration: underline; }
+.agent-featured-meta { font-size: 11px; color: var(--muted); display: flex; gap: 4px; flex-wrap: wrap; }
+
+.agent-source-dist { display: flex; flex-direction: column; gap: 10px; }
+.agent-source-dist-track { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: var(--border); }
+.agent-source-dist-track > div { transition: width 0.3s ease; }
+.agent-source-dist-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.agent-source-dist-item { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--muted); }
+.agent-source-dist-item b { color: var(--text); font-weight: 700; }
+.agent-source-dist-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+@media (max-width: 480px) {
+  .agent-featured-title { font-size: 12.5px; }
+  .agent-source-dist-legend { gap: 6px 10px; }
+}

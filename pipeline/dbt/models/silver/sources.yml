@@ -19,6 +19,12 @@ sources:
       - name: research_repos
       - name: research_hn
       - name: pypi_trends
+      - name: semantic_scholar_papers
+      - name: openalex_papers
+      - name: crossref_papers
+      - name: dblp_papers
+      - name: hf_papers
+      - name: zenodo_papers
   - name: gold_python
     schema: dbt_dev_gold
     tables:

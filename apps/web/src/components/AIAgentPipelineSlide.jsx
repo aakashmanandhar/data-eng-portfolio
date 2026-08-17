@@ -1,14 +1,22 @@
 import { useState, useEffect } from 'react'
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts'
-import { FileText, Github, MessageSquare, Wrench, ShieldCheck, Sparkles, TrendingUp, Bot, ExternalLink, Activity, HelpCircle, Package } from 'lucide-react'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
+import { FileText, MessageSquare, Wrench, ShieldCheck, Sparkles, TrendingUp, Bot, ExternalLink, Activity, HelpCircle, Package, BookOpen, Library, Link2, Database, Rocket, Archive, Quote, Layers } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
 const SOURCE_META = {
-  arxiv: { label: 'arXiv Papers', color: '#2563EB', Icon: FileText },
-  github: { label: 'GitHub Repos', color: '#16A34A', Icon: Github },
+  arxiv: { label: 'arXiv', color: '#2563EB', Icon: FileText },
+  semantic_scholar: { label: 'Semantic Scholar', color: '#7C3AED', Icon: BookOpen },
+  openalex: { label: 'OpenAlex', color: '#0D9488', Icon: Library },
+  crossref: { label: 'Crossref', color: '#4F46E5', Icon: Link2 },
+  dblp: { label: 'DBLP', color: '#0891B2', Icon: Database },
+  hf_papers: { label: 'Hugging Face', color: '#D97706', Icon: Rocket },
+  zenodo: { label: 'Zenodo', color: '#64748B', Icon: Archive },
   hackernews: { label: 'Hacker News', color: '#F97316', Icon: MessageSquare },
 }
+const PAPER_SOURCES = ['arxiv', 'semantic_scholar', 'openalex', 'crossref', 'dblp', 'hf_papers', 'zenodo']
+
+const STOPWORDS = new Set(['the', 'a', 'an', 'of', 'for', 'and', 'to', 'in', 'on', 'with', 'via', 'using', 'from', 'based', 'is', 'are', 'this', 'towards', 'toward', 'new', 'study', 'analysis', 'approach', 'system', 'systems', 'model', 'models', 'data'])
 
 function timeAgo(dateStr) {
   const diffMs = Date.now() - new Date(dateStr).getTime()
@@ -23,6 +31,17 @@ function formatDownloads(n) {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
   if (n >= 1000) return `${(n / 1000).toFixed(0)}K`
   return n
+}
+
+function topKeyword(signals) {
+  const counts = {}
+  signals.slice(0, 300).forEach(s => {
+    (s.title || '').toLowerCase().match(/[a-z][a-z-]{3,}/g)?.forEach(w => {
+      if (!STOPWORDS.has(w)) counts[w] = (counts[w] || 0) + 1
+    })
+  })
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
+  return sorted[0]?.[0] || '—'
 }
 
 function KpiTile({ icon, label, help, children }) {
@@ -43,18 +62,23 @@ function KpiTile({ icon, label, help, children }) {
   )
 }
 
-function SelfHealingGauge({ rate }) {
-  const data = [{ name: 'rate', value: rate, fill: rate > 50 ? '#16A34A' : rate > 15 ? '#F97316' : 'var(--muted)' }]
+function SourceDistributionBar({ bySource }) {
+  const total = Object.values(bySource).reduce((a, b) => a + b, 0) || 1
+  const entries = Object.entries(bySource).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1])
   return (
-    <div style={{ position: 'relative', width: 44, height: 44, flexShrink: 0 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <RadialBarChart innerRadius="70%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
-          <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-          <RadialBar background={{ fill: 'var(--border)' }} dataKey="value" cornerRadius={8} />
-        </RadialBarChart>
-      </ResponsiveContainer>
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: 'var(--text)' }}>
-        {rate}%
+    <div className="agent-source-dist">
+      <div className="agent-source-dist-track">
+        {entries.map(([key, val]) => (
+          <div key={key} style={{ width: `${(val / total) * 100}%`, background: SOURCE_META[key].color }} title={`${SOURCE_META[key].label}: ${val}`}></div>
+        ))}
+      </div>
+      <div className="agent-source-dist-legend">
+        {entries.map(([key, val]) => (
+          <span key={key} className="agent-source-dist-item">
+            <span className="agent-source-dist-dot" style={{ background: SOURCE_META[key].color }}></span>
+            {SOURCE_META[key].label} <b>{val}</b>
+          </span>
+        ))}
       </div>
     </div>
   )
@@ -89,7 +113,7 @@ function AIAgentPipelineSlide() {
   const [summary, setSummary] = useState(null)
   const [diagnoses, setDiagnoses] = useState([])
   const [dqActions, setDqActions] = useState([])
-  const [feedTab, setFeedTab] = useState('arxiv')
+  const [feedTab, setFeedTab] = useState('papers')
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= 480)
@@ -116,18 +140,24 @@ function AIAgentPipelineSlide() {
     )
   }
 
-  const bySource = { arxiv: 0, github: 0, hackernews: 0 }
+  const bySource = {}
+  Object.keys(SOURCE_META).forEach(k => { bySource[k] = 0 })
   signals.forEach(s => { if (bySource[s.source] !== undefined) bySource[s.source]++ })
-  const pieData = Object.entries(bySource).map(([key, value]) => ({ name: SOURCE_META[key].label, value, color: SOURCE_META[key].color }))
 
-  const feedSignals = signals.filter(s => s.source === feedTab).slice(0, isMobile ? 5 : 7)
+  const paperCount = PAPER_SOURCES.reduce((sum, k) => sum + (bySource[k] || 0), 0)
+
+  const feedSignals = (feedTab === 'papers'
+    ? signals.filter(s => PAPER_SOURCES.includes(s.source))
+    : signals.filter(s => s.source === 'hackernews')
+  ).slice(0, isMobile ? 5 : 7)
+
+  const mostCited = [...signals].filter(s => PAPER_SOURCES.includes(s.source)).sort((a, b) => (b.score || 0) - (a.score || 0))[0]
 
   const topTools = [...trends]
     .sort((a, b) => b.download_count - a.download_count)
     .slice(0, 6)
     .map(t => ({ name: t.tool_name, downloads: t.download_count }))
 
-  // Signal growth trend: count of signals by published day, last 14 days
   const dayCounts = {}
   signals.forEach(s => {
     const day = (s.published_at || '').slice(0, 10)
@@ -151,27 +181,47 @@ function AIAgentPipelineSlide() {
           <span>Self-Healing Research Pipeline</span>
         </div>
         <p className="agent-intro-text">
-          AI agents track the latest research and tools in data engineering — then watch their own pipeline,
-          diagnosing failures and catching data issues automatically, without a human in the loop.
+          AI agents track the latest research and tools in data engineering across 7 real academic sources —
+          then watch their own pipeline, diagnosing failures and catching data issues automatically.
         </p>
       </div>
 
       <div className="agent-kpi-row">
-        <KpiTile icon={<Activity size={16} color="var(--accent1)" />} label="Signals Tracked" help="Total papers, repos, and posts the agents are currently monitoring">
-          <span className="agent-kpi-value">{signals.length}</span>
+        <KpiTile icon={<FileText size={16} color="var(--accent1)" />} label="Papers Tracked" help="Real papers indexed across arXiv, Semantic Scholar, OpenAlex, Crossref, DBLP, Hugging Face, and Zenodo">
+          <span className="agent-kpi-value">{paperCount.toLocaleString()}</span>
         </KpiTile>
-        <KpiTile icon={<SelfHealingGauge rate={summary.self_healing_rate} />} label="Self-Healing Rate" help="Share of pipeline failures the agent fixed automatically, with no human needed">
-          <span className="agent-kpi-sublabel">auto-fixed</span>
+        <KpiTile icon={<Layers size={16} color="var(--accent2)" />} label="Sources" help="Distinct research databases and APIs this pipeline pulls from">
+          <span className="agent-kpi-value">{Object.keys(SOURCE_META).length}</span>
         </KpiTile>
-        <KpiTile icon={<Wrench size={16} color="#F97316" />} label="Agent Diagnoses" help="Times an AI agent investigated a pipeline failure and explained the root cause">
-          <span className="agent-kpi-value">{summary.total_diagnoses}</span>
+        <KpiTile icon={<Sparkles size={16} color="#7C3AED" />} label="Top Keyword" help="Most frequent meaningful word across the 300 latest paper titles">
+          <span className="agent-kpi-value agent-kpi-value-text">{topKeyword(signals)}</span>
         </KpiTile>
-        <KpiTile icon={<ShieldCheck size={16} color="var(--green)" />} label="Quality Checks" help="Automated checks the agent ran to catch bad or missing data before it reached the site">
-          <span className="agent-kpi-value">{summary.total_dq_actions}</span>
+        <KpiTile icon={<ShieldCheck size={16} color="var(--green)" />} label="Self-Healing Rate" help="Share of pipeline failures the agent fixed automatically, with no human needed">
+          <span className="agent-kpi-value" style={{ color: 'var(--green)' }}>{summary.self_healing_rate}%</span>
         </KpiTile>
-        <KpiTile icon={<TrendingUp size={16} color="var(--accent2)" />} label="Top Tool" help="The AI/data tool with the most downloads last month, by PyPI installs">
+        <KpiTile icon={<TrendingUp size={16} color="#D97706" />} label="Top Tool" help="The AI/data tool with the most downloads last month, by PyPI installs">
           <span className="agent-kpi-value agent-kpi-value-text">{topTools[0]?.name || '—'}</span>
         </KpiTile>
+      </div>
+
+      {mostCited && (
+        <div className="agent-featured-card">
+          <span className="agent-featured-badge"><Quote size={12} /> Most Cited This Week</span>
+          <a href={mostCited.url} target="_blank" rel="noopener noreferrer" className="agent-featured-title">
+            {mostCited.title} <ExternalLink size={12} className="agent-signal-ext-icon" />
+          </a>
+          <div className="agent-featured-meta">
+            <span style={{ color: SOURCE_META[mostCited.source]?.color, fontWeight: 700 }}>{SOURCE_META[mostCited.source]?.label}</span>
+            <span>· {(mostCited.score || 0).toLocaleString()} citations</span>
+            <span>· {timeAgo(mostCited.published_at)}</span>
+          </div>
+        </div>
+      )}
+
+      <div className="agent-panel">
+        <h3 className="agent-panel-title"><Layers size={14} /> Signal Sources</h3>
+        <p className="agent-panel-sub">Where today's research and tooling signals are coming from.</p>
+        <SourceDistributionBar bySource={bySource} />
       </div>
 
       <div className="agent-panel">
@@ -197,19 +247,22 @@ function AIAgentPipelineSlide() {
       <div className="agent-main-grid">
         <div className="agent-panel">
           <h3 className="agent-panel-title"><FileText size={14} /> Latest Research & Tooling Signals</h3>
-          <p className="agent-panel-sub">Fresh papers, repos, and discussions on data engineering &amp; AI, updated daily.</p>
+          <p className="agent-panel-sub">Fresh papers and discussions on data engineering &amp; AI, updated daily.</p>
           <div className="agent-feed-tabs">
-            {Object.entries(SOURCE_META).map(([key, meta]) => (
-              <button
-                key={key}
-                className={`agent-feed-tab ${feedTab === key ? 'agent-feed-tab-active' : ''}`}
-                style={feedTab === key ? { background: meta.color, borderColor: meta.color } : { borderColor: meta.color, color: meta.color }}
-                onClick={() => setFeedTab(key)}
-              >
-                <meta.Icon size={12} />
-                {meta.label} ({bySource[key]})
-              </button>
-            ))}
+            <button
+              className={`agent-feed-tab ${feedTab === 'papers' ? 'agent-feed-tab-active' : ''}`}
+              style={feedTab === 'papers' ? { background: 'var(--accent1)', borderColor: 'var(--accent1)' } : { borderColor: 'var(--accent1)', color: 'var(--accent1)' }}
+              onClick={() => setFeedTab('papers')}
+            >
+              <FileText size={12} /> Papers ({paperCount})
+            </button>
+            <button
+              className={`agent-feed-tab ${feedTab === 'hackernews' ? 'agent-feed-tab-active' : ''}`}
+              style={feedTab === 'hackernews' ? { background: SOURCE_META.hackernews.color, borderColor: SOURCE_META.hackernews.color } : { borderColor: SOURCE_META.hackernews.color, color: SOURCE_META.hackernews.color }}
+              onClick={() => setFeedTab('hackernews')}
+            >
+              <MessageSquare size={12} /> Hacker News ({bySource.hackernews})
+            </button>
           </div>
           <div className="agent-signal-feed">
             {feedSignals.length === 0 && <div className="agent-activity-empty">No signals in this category yet.</div>}
@@ -224,9 +277,10 @@ function AIAgentPipelineSlide() {
                     </a>
                     {s.summary && <p className="agent-signal-summary">{s.summary.slice(0, 140)}{s.summary.length > 140 ? '…' : ''}</p>}
                     <div className="agent-signal-meta">
-                      {s.authors && <span>{s.authors.split(',').slice(0, 2).join(',')}{s.authors.split(',').length > 2 ? ' et al.' : ''} ·</span>}
-                      {s.score > 0 && <span>{s.score.toLocaleString()} pts ·</span>}
-                      <span>{timeAgo(s.published_at)}</span>
+                      <span style={{ color: meta.color, fontWeight: 700 }}>{meta.label}</span>
+                      {s.authors && <span>· {s.authors.split(',').slice(0, 2).join(',')}{s.authors.split(',').length > 2 ? ' et al.' : ''}</span>}
+                      {s.score > 0 && <span>· {s.score.toLocaleString()} {PAPER_SOURCES.includes(s.source) ? 'citations' : 'pts'}</span>}
+                      <span>· {timeAgo(s.published_at)}</span>
                     </div>
                   </div>
                 </div>
@@ -236,26 +290,7 @@ function AIAgentPipelineSlide() {
         </div>
 
         <div className="agent-panel">
-          <h3 className="agent-panel-title"><Github size={14} /> Signal Mix</h3>
-          <p className="agent-panel-sub">Where this week's signals are coming from.</p>
-          <ResponsiveContainer width="100%" height={130}>
-            <PieChart>
-              <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={32} outerRadius={50} paddingAngle={3}>
-                {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-              </Pie>
-              <Tooltip contentStyle={{ background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="agent-pie-legend">
-            {pieData.map((p, i) => (
-              <span key={i} className="agent-pie-legend-item">
-                <span className="agent-pie-legend-dot" style={{ background: p.color }}></span>
-                {p.name}: {p.value}
-              </span>
-            ))}
-          </div>
-
-          <h3 className="agent-panel-title agent-panel-title-spaced"><Package size={14} /> Tool Adoption Leaderboard</h3>
+          <h3 className="agent-panel-title"><Package size={14} /> Tool Adoption Leaderboard</h3>
           <p className="agent-panel-sub">Most-downloaded AI &amp; data tools on PyPI last month.</p>
           <ToolLeaderboard tools={topTools} />
         </div>

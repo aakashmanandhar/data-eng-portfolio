@@ -119,14 +119,110 @@ with DAG(
         ),
         on_failure_callback=diagnose_failure,
     )
+    extract_semantic_scholar = BashOperator(
+        task_id="extract_semantic_scholar",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/extract_semantic_scholar.py portfolio_django:/tmp/extract_semantic_scholar.py && "
+            "docker exec -w /tmp portfolio_django python extract_semantic_scholar.py"
+        ),
+        on_failure_callback=diagnose_failure,
+    )
+    load_semantic_scholar = BashOperator(
+        task_id="load_bronze_semantic_scholar",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/load_bronze_semantic_scholar.py portfolio_django:/tmp/load_bronze_semantic_scholar.py && "
+            "docker exec -w /tmp portfolio_django python load_bronze_semantic_scholar.py"
+        ),
+        on_failure_callback=diagnose_failure,
+    )
+    extract_openalex = BashOperator(
+        task_id="extract_openalex",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/extract_openalex.py portfolio_django:/tmp/extract_openalex.py && "
+            "docker exec -w /tmp portfolio_django python extract_openalex.py"
+        ),
+        on_failure_callback=diagnose_failure,
+    )
+    load_openalex = BashOperator(
+        task_id="load_bronze_openalex",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/load_bronze_openalex.py portfolio_django:/tmp/load_bronze_openalex.py && "
+            "docker exec -w /tmp portfolio_django python load_bronze_openalex.py"
+        ),
+        on_failure_callback=diagnose_failure,
+    )
+    extract_crossref = BashOperator(
+        task_id="extract_crossref",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/extract_crossref.py portfolio_django:/tmp/extract_crossref.py && "
+            "docker exec -w /tmp portfolio_django python extract_crossref.py"
+        ),
+        on_failure_callback=diagnose_failure,
+    )
+    load_crossref = BashOperator(
+        task_id="load_bronze_crossref",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/load_bronze_crossref.py portfolio_django:/tmp/load_bronze_crossref.py && "
+            "docker exec -w /tmp portfolio_django python load_bronze_crossref.py"
+        ),
+        on_failure_callback=diagnose_failure,
+    )
+    extract_dblp = BashOperator(
+        task_id="extract_dblp",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/extract_dblp.py portfolio_django:/tmp/extract_dblp.py && "
+            "docker exec -w /tmp portfolio_django python extract_dblp.py"
+        ),
+        on_failure_callback=diagnose_failure,
+    )
+    load_dblp = BashOperator(
+        task_id="load_bronze_dblp",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/load_bronze_dblp.py portfolio_django:/tmp/load_bronze_dblp.py && "
+            "docker exec -w /tmp portfolio_django python load_bronze_dblp.py"
+        ),
+        on_failure_callback=diagnose_failure,
+    )
+    extract_hf_papers = BashOperator(
+        task_id="extract_hf_papers",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/extract_hf_papers.py portfolio_django:/tmp/extract_hf_papers.py && "
+            "docker exec -w /tmp portfolio_django python extract_hf_papers.py"
+        ),
+        on_failure_callback=diagnose_failure,
+    )
+    load_hf_papers = BashOperator(
+        task_id="load_bronze_hf_papers",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/load_bronze_hf_papers.py portfolio_django:/tmp/load_bronze_hf_papers.py && "
+            "docker exec -w /tmp portfolio_django python load_bronze_hf_papers.py"
+        ),
+        on_failure_callback=diagnose_failure,
+    )
+    extract_zenodo = BashOperator(
+        task_id="extract_zenodo",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/extract_zenodo.py portfolio_django:/tmp/extract_zenodo.py && "
+            "docker exec -w /tmp portfolio_django python extract_zenodo.py"
+        ),
+        on_failure_callback=diagnose_failure,
+    )
+    load_zenodo = BashOperator(
+        task_id="load_bronze_zenodo",
+        bash_command=(
+            "docker cp /repo/pipeline/extraction/load_bronze_zenodo.py portfolio_django:/tmp/load_bronze_zenodo.py && "
+            "docker exec -w /tmp portfolio_django python load_bronze_zenodo.py"
+        ),
+        on_failure_callback=diagnose_failure,
+    )
     dbt_run = BashOperator(
         task_id="dbt_run",
-        bash_command="docker exec portfolio_dbt dbt run --select silver_research_papers silver_research_repos silver_research_hn silver_pypi_trends dim_research_source dim_research_topic fact_research_signal fact_tool_adoption",
+        bash_command="docker exec portfolio_dbt dbt run --select silver_research_papers silver_research_repos silver_research_hn silver_pypi_trends silver_semantic_scholar_papers silver_openalex_papers silver_crossref_papers silver_dblp_papers silver_hf_papers silver_zenodo_papers dim_research_source dim_research_topic fact_research_signal fact_tool_adoption",
         on_failure_callback=diagnose_failure,
     )
     dbt_test = BashOperator(
         task_id="dbt_test",
-        bash_command="docker exec portfolio_dbt dbt test --select silver_research_papers silver_research_repos silver_research_hn silver_pypi_trends dim_research_source dim_research_topic fact_research_signal fact_tool_adoption",
+        bash_command="docker exec portfolio_dbt dbt test --select silver_research_papers silver_research_repos silver_research_hn silver_pypi_trends silver_semantic_scholar_papers silver_openalex_papers silver_crossref_papers silver_dblp_papers silver_hf_papers silver_zenodo_papers dim_research_source dim_research_topic fact_research_signal fact_tool_adoption",
         on_failure_callback=diagnose_failure,
     )
     check_data_quality = BashOperator(
@@ -147,4 +243,10 @@ with DAG(
     extract_repos >> load_repos
     extract_hn >> load_hn
     extract_pypi >> load_pypi
-    [load_papers, load_repos, load_hn, load_pypi] >> dbt_run >> dbt_test >> check_data_quality >> load_research_signals
+    extract_semantic_scholar >> load_semantic_scholar
+    extract_openalex >> load_openalex
+    extract_crossref >> load_crossref
+    extract_dblp >> load_dblp
+    extract_hf_papers >> load_hf_papers
+    extract_zenodo >> load_zenodo
+    [load_papers, load_repos, load_hn, load_pypi, load_semantic_scholar, load_openalex, load_crossref, load_dblp, load_hf_papers, load_zenodo] >> dbt_run >> dbt_test >> check_data_quality >> load_research_signals

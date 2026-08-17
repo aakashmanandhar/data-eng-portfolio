@@ -31,6 +31,12 @@ class ResearchSignal(models.Model):
         ('arxiv', 'arXiv'),
         ('github', 'GitHub'),
         ('hackernews', 'Hacker News'),
+        ('semantic_scholar', 'Semantic Scholar'),
+        ('openalex', 'OpenAlex'),
+        ('crossref', 'Crossref'),
+        ('dblp', 'DBLP'),
+        ('hf_papers', 'Hugging Face Papers'),
+        ('zenodo', 'Zenodo'),
     ]
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES)
     external_id = models.CharField(max_length=200, unique=True)  # arxiv id, repo full_name, or HN item id
