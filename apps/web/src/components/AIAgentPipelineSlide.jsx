@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts'
-import { FileText, Wrench, ShieldCheck, Sparkles, Bot, ExternalLink, HelpCircle, BookOpen, Library, Link2, Database, Rocket, Archive, Quote, Layers, Zap, Users } from 'lucide-react'
+import { AreaChart, Area, ComposedChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts'
+import { FileText, Wrench, ShieldCheck, Sparkles, Bot, ExternalLink, HelpCircle, BookOpen, Library, Link2, Database, Rocket, Archive, Quote, Layers, Zap, Users, TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -13,6 +13,7 @@ const SOURCE_META = {
   hf_papers: { label: 'Hugging Face', color: '#D97706', Icon: Rocket },
   zenodo: { label: 'Zenodo', color: '#64748B', Icon: Archive },
 }
+const PAPER_SOURCES = Object.keys(SOURCE_META)
 
 const STOPWORDS = new Set(['the', 'a', 'an', 'of', 'for', 'and', 'to', 'in', 'on', 'with', 'via', 'using', 'from', 'based', 'is', 'are', 'this', 'towards', 'toward', 'new', 'study', 'analysis', 'approach', 'system', 'systems', 'model', 'models', 'data'])
 
@@ -33,6 +34,55 @@ function topKeywords(signals, n) {
     })
   })
   return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, n).map(([w]) => w)
+}
+
+function linearForecast(dayCounts, daysAhead) {
+  const entries = Object.entries(dayCounts).sort((a, b) => a[0].localeCompare(b[0])).slice(-14)
+  if (entries.length < 3) return { history: [], forecastTotal: 0, trendingUp: false, trendingDown: false }
+  const xs = entries.map((_, i) => i)
+  const ys = entries.map(([, c]) => c)
+  const n = xs.length
+  const sumX = xs.reduce((a, b) => a + b, 0)
+  const sumY = ys.reduce((a, b) => a + b, 0)
+  const sumXY = xs.reduce((s, x, i) => s + x * ys[i], 0)
+  const sumXX = xs.reduce((s, x) => s + x * x, 0)
+  const denom = (n * sumXX - sumX * sumX) || 1
+  const slope = (n * sumXY - sumX * sumY) / denom
+  const intercept = (sumY - slope * sumX) / n
+  const history = entries.map(([day, count]) => ({ day: day.slice(5), actual: count, forecast: null }))
+  let forecastTotal = 0
+  for (let i = 0; i < daysAhead; i++) {
+    const x = n + i
+    const projected = Math.max(0, Math.round(intercept + slope * x))
+    forecastTotal += projected
+    const d = new Date(entries[entries.length - 1][0])
+    d.setDate(d.getDate() + i + 1)
+    history.push({ day: d.toISOString().slice(5, 10), actual: null, forecast: projected })
+  }
+  if (history.length > daysAhead) {
+    history[history.length - daysAhead - 1].forecast = history[history.length - daysAhead - 1].actual
+  }
+  return { history, forecastTotal, trendingUp: slope > 0.05, trendingDown: slope < -0.05 }
+}
+
+function sourceMomentum(signals) {
+  const now = Date.now()
+  const weekMs = 7 * 86400000
+  const bySource = {}
+  PAPER_SOURCES.forEach(s => { bySource[s] = { thisWeek: 0, lastWeek: 0 } })
+  signals.forEach(s => {
+    if (!bySource[s.source]) return
+    const age = now - new Date(s.published_at).getTime()
+    if (age <= weekMs) bySource[s.source].thisWeek++
+    else if (age <= weekMs * 2) bySource[s.source].lastWeek++
+  })
+  return Object.entries(bySource)
+    .map(([key, v]) => {
+      const change = v.lastWeek === 0 ? (v.thisWeek > 0 ? 100 : 0) : Math.round(((v.thisWeek - v.lastWeek) / v.lastWeek) * 100)
+      return { source: key, thisWeek: v.thisWeek, change }
+    })
+    .sort((a, b) => b.thisWeek - a.thisWeek)
+    .slice(0, 5)
 }
 
 function KpiTile({ icon, label, help, children }) {
@@ -71,6 +121,7 @@ function SourceRing({ label, color, Icon, value, pct }) {
     </div>
   )
 }
+
 function SourceDistributionBar({ bySource }) {
   const total = Object.values(bySource).reduce((a, b) => a + b, 0) || 1
   const entries = Object.entries(bySource).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1])
@@ -82,45 +133,64 @@ function SourceDistributionBar({ bySource }) {
     </div>
   )
 }
-function TopAuthors({ papers }) {
-  const counts = {}
-  papers.forEach(s => {
-    (s.authors || '').split(',').forEach(a => {
-      const name = a.trim()
-      if (name) counts[name] = (counts[name] || 0) + 1
-    })
-  })
-  const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6)
-  if (top.length === 0) return <div className="agent-activity-empty">Not enough author data yet.</div>
-  const max = top[0][1]
+
+function ForecastPanel({ dayCounts }) {
+  const { history, forecastTotal, trendingUp, trendingDown } = linearForecast(dayCounts, 7)
+  const TrendIcon = trendingUp ? TrendingUp : trendingDown ? TrendingDown : Minus
+  const trendColor = trendingUp ? 'var(--green)' : trendingDown ? '#EF4444' : 'var(--muted)'
   return (
-    <div className="agent-leaderboard">
-      {top.map(([name, count], i) => (
-        <div key={i} className="agent-leaderboard-row">
-          <span className="agent-leaderboard-rank">#{i + 1}</span>
-          <div className="agent-leaderboard-main">
-            <div className="agent-leaderboard-top">
-              <span className="agent-leaderboard-name">{name}</span>
-              <span className="agent-leaderboard-value">{count} papers</span>
-            </div>
-            <div className="agent-leaderboard-track">
-              <div className="agent-leaderboard-fill" style={{ width: `${(count / max) * 100}%` }}></div>
-            </div>
-          </div>
+    <div className="agent-panel">
+      <h3 className="agent-panel-title"><Activity size={14} /> 7-Day Forecast</h3>
+      <p className="agent-panel-sub">Projected paper volume, based on a linear trend over the last 14 days.</p>
+      <div className="agent-forecast-hero">
+        <TrendIcon size={20} color={trendColor} />
+        <div className="agent-forecast-hero-text">
+          <span className="agent-forecast-hero-value">~{forecastTotal}</span>
+          <span className="agent-forecast-hero-label">papers expected next 7 days</span>
         </div>
-      ))}
+      </div>
+      <ResponsiveContainer width="100%" height={70}>
+        <ComposedChart data={history} margin={{ top: 4, right: 4, left: -30, bottom: 0 }}>
+          <XAxis dataKey="day" tick={{ fontSize: 8, fill: 'var(--muted)' }} axisLine={false} tickLine={false} />
+          <YAxis hide />
+          <Tooltip contentStyle={{ background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 10 }} />
+          <Line type="monotone" dataKey="actual" stroke="var(--accent1)" strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="forecast" stroke="var(--accent2)" strokeWidth={2} strokeDasharray="4 3" dot={false} />
+        </ComposedChart>
+      </ResponsiveContainer>
     </div>
   )
 }
 
-function citationStats(signals) {
-  const scores = signals.map(s => s.score || 0).sort((a, b) => a - b)
-  const n = scores.length
-  const median = n === 0 ? 0 : n % 2 === 1 ? scores[(n - 1) / 2] : Math.round((scores[n / 2 - 1] + scores[n / 2]) / 2)
-  const citedCount = scores.filter(s => s > 0).length
-  const citedPct = n ? Math.round((citedCount / n) * 100) : 0
-  const highlyCited = scores.filter(s => s > 20).length
-  return { median, citedPct, highlyCited }
+function MomentumPanel({ signals }) {
+  const rows = sourceMomentum(signals)
+  const max = Math.max(...rows.map(r => r.thisWeek), 1)
+  return (
+    <div className="agent-panel">
+      <h3 className="agent-panel-title"><Zap size={14} /> Source Momentum</h3>
+      <p className="agent-panel-sub">This week's paper count per source vs. the week before.</p>
+      <div className="agent-momentum-list">
+        {rows.map((r, i) => {
+          const meta = SOURCE_META[r.source]
+          const TrendIcon = r.change > 0 ? TrendingUp : r.change < 0 ? TrendingDown : Minus
+          const trendColor = r.change > 0 ? 'var(--green)' : r.change < 0 ? '#EF4444' : 'var(--muted)'
+          return (
+            <div key={i} className="agent-momentum-row">
+              <meta.Icon size={13} color={meta.color} />
+              <span className="agent-momentum-label">{meta.label}</span>
+              <div className="agent-momentum-track">
+                <div className="agent-momentum-fill" style={{ width: `${(r.thisWeek / max) * 100}%`, background: meta.color }}></div>
+              </div>
+              <span className="agent-momentum-count">{r.thisWeek}</span>
+              <span className="agent-momentum-change" style={{ color: trendColor }}>
+                <TrendIcon size={11} /> {Math.abs(r.change)}%
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 function AIAgentPipelineSlide() {
@@ -190,8 +260,6 @@ function AIAgentPipelineSlide() {
     .slice(-14)
     .map(([day, count]) => ({ day: day.slice(5), count }))
 
-  const citeStats = citationStats(papers)
-
   const activityFeed = [
     ...diagnoses.map(d => ({ type: 'diagnosis', ...d, ts: d.created_at })),
     ...dqActions.map(a => ({ type: 'dq', ...a, ts: a.created_at })),
@@ -254,31 +322,8 @@ function AIAgentPipelineSlide() {
           <p className="agent-panel-sub">Distribution across the 7 tracked academic sources.</p>
           <SourceDistributionBar bySource={bySource} />
         </div>
-
-        <div className="agent-panel">
-          <h3 className="agent-panel-title"><Quote size={14} /> Citation Health</h3>
-          <p className="agent-panel-sub">How well-cited this tracked collection is overall.</p>
-          <div className="agent-cite-stats">
-            <div className="agent-cite-stat">
-              <span className="agent-cite-stat-value">{citeStats.median}</span>
-              <span className="agent-cite-stat-label">Median citations</span>
-            </div>
-            <div className="agent-cite-stat">
-              <span className="agent-cite-stat-value">{citeStats.citedPct}%</span>
-              <span className="agent-cite-stat-label">Cited at least once</span>
-            </div>
-            <div className="agent-cite-stat">
-              <span className="agent-cite-stat-value">{citeStats.highlyCited}</span>
-              <span className="agent-cite-stat-label">Highly cited (20+)</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="agent-panel">
-          <h3 className="agent-panel-title"><Users size={14} /> Most Prolific Authors</h3>
-          <p className="agent-panel-sub">Researchers appearing most often across tracked papers.</p>
-          <TopAuthors papers={papers} />
-        </div>
+        <ForecastPanel dayCounts={dayCounts} />
+        <MomentumPanel signals={papers} />
       </div>
 
       <div className="agent-panel">
@@ -301,69 +346,67 @@ function AIAgentPipelineSlide() {
         </ResponsiveContainer>
       </div>
 
-      <div className="agent-main-grid">
-        <div className="agent-panel">
-          <h3 className="agent-panel-title"><FileText size={14} /> Latest Research Papers</h3>
-          <p className="agent-panel-sub">Fresh papers on data engineering &amp; AI, updated daily.</p>
-          <div className="agent-source-filters">
-            {Object.entries(SOURCE_META).map(([key, meta]) => (
-              <button
-                key={key}
-                className={`agent-source-pill ${sourceFilter === key ? 'agent-source-pill-active' : ''}`}
-                style={sourceFilter === key ? { background: meta.color, borderColor: meta.color, color: '#fff' } : { borderColor: meta.color, color: meta.color }}
-                onClick={() => setSourceFilter(sourceFilter === key ? null : key)}
-              >
-                <meta.Icon size={11} /> {meta.label} ({bySource[key]})
-              </button>
-            ))}
-          </div>
-          <div className="agent-signal-feed">
-            {feedSignals.length === 0 && <div className="agent-activity-empty">No papers in this category yet.</div>}
-            {feedSignals.map((s, i) => {
-              const meta = SOURCE_META[s.source]
-              return (
-                <div key={i} className="agent-signal-item">
-                  <meta.Icon size={14} color={meta.color} className="agent-signal-icon" />
-                  <div className="agent-signal-body">
-                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="agent-signal-title">
-                      {s.title} <ExternalLink size={10} className="agent-signal-ext-icon" />
-                    </a>
-                    {s.summary && <p className="agent-signal-summary">{s.summary.slice(0, 140)}{s.summary.length > 140 ? '…' : ''}</p>}
-                    <div className="agent-signal-meta">
-                      <span style={{ color: meta.color, fontWeight: 700 }}>{meta.label}</span>
-                      {s.authors && <span>· {s.authors.split(',').slice(0, 2).join(',')}{s.authors.split(',').length > 2 ? ' et al.' : ''}</span>}
-                      {s.score > 0 && <span>· {s.score.toLocaleString()} citations</span>}
-                      <span>· {timeAgo(s.published_at)}</span>
-                    </div>
+      <div className="agent-panel">
+        <h3 className="agent-panel-title"><FileText size={14} /> Latest Research Papers</h3>
+        <p className="agent-panel-sub">Fresh papers on data engineering &amp; AI, updated daily.</p>
+        <div className="agent-source-filters">
+          {Object.entries(SOURCE_META).map(([key, meta]) => (
+            <button
+              key={key}
+              className={`agent-source-pill ${sourceFilter === key ? 'agent-source-pill-active' : ''}`}
+              style={sourceFilter === key ? { background: meta.color, borderColor: meta.color, color: '#fff' } : { borderColor: meta.color, color: meta.color }}
+              onClick={() => setSourceFilter(sourceFilter === key ? null : key)}
+            >
+              <meta.Icon size={11} /> {meta.label} ({bySource[key]})
+            </button>
+          ))}
+        </div>
+        <div className="agent-signal-feed-wide">
+          {feedSignals.length === 0 && <div className="agent-activity-empty">No papers in this category yet.</div>}
+          {feedSignals.map((s, i) => {
+            const meta = SOURCE_META[s.source]
+            return (
+              <div key={i} className="agent-signal-card">
+                <meta.Icon size={14} color={meta.color} className="agent-signal-icon" />
+                <div className="agent-signal-body">
+                  <a href={s.url} target="_blank" rel="noopener noreferrer" className="agent-signal-title">
+                    {s.title} <ExternalLink size={10} className="agent-signal-ext-icon" />
+                  </a>
+                  {s.summary && <p className="agent-signal-summary">{s.summary.slice(0, 140)}{s.summary.length > 140 ? '…' : ''}</p>}
+                  <div className="agent-signal-meta">
+                    <span style={{ color: meta.color, fontWeight: 700 }}>{meta.label}</span>
+                    {s.authors && <span>· {s.authors.split(',').slice(0, 2).join(',')}{s.authors.split(',').length > 2 ? ' et al.' : ''}</span>}
+                    {s.score > 0 && <span>· {s.score.toLocaleString()} citations</span>}
+                    <span>· {timeAgo(s.published_at)}</span>
                   </div>
                 </div>
-              )
-            })}
-          </div>
+              </div>
+            )
+          })}
         </div>
+      </div>
 
-        <div className="agent-panel agent-activity-panel">
-          <h3 className="agent-panel-title"><Bot size={14} /> Agent Activity Log</h3>
-          <p className="agent-panel-sub">Every time an agent catches or fixes a problem in this pipeline, it shows up here.</p>
-          <div className="agent-activity-feed">
-            {activityFeed.length === 0 && (
-              <div className="agent-activity-empty">
-                <ShieldCheck size={16} color="var(--green)" />
-                No agent actions yet — pipeline is running clean.
-              </div>
-            )}
-            {activityFeed.map((item, i) => (
-              <div key={i} className="agent-activity-item">
-                <span className={`agent-activity-badge agent-activity-badge-${item.type}`}>
-                  {item.type === 'diagnosis' ? <><Wrench size={10} /> Diagnosis</> : <><ShieldCheck size={10} /> Quality Check</>}
-                </span>
-                <p className="agent-activity-text">
-                  {item.type === 'diagnosis' ? item.diagnosis : item.reasoning}
-                </p>
-                <span className="agent-activity-ts">{timeAgo(item.ts)}</span>
-              </div>
-            ))}
-          </div>
+      <div className="agent-panel agent-activity-panel-wide">
+        <h3 className="agent-panel-title"><Bot size={14} /> Agent Activity Log</h3>
+        <p className="agent-panel-sub">Every time an agent catches or fixes a problem in this pipeline, it shows up here.</p>
+        <div className="agent-activity-feed">
+          {activityFeed.length === 0 && (
+            <div className="agent-activity-empty">
+              <ShieldCheck size={16} color="var(--green)" />
+              No agent actions yet — pipeline is running clean.
+            </div>
+          )}
+          {activityFeed.map((item, i) => (
+            <div key={i} className="agent-activity-item">
+              <span className={`agent-activity-badge agent-activity-badge-${item.type}`}>
+                {item.type === 'diagnosis' ? <><Wrench size={10} /> Diagnosis</> : <><ShieldCheck size={10} /> Quality Check</>}
+              </span>
+              <p className="agent-activity-text">
+                {item.type === 'diagnosis' ? item.diagnosis : item.reasoning}
+              </p>
+              <span className="agent-activity-ts">{timeAgo(item.ts)}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -10,7 +10,7 @@ import OrgArchetypeSlide from '../components/OrgArchetypeSlide'
 import OssLandscapeSlide from '../components/OssLandscapeSlide'
 import NewsIntelligenceSlide from '../components/NewsIntelligenceSlide'
 import AIAgentPipelineSlide from '../components/AIAgentPipelineSlide'
-import { CheckCircle2, XCircle, Clock, BarChart3, Sparkles, Newspaper, DollarSign, Globe2, Bot, MessageCircle, FileSearch, Wrench } from 'lucide-react'
+import { CheckCircle2, XCircle, Clock, BarChart3, Sparkles, Newspaper, DollarSign, Globe2, Bot, MessageCircle, FileSearch, Wrench, Github, History, Users, Package } from 'lucide-react'
 
 function relativeTime(dateStr) {
   const diffMs = Date.now() - new Date(dateStr).getTime()
@@ -265,11 +265,25 @@ function HomePage() {
             <span className="analytics-kicker"><Sparkles size={11} /> LIVE ANALYTICS</span>
             <h2>Data engineering, tracked in real time</h2>
             <p className="analytics-subtext">Eight views into how DE careers and tooling are actually evolving — refreshed automatically by live ELT and ML pipelines.</p>
-            <div className="analytics-chip-row">
-              <span className="analytics-chip"><Newspaper size={12} /> News &amp; Sentiment</span>
-              <span className="analytics-chip"><DollarSign size={12} /> Salary ML</span>
-              <span className="analytics-chip"><Globe2 size={12} /> Geographic AI</span>
-              <span className="analytics-chip"><Bot size={12} /> Self-Healing Agents</span>
+            <div className="analytics-chip-grid">
+              {[
+                { icon: <DollarSign size={13} />, label: 'Salary Intelligence', idx: 0 },
+                { icon: <Github size={13} />, label: 'GitHub Trends', idx: 1 },
+                { icon: <Globe2 size={13} />, label: 'AI Adoption', idx: 2 },
+                { icon: <History size={13} />, label: 'Historical Survey', idx: 3 },
+                { icon: <Users size={13} />, label: 'Community Survey', idx: 4 },
+                { icon: <Package size={13} />, label: 'OSS Landscape', idx: 5 },
+                { icon: <Newspaper size={13} />, label: 'News & Sentiment', idx: 6 },
+                { icon: <Bot size={13} />, label: 'AI & DE Research', idx: 7 },
+              ].map((item, i) => (
+                <button
+                  key={i}
+                  className="analytics-chip"
+                  onClick={() => window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: item.idx } }))}
+                >
+                  {item.icon} {item.label}
+                </button>
+              ))}
             </div>
           </div>
           {(() => {
@@ -287,13 +301,15 @@ function HomePage() {
             if (cfg.kind === 'static') {
               return (
                 <div className="pipeline-status-widget status-static">
-                  <span className="pipeline-status-icon-badge">
-                    <BarChart3 size={14} />
-                  </span>
-                  <div className="pipeline-status-text">
-                    <span className="pipeline-status-title">{cfg.title}</span>
-                    <span className="pipeline-status-time">{cfg.time}</span>
+                  <div className="pipeline-status-top">
+                    <span className="pipeline-status-icon-badge">
+                      <BarChart3 size={18} />
+                    </span>
+                    <span className="pipeline-status-pill">Static Snapshot</span>
                   </div>
+                  <span className="pipeline-status-title">{cfg.title}</span>
+                  <span className="pipeline-status-time">{cfg.time}</span>
+                  <span className="pipeline-status-desc">A fixed historical dataset — not refreshed by a live pipeline.</span>
                 </div>
               )
             }
@@ -302,20 +318,20 @@ function HomePage() {
             const StatusIcon = runs.length === 0 ? Clock : status === 'success' ? CheckCircle2 : XCircle
             return (
               <div className={`pipeline-status-widget status-${status}`}>
-                <span className="pipeline-status-icon-badge">
-                  <StatusIcon size={14} />
-                  {status === 'success' && <span className="pipeline-status-live-dot"></span>}
-                </span>
-                <div className="pipeline-status-text">
-                  <span className="pipeline-status-title">
-                    {cfg.title} {runs.length === 0 ? '· No runs yet' : status === 'success' ? '· Live' : '· Failed'}
+                <div className="pipeline-status-top">
+                  <span className="pipeline-status-icon-badge">
+                    <StatusIcon size={18} />
+                    {status === 'success' && <span className="pipeline-status-live-dot"></span>}
                   </span>
-                  {runs.length > 0 && (
-                    <span className="pipeline-status-time">
-                      Updated {relativeTime(runs[0].finished_at)}
-                    </span>
-                  )}
+                  <span className="pipeline-status-pill">
+                    {runs.length === 0 ? 'No Runs Yet' : status === 'success' ? 'Live' : 'Failed'}
+                  </span>
                 </div>
+                <span className="pipeline-status-title">{cfg.title}</span>
+                {runs.length > 0 && (
+                  <span className="pipeline-status-time">Updated {relativeTime(runs[0].finished_at)}</span>
+                )}
+                <span className="pipeline-status-desc">Refreshed automatically by a self-healing Airflow DAG.</span>
               </div>
             )
           })()}
