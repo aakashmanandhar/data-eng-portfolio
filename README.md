@@ -3,6 +3,7 @@
 A live, self-hosted data platform powering [aakashmanandhar.tech](https://aakashmanandhar.tech) — six independently-orchestrated pipelines sharing one Django/React/Postgres stack, plus a Gemini-powered RAG assistant spanning all of them.
 
 - **Salary & Career Trends** — real salary survey data, a live trained ML predictor, forecasting, and clustering (ai-jobs-net-salaries, Apache Airflow, weekly) — the site's newest and most feature-dense pipeline
+- **AI & Data Engineering Research Intelligence** — self-healing research tracking across 9 real academic/tooling sources, two AI agents that diagnose their own pipeline's failures and check data quality after every load (arXiv, Semantic Scholar, OpenAlex, Crossref, DBLP, Hugging Face, Zenodo, GitHub, Hacker News, Apache Airflow, daily)
 - **GitHub Trends** — the shift to AI-native data engineering tooling (GitHub API, Apache Airflow, daily)
 - **Interactive AI/ML GIS Map** — geographic AI adoption, built on top of GitHub Trends' own data (Apache Airflow, daily, shares the same DAG)
 - **Historical Survey Analytics** — a decade of Stack Overflow tool-adoption data + a 2026 industry survey (manual-trigger, no public API for either source)
@@ -23,152 +24,209 @@ Both pipelines share the same repo and Postgres instance, but keep their extract
 ```text
 pipeline/
 ├── extraction/
-│   ├── extract_adzuna.py                    [P1] salary histograms + job counts, 19 countries
-│   ├── extract_so_survey.py                 [P1] Stack Overflow Developer Survey (single-year)
-│   ├── load_bronze.py                       [P1] loads both P1 sources into bronze
+│   ├── extract_adzuna.py                     [P1] salary histograms + job counts, 19 countries
+│   ├── extract_so_survey.py                  [P1] Stack Overflow Developer Survey (single-year)
+│   ├── load_bronze.py                        [P1] loads both P1 sources into bronze
 │   ├── data/
-│   │   └── so_survey_2025.csv               [P1] raw survey export
+│   │   └── so_survey_2025.csv                [P1] raw survey export
 │   │
-│   ├── extract_github.py                    [P2] fixed-list extraction, 57 repos across 11 cohorts
-│   ├── discover_github_topics.py            [P2] GitHub Search API, 65 dynamically-found repos
-│   ├── extract_github_orgs.py               [P2] paginated org aggregate stats (4 orgs)
-│   ├── load_bronze_github.py                [P2]
-│   ├── load_bronze_github_discovery.py      [P2]
-│   ├── load_bronze_github_orgs.py           [P2]
+│   ├── extract_github.py                     [P2] fixed-list extraction, 57 repos across 11 cohorts
+│   ├── discover_github_topics.py             [P2] GitHub Search API, 65 dynamically-found repos
+│   ├── extract_github_orgs.py                [P2] paginated org aggregate stats (4 orgs)
+│   ├── load_bronze_github.py                 [P2]
+│   ├── load_bronze_github_discovery.py       [P2]
+│   ├── load_bronze_github_orgs.py            [P2]
 │   │
-│   ├── extract_arxiv.py                     [Forecast] cs.DB/cs.SE vs cs.AI/cs.LG paper counts
-│   ├── extract_hackernews.py                [Forecast] Algolia search API, per-keyword summed
-│   ├── load_bronze_arxiv.py                 [Forecast]
-│   ├── load_bronze_hackernews.py            [Forecast]
-│   ├── forecast_ai_adoption.py              [Forecast] scikit-learn linear regression, honest data-sufficiency gate
+│   ├── extract_arxiv.py                      [Forecast] cs.DB/cs.SE vs cs.AI/cs.LG paper counts
+│   ├── extract_hackernews.py                 [Forecast] Algolia search API, per-keyword summed
+│   ├── load_bronze_arxiv.py                  [Forecast]
+│   ├── load_bronze_hackernews.py             [Forecast]
+│   ├── forecast_ai_adoption.py               [Forecast] scikit-learn linear regression, honest data-sufficiency gate
 │   │
-│   ├── extract_oss_insight.py               [GIS] per-country stargazer breakdown, ~122 tracked repos
-│   ├── load_bronze_oss_insight.py           [GIS]
-│   ├── build_country_shapes.py              [GIS] real boundary SVG paths, per-country normalized
-│   ├── forecast_country_growth.py           [GIS] per-country AI-share LinearRegression, 7-day gate
-│   ├── cluster_country_archetypes.py        [GIS] k-means, 4 country archetypes
+│   ├── extract_oss_insight.py                [GIS] per-country stargazer breakdown, ~122 tracked repos
+│   ├── load_bronze_oss_insight.py            [GIS]
+│   ├── build_country_shapes.py               [GIS] real boundary SVG paths, per-country normalized
+│   ├── forecast_country_growth.py            [GIS] per-country AI-share LinearRegression, 7-day gate
+│   ├── cluster_country_archetypes.py         [GIS] k-means, 4 country archetypes
 │   │
-│   ├── extract_so_survey_historical.py      [Survey] 2016-2025, 720K respondents, 3 naming eras harmonized
-│   ├── so_survey_column_map.py              [Survey] column-naming-era crosswalk logic
-│   ├── load_bronze_so_survey_historical.py  [Survey]
-│   ├── forecast_de_tool_adoption.py         [Survey] per-country + overall tool forecast, 4-year gate
-│   ├── load_bronze_practical_data_survey.py [Survey] 2026 org survey, 1,101 respondents
-│   ├── cluster_org_maturity.py              [Survey] k-means, 4 org archetypes (tooling philosophy, not maturity)
+│   ├── extract_so_survey_historical.py       [Survey] 2016-2025, 720K respondents, 3 naming eras harmonized
+│   ├── so_survey_column_map.py               [Survey] column-naming-era crosswalk logic
+│   ├── load_bronze_so_survey_historical.py   [Survey]
+│   ├── forecast_de_tool_adoption.py          [Survey] per-country + overall tool forecast, 4-year gate
+│   ├── load_bronze_practical_data_survey.py  [Survey] 2026 org survey, 1,101 respondents
+│   ├── cluster_org_maturity.py               [Survey] k-means, 4 org archetypes (tooling philosophy, not maturity)
 │   │
-│   ├── cluster_tool_co_adoption.py          [OSS] k-means on country-adoption pattern, anchor-repo naming
-│   ├── tool_momentum_staging.py             [OSS] lifecycle staging (Emerging/Accelerating/Mature/Declining)
+│   ├── cluster_tool_co_adoption.py           [OSS] k-means on country-adoption pattern, anchor-repo naming
+│   ├── tool_momentum_staging.py              [OSS] lifecycle staging (Emerging/Accelerating/Mature/Declining)
 │   │
-│   ├── extract_ai_jobs_salaries.py          [Salary] 151,445 respondents, weekly-updated GitHub CSV
-│   ├── load_bronze_ai_jobs_salaries.py      [Salary]
-│   ├── skill_salary_growth.py               [Salary] per-tool salary growth rate, 4-year gate
-│   ├── forecast_salary_multiyear.py         [Salary] 3-year forecast, real statistical prediction intervals
-│   ├── cluster_career_archetypes.py         [Salary] k-means, 4 career archetypes by job title
-│   ├── train_salary_predictor.py            [Salary] RandomForestRegressor, saved for live API predictions
+│   ├── extract_ai_jobs_salaries.py           [Salary] 151,445 respondents, weekly-updated GitHub CSV
+│   ├── load_bronze_ai_jobs_salaries.py       [Salary]
+│   ├── skill_salary_growth.py                [Salary] per-tool salary growth rate, 4-year gate
+│   ├── forecast_salary_multiyear.py          [Salary] 3-year forecast, real statistical prediction intervals
+│   ├── cluster_career_archetypes.py          [Salary] k-means, 4 career archetypes by job title
+│   ├── train_salary_predictor.py             [Salary] RandomForestRegressor, saved for live API predictions
 │   │
-│   ├── embed_case_studies.py                [RAG] embeds case study content into pgvector
+│   ├── extract_news_articles.py              [P8] Currents API, 70-term curated DE/AI-DE keyword sweep
+│   ├── load_bronze_news_articles.py          [P8]
+│   ├── score_news_sentiment.py               [P8] Hugging Face cardiffnlp/twitter-roberta-base-sentiment-latest, confidence-weighted
+│   ├── news_keyword_growth.py                [P8] honestly-gated keyword growth detection
+│   ├── news_keyword_breakout.py              [P8] honestly-gated breakout detection, threshold-based
+│   │
+│   ├── extract_research_papers.py            [P7] arXiv, 800 papers, 5 categories, 8-page pagination
+│   ├── extract_research_repos.py             [P7] GitHub, 128 repos, 10 AI/data-eng topics
+│   ├── extract_research_hn.py                [P7] Hacker News, 380 stories, 13 keywords via Algolia
+│   ├── extract_pypi_trends.py                [P7] pypistats.org, 20 packages, no auth
+│   ├── extract_semantic_scholar.py           [P7] Semantic Scholar Graph API, 93-keyword DE/AI-DE sweep, 1 req/sec (API key)
+│   ├── extract_openalex.py                   [P7] OpenAlex API, same 93-keyword sweep, no auth
+│   ├── extract_crossref.py                   [P7] Crossref API, same sweep, defensive year-range guard (rejects >2yr-future dates)
+│   ├── extract_dblp.py                       [P7] DBLP CS bibliography, no auth
+│   ├── extract_hf_papers.py                  [P7] Hugging Face Daily Papers, community upvote signal (draws from arXiv)
+│   ├── extract_zenodo.py                     [P7] Zenodo open-research repository, no auth
+│   ├── load_bronze_research_papers.py        [P7]
+│   ├── load_bronze_research_repos.py         [P7]
+│   ├── load_bronze_research_hn.py            [P7]
+│   ├── load_bronze_pypi_trends.py            [P7]
+│   ├── load_bronze_semantic_scholar.py       [P7]
+│   ├── load_bronze_openalex.py               [P7]
+│   ├── load_bronze_crossref.py               [P7]
+│   ├── load_bronze_dblp.py                   [P7]
+│   ├── load_bronze_hf_papers.py              [P7]
+│   ├── load_bronze_zenodo.py                 [P7]
+│   ├── diagnose_task_failure.py              [P7] Gemini reads on_failure_callback errors, flags safe auto-retries
+│   ├── check_data_quality.py                 [P7] post-load dupe/null/volume checks, every run
+│   │
+│   ├── embed_case_studies.py                 [RAG] embeds case study content into pgvector
 │   └── test_adzuna.py, test_gemini.py, test_router.py   - ad hoc verification scripts
 │
 ├── dbt/
 │   ├── dbt_project.yml
-│   ├── profiles.yml                         - Postgres connection (not committed)
+│   ├── profiles.yml                          - Postgres connection (not committed)
 │   ├── Dockerfile
 │   ├── seeds/
-│   │   ├── country_mapping.csv              [P1] Adzuna code → country name bridge
-│   │   ├── so_survey_country_crosswalk.csv  [Survey] 18 naming-variant exceptions
-│   │   ├── so_survey_to_geojson_country.csv [GIS] country-name → map-boundary bridge
-│   │   ├── so_survey_tool_crosswalk.csv     [Survey] canonical DE/AI-DE tool whitelist (25 tools)
-│   │   └── tool_to_job_titles_crosswalk.csv [Salary] tool → associated real job titles (75 rows)
+│   │   ├── country_mapping.csv               [P1] Adzuna code → country name bridge
+│   │   ├── so_survey_country_crosswalk.csv   [Survey] 18 naming-variant exceptions
+│   │   ├── so_survey_to_geojson_country.csv  [GIS] country-name → map-boundary bridge
+│   │   ├── so_survey_tool_crosswalk.csv      [Survey] canonical DE/AI-DE tool whitelist (25 tools)
+│   │   └── tool_to_job_titles_crosswalk.csv  [Salary] tool → associated real job titles (75 rows)
 │   └── models/
 │       ├── silver/
-│       │   ├── silver_job_market.sql                [P1]
-│       │   ├── silver_tool_usage.sql                 [P1]
-│       │   ├── silver_preferred_tools_global.sql     [P1]
-│       │   ├── silver_github_repo_snapshot.sql       [P2]
-│       │   ├── silver_github_org_snapshot.sql        [P2]
-│       │   ├── silver_arxiv_snapshot.sql             [Forecast]
-│       │   ├── silver_hackernews_snapshot.sql        [Forecast]
-│       │   ├── silver_oss_insight_stargazers.sql     [GIS]
-│       │   ├── silver_so_survey_historical.sql       [Survey]
-│       │   ├── silver_practical_data_survey.sql      [Survey]
-│       │   ├── silver_ai_jobs_salaries.sql           [Salary]
-│       │   └── sources.yml                           - registers bronze tables, ALL sources
+│       │   ├── silver_job_market.sql                 [P1]
+│       │   ├── silver_tool_usage.sql                  [P1]
+│       │   ├── silver_preferred_tools_global.sql      [P1]
+│       │   ├── silver_github_repo_snapshot.sql        [P2]
+│       │   ├── silver_github_org_snapshot.sql         [P2]
+│       │   ├── silver_arxiv_snapshot.sql              [Forecast]
+│       │   ├── silver_hackernews_snapshot.sql         [Forecast]
+│       │   ├── silver_oss_insight_stargazers.sql      [GIS]
+│       │   ├── silver_so_survey_historical.sql        [Survey]
+│       │   ├── silver_practical_data_survey.sql       [Survey]
+│       │   ├── silver_ai_jobs_salaries.sql            [Salary]
+│       │   ├── silver_news_articles.sql               [P8]
+│       │   ├── silver_research_papers.sql             [P7]
+│       │   ├── silver_research_repos.sql              [P7]
+│       │   ├── silver_research_hn.sql                 [P7]
+│       │   ├── silver_pypi_trends.sql                 [P7]
+│       │   ├── silver_semantic_scholar_papers.sql     [P7]
+│       │   ├── silver_openalex_papers.sql             [P7]
+│       │   ├── silver_crossref_papers.sql             [P7] WHERE guard rejects future-dated garbage (Crossref data quality)
+│       │   ├── silver_dblp_papers.sql                 [P7]
+│       │   ├── silver_hf_papers.sql                   [P7]
+│       │   ├── silver_zenodo_papers.sql               [P7] WHERE guard rejects incomplete year-month-only dates
+│       │   └── sources.yml                            - registers bronze tables, ALL sources
 │       └── gold/
-│           ├── dim_country.sql, dim_tool.sql         [P1]
-│           ├── fact_job_market.sql                   [P1]
-│           ├── fact_tool_preference_global.sql       [P1]
-│           ├── dim_github_repo.sql                   [P2] latest snapshot per repo (deduped)
-│           ├── dim_github_org.sql                    [P2] latest snapshot per org (deduped)
-│           ├── fact_github_repo_trend.sql            [P2] LAG()-based star growth (deduped)
-│           ├── fact_github_org_trend.sql             [P2]
-│           ├── fact_ai_adoption_signal.sql           [Forecast] GitHub+arXiv+HN joined by cohort/day
-│           ├── fact_country_ai_signal.sql            [GIS] per-country AI vs traditional share
-│           ├── fact_country_tool_signal.sql          [GIS] per-repo-per-country breakdown
-│           ├── fact_de_tool_by_country_year.sql      [Survey] per-country tool usage_pct, 2016-2025
-│           ├── fact_de_tool_ranking.sql              [Survey] rank_in_country + rank_overall
-│           ├── fact_salary_by_experience.sql         [Salary] real EN/MI/SE/EX progression
-│           ├── fact_salary_by_tool.sql                [Salary] joins 25 SO Survey tools to real job titles
-│           ├── fact_remote_ratio_trend.sql            [Salary]
-│           ├── fact_top_paying_title_by_year.sql      [Salary] 20-respondent reliability floor
-│           └── schema.yml                             - tests for every model above
+│           ├── dim_country.sql, dim_tool.sql          [P1]
+│           ├── fact_job_market.sql                    [P1]
+│           ├── fact_tool_preference_global.sql        [P1]
+│           ├── dim_github_repo.sql                    [P2] latest snapshot per repo (deduped)
+│           ├── dim_github_org.sql                      [P2] latest snapshot per org (deduped)
+│           ├── fact_github_repo_trend.sql              [P2] LAG()-based star growth (deduped)
+│           ├── fact_github_org_trend.sql               [P2]
+│           ├── fact_ai_adoption_signal.sql             [Forecast] GitHub+arXiv+HN joined by cohort/day
+│           ├── fact_country_ai_signal.sql              [GIS] per-country AI vs traditional share
+│           ├── fact_country_tool_signal.sql            [GIS] per-repo-per-country breakdown
+│           ├── fact_de_tool_by_country_year.sql        [Survey] per-country tool usage_pct, 2016-2025
+│           ├── fact_de_tool_ranking.sql                [Survey] rank_in_country + rank_overall
+│           ├── fact_salary_by_experience.sql           [Salary] real EN/MI/SE/EX progression
+│           ├── fact_salary_by_tool.sql                 [Salary] joins 25 SO Survey tools to real job titles
+│           ├── fact_remote_ratio_trend.sql             [Salary]
+│           ├── fact_top_paying_title_by_year.sql       [Salary] 20-respondent reliability floor
+│           ├── dim_keyword.sql, dim_source.sql         [P8]
+│           ├── fact_keyword_mention.sql                [P8]
+│           ├── fact_keyword_sentiment_trend.sql        [P8]
+│           ├── dim_research_source.sql                 [P7] 9 sources
+│           ├── dim_research_topic.sql                  [P7]
+│           ├── fact_research_signal.sql                [P7] UNION ALL across all 9 sources
+│           ├── fact_tool_adoption.sql                  [P7]
+│           └── schema.yml                              - tests for every model above
 │
 └── airflow/
     └── dags/
-        ├── github_trends_dag.py    [P2+Forecast+GIS+OSS] 5-branch parallel fan-out/fan-in,
-        │                           dbt run/test, forecast_ai_adoption.py, extract_oss_insight,
-        │                           cluster_tool_co_adoption.py, tool_momentum_staging.py — @daily
-        ├── survey_pipelines_dag.py [Survey] SO Survey + Practical Data — manual-trigger only,
-        │                           no public API for either source
-        └── salary_pipeline_dag.py  [Salary] its own dedicated DAG — @weekly, matches this
-                                    source's real update cadence
+        ├── github_trends_dag.py       [P2+Forecast+GIS+OSS+P8] shared DAG — 5-branch parallel
+        │                              fan-out/fan-in, dbt run/test, forecast_ai_adoption.py,
+        │                              extract_oss_insight, cluster_tool_co_adoption.py,
+        │                              tool_momentum_staging.py, News & Sentiment extract/load — @daily
+        ├── survey_pipelines_dag.py    [Survey] SO Survey + Practical Data — manual-trigger only,
+        │                              no public API for either source
+        ├── salary_pipeline_dag.py     [Salary] its own dedicated DAG — @weekly, matches this
+        │                              source's real update cadence
+        └── ai_dataeng_trends_dag.py   [P7] its own dedicated DAG — 19 tasks, 10 parallel extract
+                                       branches → load → dbt_run → dbt_test → check_data_quality →
+                                       load_research_signals, every task wired to the diagnosis
+                                       agent — @daily, NOT shared with any other pipeline
 
 infra/
 ├── jenkins/
-│   ├── Dockerfile                       [P1] custom image, Docker CLI + socket mount
-│   └── Jenkinsfile                      [P1] extract → load bronze → dbt run → dbt test
+│   ├── Dockerfile                        [P1] custom image, Docker CLI + socket mount
+│   └── Jenkinsfile                       [P1] extract → load bronze → dbt run → dbt test
 │
 ├── airflow/
-│   ├── Dockerfile                       [P2] apache/airflow base + extra deps
-│   └── requirements.txt                 [P2]
+│   ├── Dockerfile                        [P2] apache/airflow base + extra deps
+│   └── requirements.txt                  [P2]
 │
-├── postgres-init/                       - shared, all pipelines
+├── postgres-init/                        - shared, all pipelines
 │   ├── 01-enable-pgvector.sql
 │   ├── 02-create-readonly-role.sql
 │   ├── 03-create-pipeline-schemas.sql
-│   ├── 04-create-bronze-tables.sql       - includes tables for ALL sources
+│   ├── 04-create-bronze-tables.sql        - includes tables for ALL sources
 │   ├── 05-grant-readonly-dbt-schemas.sql
-│   └── 06-create-airflow-db.sql         [P2] airflow_meta database
+│   └── 06-create-airflow-db.sql          [P2] airflow_meta database
 │
 └── terraform/
-    └── main.tf                          - every container as code, all pipelines
+    └── main.tf                           - every container as code, all pipelines
 
 apps/
 ├── api/
 │   └── analytics/
-│       └── ml_models/                   [Salary] trained model artifacts (gitignored, regenerated
-│                                         by train_salary_predictor.py — not committed to source control)
+│       ├── management/commands/
+│       │   └── load_research_signals.py  [P7] unifies all 9 bronze sources into ResearchSignal
+│       └── ml_models/                    [Salary] trained model artifacts (gitignored, regenerated
+│                                          by train_salary_predictor.py — not committed to source control)
 │           ├── salary_predictor.joblib
 │           └── title_map.joblib
 │
 └── web/src/
     ├── components/
-    │   ├── SalaryTrendsSlide.jsx        [Salary] bento hero + 4-tab analytics, first carousel slide
-    │   ├── GitHubTrendsSlide.jsx        [P2]
-    │   ├── GisAiMapSlide.jsx            [GIS]
-    │   ├── SoSurveySlide.jsx            [Survey]
-    │   ├── OrgArchetypeSlide.jsx        [Survey]
-    │   ├── OssLandscapeSlide.jsx        [OSS]
-    │   ├── Carousel.jsx                 - single-active-slide-in-DOM carousel shell
-    │   ├── ChatWidget.jsx               [RAG] chat interface
-    │   ├── VisitorWidget.jsx            - live visitor count
-    │   └── Sparkline.jsx                [Salary] tiny inline SVG sparkline, reused across KPI tiles
+    │   ├── SalaryTrendsSlide.jsx         [Salary] bento hero + 4-tab analytics, first carousel slide
+    │   ├── GitHubTrendsSlide.jsx         [P2]
+    │   ├── GisAiMapSlide.jsx             [GIS]
+    │   ├── SoSurveySlide.jsx             [Survey]
+    │   ├── OrgArchetypeSlide.jsx         [Survey]
+    │   ├── OssLandscapeSlide.jsx         [OSS]
+    │   ├── NewsIntelligenceSlide.jsx     [P8] sentiment gauge, packed-bubble topic viz, Live Wire timeline
+    │   ├── AIAgentPipelineSlide.jsx      [P7] papers-only feed, 7-day forecast, source momentum,
+    │   │                                 citation health, most-cited card
+    │   ├── Carousel.jsx                  - single-active-slide-in-DOM carousel shell
+    │   ├── ChatWidget.jsx                [RAG] chat interface
+    │   ├── VisitorWidget.jsx             - live visitor count
+    │   └── Sparkline.jsx                 [Salary] tiny inline SVG sparkline, reused across KPI tiles
     ├── pages/
-    │   ├── HomePage.jsx                 - carousel host, hero, per-slide pipeline-status widget
-    │   ├── ArchitecturePage.jsx         - full site architecture deep-dive
+    │   ├── HomePage.jsx                  - carousel host, hero, per-slide pipeline-status widget
+    │   ├── ArchitecturePage.jsx          - full site architecture deep-dive
     │   └── CaseStudyDetailPage.jsx
     └── utils/
-        ├── countryNames.js              - shared ISO-code → country-name map (~190 countries),
-        │                                 used by both GisAiMapSlide and SalaryTrendsSlide
-        └── useCountUp.js                [Salary] animated count-up number hook
+        ├── countryNames.js               - shared ISO-code → country-name map (~190 countries),
+        │                                  used by both GisAiMapSlide and SalaryTrendsSlide
+        └── useCountUp.js                 [Salary] animated count-up number hook
 ```
 
 ---
@@ -654,6 +712,137 @@ docker exec -w /tmp portfolio_django python train_salary_predictor.py
 ### Frontend
 
 `SalaryTrendsSlide.jsx` — bento layout, 3 animated KPI tiles with inline sparklines, an interactive skill-picker hero (two synced Recharts strips, permanent correlational-not-causal microcopy), and a 4-tab section below (scatter plot, gradient-uncertainty-band forecast, radar-chart archetypes, slider-driven live predictor).
+
+---
+
+---
+
+## Pipeline 7 — AI & Data Engineering Research Intelligence
+
+A self-healing research-tracking pipeline spanning 9 real academic/tooling sources — the site's broadest single data-gathering effort, with two AI agents that diagnose their own pipeline's failures and check data quality after every load.
+
+### Architecture
+
+![AI & DE Research Pipeline Architecture](./docs/AIDEResearch_Architecture.png)
+
+### Data Sources
+
+| Source | Auth | Notes |
+|---|---|---|
+| **arXiv API** | None | 800 papers, 5 categories, 8-page pagination, 3s delays |
+| **GitHub API** | Token | 128 repos, 10 AI/data-eng topics |
+| **Hacker News (Algolia)** | None | 380 stories, 13 keywords |
+| **pypistats.org** | None | 20 tracked packages |
+| **Semantic Scholar Graph API** | API key | 1 req/sec rate limit — the only source of the 9 with an auth dependency |
+| **OpenAlex API** | None | "Polite pool" via `mailto` param per their docs |
+| **Crossref API** | None | Some publisher deposits carry corrupted placeholder dates (year 2121/2200 seen in practice) — filtered defensively, see below |
+| **DBLP** | None | CS-specific bibliography (VLDB, SIGMOD, ICDE, etc.) — narrower but more precisely targeted than a general index |
+| **Hugging Face Daily Papers** | None | Draws primarily from arXiv per its own docs, so meaningful title overlap with the arXiv source is expected and not a data error — its value-add is real community upvote signal, not new papers |
+| **Zenodo** | None | Some records carry year-month-only precision with no day — filtered defensively, see below |
+
+All 6 of the newer sources (Semantic Scholar/OpenAlex/Crossref/DBLP/HF Papers/Zenodo) share one 93-term keyword sweep covering core data engineering, storage architecture, relational/NoSQL/distributed databases, AI-native databases (vector/graph/embedding), governance, processing paradigms, orchestration, data modeling, and the ML/AI-DE crossover.
+
+**Deliberately not integrated:** Papers With Code (Meta shut the service down in July 2025 — confirmed live, the old API endpoint returns invalid JSON), ResearchGate (no public API, ToS prohibits scraping), CORE.ac.uk (its free "Personal" tier explicitly prohibits use in a publicly-facing service, which this site is).
+
+### Medallion Architecture
+
+- **Bronze** — 10 tables, one per source (`bronze.research_papers`, `research_repos`, `research_hn`, `pypi_trends`, `semantic_scholar_papers`, `openalex_papers`, `crossref_papers`, `dblp_papers`, `hf_papers`, `zenodo_papers`), all `external_id UNIQUE`, raw JSONB.
+- **Silver** — 10 dbt models, typed/unpacked JSON.
+- **Gold** — `dim_research_source` (9 rows), `dim_research_topic`, `fact_research_signal` (`UNION ALL` across all 9 sources), `fact_tool_adoption`.
+
+### Real Bugs Found & Fixed
+
+- **Crossref garbage dates**: some publisher deposits in Crossref's own metadata carry corrupted placeholder years (2121, 2200 seen in practice) rather than real publication dates — confirmed genuine upstream data-quality issue, not a parsing bug on this side. Fixed at three levels: `extract_crossref.py`'s `extract_date()` now rejects any year outside `[1900, current_year+2]`; `silver_crossref_papers.sql` carries a matching `WHERE` guard; existing corrupted `ResearchSignal` records were cleaned via a one-off Django shell delete (218 records locally, 681+275+1 across sources on the server after a second pass).
+- **Zenodo incomplete dates**: Zenodo sometimes returns year-month precision only (`"2026-04"`, no day) — Postgres can't cast this directly to `TIMESTAMPTZ`. Fixed with a regex `WHERE` guard (`^\d{4}-\d{2}-\d{2}`) filtering these out at the silver layer rather than guessing a fake day.
+- **Naive-datetime bug in `load_research_signals.py`**: `parse_dt()` only attached UTC tzinfo when the source string had a literal `Z` suffix (arXiv's format) — the newer sources often give bare dates with no `Z`, producing ambiguous naive datetimes Django warned about. Fixed by always attaching UTC when the parsed datetime comes back naive.
+- **Global-recency sampling bug (the most significant one)**: the original `/api/research-signals/` endpoint ordered all 9 sources together by `published_at DESC LIMIT N`. Because different sources' date semantics aren't equivalent (some reflect true publication date, others deposit/indexing date), this structurally starved out entire sources — a real triggered query once returned a top-100 sample that was 93% Crossref and 7% OpenAlex, with arXiv, Semantic Scholar, DBLP, Hugging Face, and Zenodo receiving **zero** slots despite having thousands of real papers each. Fixed by replacing the single global query with fair per-source sampling — 60 most-recent papers from each of the 7 paper sources, combined and re-sorted for display (`PAPER_SOURCES = [...]` loop in `views.py`). Verified: all 7 sources now return exactly 60/60/60/60/60/60/60.
+- **`schema.yml` accidental triplication**: a heredoc append got resubmitted 3 times during development, tripling the same 6-model test block. Caught via a `grep -c` sanity check before running `dbt run` (which would otherwise have failed on duplicate model definitions), fixed by a dedup-rewrite of the file.
+
+### The 19-Task DAG
+
+10 branches run in genuine parallel fan-out, converge before a shared `dbt run`/`dbt test` (fan-in). Every task's `on_failure_callback` is wired to the Gemini diagnosis agent. Schedule: `@daily`. Note: Semantic Scholar's rate-limited extraction (1 req/sec × 93 keywords) takes ~50 minutes on a cold run — the DAG waits it out correctly rather than timing out.
+
+### Self-Healing Agents
+
+- **`diagnose_task_failure.py`** — Gemini reads the actual error, explains root cause in plain language, flags whether it's safe to auto-retry, POSTs to `/api/agent-diagnosis/`.
+- **`check_data_quality.py`** — checks for duplicates, nulls, and volume anomalies after every load, POSTs to `/api/data-quality-action/`.
+- Findings are logged to Postgres and surfaced in the UI's Agent Activity Log — no external alerting (Slack/email) yet, in-app only.
+
+### Setup — Local
+
+```bash
+# Create all 10 bronze tables (run once; also in infra/postgres-init/04-create-bronze-tables.sql
+# for a fresh DB volume, but that init script only runs on first DB creation)
+docker exec portfolio_django python -c "
+import psycopg2
+conn = psycopg2.connect(host='portfolio_postgres', port=5432, dbname='portfolio', user='postgres', password='localdevpassword')
+cur = conn.cursor()
+for tbl in ['research_papers', 'research_repos', 'research_hn', 'pypi_trends',
+            'semantic_scholar_papers', 'openalex_papers', 'crossref_papers',
+            'dblp_papers', 'hf_papers', 'zenodo_papers']:
+    cur.execute(f'''
+    CREATE TABLE IF NOT EXISTS bronze.{tbl} (
+        id SERIAL PRIMARY KEY, external_id TEXT NOT NULL UNIQUE, raw_data JSONB NOT NULL,
+        snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE, loaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );''')
+conn.commit()
+"
+
+# .env at repo root (gitignored) — Semantic Scholar is the only source needing a key
+echo "SEMANTIC_SCHOLAR_API_KEY=your_key_here" >> .env
+# request one at https://www.semanticscholar.org/product/api#api-key-form (free, may take a
+# few days for review, though it can also arrive within hours)
+# GITHUB_TOKEN is also required for extract_research_repos.py (see Pipeline 2's prerequisites)
+
+# Extract + load each source (run from repo root; each script's own docker cp + exec)
+for name in research_papers research_repos research_hn pypi_trends \
+            semantic_scholar openalex crossref dblp hf_papers zenodo; do
+  docker cp pipeline/extraction/extract_${name}.py portfolio_django:/tmp/
+  docker cp pipeline/extraction/load_bronze_${name}.py portfolio_django:/tmp/
+  docker exec -w /tmp portfolio_django python extract_${name}.py
+  docker exec -w /tmp portfolio_django python load_bronze_${name}.py
+done
+
+# dbt
+docker exec portfolio_dbt dbt run --select silver_research_papers silver_research_repos \
+  silver_research_hn silver_pypi_trends silver_semantic_scholar_papers silver_openalex_papers \
+  silver_crossref_papers silver_dblp_papers silver_hf_papers silver_zenodo_papers \
+  dim_research_source dim_research_topic fact_research_signal fact_tool_adoption
+docker exec portfolio_dbt dbt test --select silver_research_papers silver_research_repos \
+  silver_research_hn silver_pypi_trends silver_semantic_scholar_papers silver_openalex_papers \
+  silver_crossref_papers silver_dblp_papers silver_hf_papers silver_zenodo_papers \
+  dim_research_source dim_research_topic fact_research_signal fact_tool_adoption
+
+# Unify all 9 sources into the Django-facing ResearchSignal table
+docker exec portfolio_django python manage.py makemigrations analytics
+docker exec portfolio_django python manage.py migrate analytics
+docker exec portfolio_django python manage.py load_research_signals
+```
+
+### Scheduling — Airflow
+
+```bash
+docker exec portfolio_airflow airflow dags unpause ai_dataeng_trends_pipeline
+docker exec portfolio_airflow airflow dags trigger ai_dataeng_trends_pipeline
+
+# Verify (Semantic Scholar's branch alone can take ~50 min on a cold run)
+docker exec portfolio_airflow airflow tasks states-for-dag-run ai_dataeng_trends_pipeline "<run_id>" -o plain
+```
+
+### API Endpoints
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/research-signals/` | Unfiltered: fair per-source sample, 60 papers × 7 sources ≈ 420 total. Filtered (`?source=X`): up to 500 of that source's own papers |
+| `GET /api/agent-activity-summary/` | Aggregate self-healing rate, total diagnoses, avg confidence |
+| `GET /api/agent-diagnosis-log/` | Individual Gemini failure diagnoses |
+| `GET /api/data-quality-log/` | Individual data-quality check results |
+| `GET /api/tool-adoption-trends/` | Monthly PyPI download counts, growth % |
+| `GET /api/pipeline-runs/?pipeline=ai_dataeng_trends` | Recent DAG run history (health widget) |
+
+### Frontend
+
+`AIAgentPipelineSlide.jsx` — papers-only focus (GitHub/Hacker News excluded from this slide's display, though still tracked in the pipeline itself): 5 KPI tiles (Papers Tracked, Published This Week, Unique Authors, Trending Terms, Self-Healing Rate), trending-keyword pills, a Most-Cited-This-Week featured card, a 3-panel row (source-distribution rings, a real 7-day linear-trend forecast, week-over-week Source Momentum), a Signal Growth area chart, a full-width scrollable 2-column paper feed with per-source filter chips, and a compact Agent Activity Log.
 
 ---
 
