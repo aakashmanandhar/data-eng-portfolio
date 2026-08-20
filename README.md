@@ -1,14 +1,15 @@
 # Data Engineering Portfolio
 
-A live, self-hosted data platform powering [aakashmanandhar.tech](https://aakashmanandhar.tech) — six independently-orchestrated pipelines sharing one Django/React/Postgres stack, plus a Gemini-powered RAG assistant spanning all of them.
+A live, self-hosted data platform powering [aakashmanandhar.tech](https://aakashmanandhar.tech) — eight independently-orchestrated pipelines sharing one Django/React/Postgres stack, plus a Gemini-powered RAG assistant spanning all of them. Pipelines below are ordered to match their position in the live site's carousel.
 
-- **Salary & Career Trends** — real salary survey data, a live trained ML predictor, forecasting, and clustering (ai-jobs-net-salaries, Apache Airflow, weekly) — the site's newest and most feature-dense pipeline
-- **AI & Data Engineering Research Intelligence** — self-healing research tracking across 9 real academic/tooling sources, two AI agents that diagnose their own pipeline's failures and check data quality after every load (arXiv, Semantic Scholar, OpenAlex, Crossref, DBLP, Hugging Face, Zenodo, GitHub, Hacker News, Apache Airflow, daily)
+- **Salary & Career Trends** — real salary survey data, a live trained ML predictor, forecasting, and clustering (ai-jobs-net-salaries, Apache Airflow, weekly) — the site's first carousel slide
 - **GitHub Trends** — the shift to AI-native data engineering tooling (GitHub API, Apache Airflow, daily)
 - **Interactive AI/ML GIS Map** — geographic AI adoption, built on top of GitHub Trends' own data (Apache Airflow, daily, shares the same DAG)
 - **Historical Survey Analytics** — a decade of Stack Overflow tool-adoption data + a 2026 industry survey (manual-trigger, no public API for either source)
 - **OSS Ecosystem Landscape** — org leaderboard, tool co-adoption clustering, hype-vs-reality gap, tool lifecycle momentum (Apache Airflow, daily, shares the GitHub Trends DAG)
-- **Job Market & Tools Explorer** — the original pipeline (Adzuna + Stack Overflow Survey, Jenkins, every 6 hours) — backend still runs, data is RAG-only now, no dedicated frontend dashboard
+- **News & Sentiment Intelligence** — real-time sentiment scoring on data engineering news via a Hugging Face transformer, with honestly-gated keyword growth and breakout detection (Currents API, Apache Airflow, daily, shares the GitHub Trends DAG)
+- **AI & Data Engineering Research Intelligence** — self-healing research tracking across 9 real academic/tooling sources, two AI agents that diagnose their own pipeline's failures and check data quality after every load (arXiv, Semantic Scholar, OpenAlex, Crossref, DBLP, Hugging Face, Zenodo, GitHub, Hacker News, Apache Airflow, daily) — the newest and most feature-dense pipeline
+- **Job Market & Tools Explorer** — the original pipeline, not part of the live carousel (Adzuna + Stack Overflow Survey, Jenkins, every 6 hours) — backend still runs, data is RAG-only now, no dedicated frontend dashboard
 
 ### Overall Architecture
 ![IOverall Architecture](./docs/Overall_Architecture.png)
@@ -231,60 +232,85 @@ apps/
 
 ---
 
-## Pipeline 1 — Job Market & Tools Explorer
+## Pipeline 1 — Salary & Career Intelligence
 
-Real salary, hiring, and tooling data across 20 countries, refreshed automatically every 6 hours.
+The newest and most feature-dense pipeline on the site — a genuinely new source, its own dedicated orchestration schedule, its own warehouse layer, and five real ML models, built end to end in a single extended session. The first carousel slide, by explicit design.
 
-### Architecture
+### Interactive Salary & Career Intelligence Architecture
+![Interactive Salary & Career Intelligence Architecture](./docs/SalaryCareerPipeline.png)
 
-![Job Market Pipeline Architecture](./docs/architecture.png)
+### Interactive Salary & Career Intelligence Dashboard
+![Interactive Salary & Career Intelligence Dashboard2](./docs/salarycareer1.png)
+![Interactive Salary & Career Intelligence Dashboard3](./docs/salarycareer2.png)
+![Interactive Salary & Career Intelligence Dashboard4](./docs/salarycareer3.png)
+![Interactive Salary & Career Intelligence Dashboard4](./docs/salarycareer4.png)
+![Interactive Salary & Career Intelligence Dashboard4](./docs/salarycareer5.png)
 
-## Analytics Dashboard
-![Job Market Analytics Dashboard](./docs/analytics2.png)
+### Data Source
 
-### Data Sources
+- **`foorilla/ai-jobs-net-salaries`** (GitHub repo) — a weekly-updated public salary survey, 2021–2025+, openly licensed for reuse. 151,445 respondents.
+- Real fields: `work_year`, `experience_level` (EN/MI/SE/EX), `employment_type` (CT/FL/FT/PT), `job_title`, `salary`/`salary_currency`/`salary_in_usd`, `employee_residence`/`company_location` (raw ISO codes — resolved to names only at the frontend, via a shared `countryNames.js` module extracted from `GisAiMapSlide.jsx`), `remote_ratio` (0/50/100), `company_size` (S/M/L).
 
-- **Adzuna API** — salary histograms + job counts, 19 countries, 3 seniority-level searches per country (junior/mid/senior)
-- **Stack Overflow Developer Survey 2025** — tool usage + self-reported salary, filtered to 16 countries with 20+ data-professional respondents
+### Medallion Architecture
 
-### Gold-Layer Star Schema
+- **Bronze** (`bronze.ai_jobs_salaries_snapshot`) — populated by plain Python (`load_bronze_ai_jobs_salaries.py`), raw JSONB, one row per respondent per weekly pull.
+- **Silver/Gold** — built by dbt (`silver_ai_jobs_salaries.sql` + 4 gold models: `fact_salary_by_experience`, `fact_salary_by_tool`, `fact_remote_ratio_trend`, `fact_top_paying_title_by_year`), 18 passing dbt tests.
+- **4 additional gold tables**, self-created by their own Python scripts (not dbt models): `skill_salary_growth`, `salary_forecast_multiyear`, `career_archetype`, `salary_predictor_metadata`.
 
-- `dim_country` — 20 rows (Adzuna's 19 + Ukraine, via `country_mapping` seed)
-- `dim_tool` — 19 unique tools
-- `fact_job_market` — seniority-level job counts + salary, cross-referenced against SO Survey
-- `fact_tool_preference_global` — standalone global tool ranking (not per-country)
+### Real bug found & fixed — double counting
+
+Running the DAG twice in one calendar day created two identical bronze batches, undetected by `snapshot_date` (date-only granularity — both loads got the same date). Every gold model silently summed both batches, doubling every respondent count (Rust showed 36,374 instead of the real 18,187). Root cause fixed properly: the load script now captures **one shared batch timestamp** before its row loop, instead of relying on each row's own INSERT-time default — making `loaded_at` a genuine, reusable batch identifier. `snapshot_date = MAX(snapshot_date)` filtering was also added to all 4 gold models as defense in depth.
+
+### The 5 ML Models
+
+| Model | What it does |
+|---|---|
+| Skill vs. adoption pairing | Real-time synced comparison — SO Survey adoption trend alongside this dataset's salary trend, for any of the 25 tracked tools |
+| Skill growth ranking | `skill_salary_growth.py` — regression slope of salary over time per tool, 4-year minimum history gate |
+| 3-year salary forecast | `forecast_salary_multiyear.py` — genuine statistical prediction intervals (manual OLS, standard-error-of-prediction formula), not an arbitrary heuristic — the uncertainty band widens the further out it predicts |
+| Career archetype clustering | `cluster_career_archetypes.py` — k-means on 93 job titles (≥200 respondents each) by salary/remote-ratio/company-size profile |
+| Live salary predictor | `train_salary_predictor.py` — a real `RandomForestRegressor`, trained on all 151K respondents, saved and loaded once by Django to serve live predictions per-request |
+
+### Real bug found & fixed — the predictor's naming collision
+
+`cluster_career_archetypes.py`'s initial naming logic used a simple above/below-average threshold on 2 dimensions — but nothing guaranteed k-means' 4 real clusters would land in 4 different quadrants, so two genuinely different clusters ended up sharing the same name. Fixed with rank-based naming (salary rank 1st–4th is inherently unique) plus a remote-tendency qualifier.
+
+### Real bug found & fixed — a genuinely weak first model
+
+The predictor's initial 3-feature model (`experience_level`, `remote_ratio`, `company_size`) was honest but weak — R² of just 0.109. Diagnosed via `feature_importances_` that `job_title` was the missing signal; adding it as a 4th feature more than doubled accuracy to R²=0.2475. The frontend shows this real accuracy in plain language alongside every prediction, never overstating confidence.
 
 ### Setup — Local
 
 ```bash
-# .env at repo root (gitignored)
-ADZUNA_APP_ID=your_app_id
-ADZUNA_APP_KEY=your_app_key
+docker exec portfolio_django python extract_ai_jobs_salaries.py
+docker exec portfolio_django python load_bronze_ai_jobs_salaries.py
 
-# Run extraction + load + transform manually once, to seed data
-docker exec portfolio_django python extract_adzuna.py
-docker exec portfolio_django python extract_so_survey.py
-docker exec portfolio_django python load_bronze.py
-docker exec portfolio_dbt dbt run
-docker exec portfolio_dbt dbt test
+docker exec portfolio_dbt dbt seed --select tool_to_job_titles_crosswalk
+docker exec portfolio_dbt dbt run --select silver_ai_jobs_salaries fact_salary_by_tool fact_salary_by_experience fact_remote_ratio_trend fact_top_paying_title_by_year
+docker exec portfolio_dbt dbt test --select silver_ai_jobs_salaries fact_salary_by_experience fact_salary_by_tool fact_top_paying_title_by_year
+
+docker cp pipeline/extraction/skill_salary_growth.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python skill_salary_growth.py
+
+docker cp pipeline/extraction/forecast_salary_multiyear.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python forecast_salary_multiyear.py
+
+docker cp pipeline/extraction/cluster_career_archetypes.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python cluster_career_archetypes.py
+
+docker cp pipeline/extraction/train_salary_predictor.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python train_salary_predictor.py
 ```
 
-### Scheduling — Jenkins
+### Scheduling — Airflow
 
-Job type: **Pipeline script from SCM** → this repo, branch `main`, script path `infra/jenkins/Jenkinsfile`.
-Cron: `H */6 * * *` (every 6 hours, jittered start minute).
+`salary_pipeline_dag.py`, `@weekly` — a genuinely separate DAG, not folded into the daily `github_trends_dag`, because `@weekly` is this source's real update cadence.
 
-Stages: `Extract Adzuna` → `Load Bronze` → `dbt run` → `dbt test`, with a `post { success/failure }` block writing a `PipelineRun` record for the site's Pipeline Health widget.
+### Frontend
 
-### API Endpoints
+`SalaryTrendsSlide.jsx` — bento layout, 3 animated KPI tiles with inline sparklines, an interactive skill-picker hero (two synced Recharts strips, permanent correlational-not-causal microcopy), and a 4-tab section below (scatter plot, gradient-uncertainty-band forecast, radar-chart archetypes, slider-driven live predictor).
 
-| Endpoint | Returns |
-|---|---|
-| `GET /api/job-market/` | Job counts + salary by country/seniority |
-| `GET /api/tool-usage/` | Tool usage by country |
-| `GET /api/tool-preference-global/` | Global tool ranking |
-| `GET /api/last-refreshed/` | Timestamp of the most recent bronze load |
-| `GET /api/pipeline-runs/` | Recent Jenkins run history (health widget) |
+---
 
 ---
 
@@ -635,88 +661,61 @@ docker exec -w /tmp portfolio_django python tool_momentum_staging.py
 
 ---
 
-## Pipeline 6 — Salary & Career Intelligence
 
-The newest and most feature-dense pipeline on the site — a genuinely new source, its own dedicated orchestration schedule, its own warehouse layer, and five real ML models, built end to end in a single extended session. The first carousel slide, by explicit design.
+## Pipeline 6 — News & Sentiment Intelligence
 
-### Interactive Salary & Career Intelligence Architecture
-![Interactive Salary & Career Intelligence Architecture](./docs/SalaryCareerPipeline.png)
-
-### Interactive Salary & Career Intelligence Dashboard
-![Interactive Salary & Career Intelligence Dashboard2](./docs/salarycareer1.png)
-![Interactive Salary & Career Intelligence Dashboard3](./docs/salarycareer2.png)
-![Interactive Salary & Career Intelligence Dashboard4](./docs/salarycareer3.png)
-![Interactive Salary & Career Intelligence Dashboard4](./docs/salarycareer4.png)
-![Interactive Salary & Career Intelligence Dashboard4](./docs/salarycareer5.png)
+Wired directly into the existing daily `github_trends_dag` — no new orchestration, same pattern as the OSS Ecosystem Landscape pipeline.
 
 ### Data Source
 
-- **`foorilla/ai-jobs-net-salaries`** (GitHub repo) — a weekly-updated public salary survey, 2021–2025+, openly licensed for reuse. 151,445 respondents.
-- Real fields: `work_year`, `experience_level` (EN/MI/SE/EX), `employment_type` (CT/FL/FT/PT), `job_title`, `salary`/`salary_currency`/`salary_in_usd`, `employee_residence`/`company_location` (raw ISO codes — resolved to names only at the frontend, via a shared `countryNames.js` module extracted from `GisAiMapSlide.jsx`), `remote_ratio` (0/50/100), `company_size` (S/M/L).
+- **Currents API** — a 70-term curated DE/AI-DE keyword sweep, filtered to genuinely relevant articles rather than a broad news firehose.
+
+### Sentiment Scoring
+
+Real sentiment classification via Hugging Face's `cardiffnlp/twitter-roberta-base-sentiment-latest` transformer — confidence-weighted, not a naive positive/negative/neutral count.
 
 ### Medallion Architecture
 
-- **Bronze** (`bronze.ai_jobs_salaries_snapshot`) — populated by plain Python (`load_bronze_ai_jobs_salaries.py`), raw JSONB, one row per respondent per weekly pull.
-- **Silver/Gold** — built by dbt (`silver_ai_jobs_salaries.sql` + 4 gold models: `fact_salary_by_experience`, `fact_salary_by_tool`, `fact_remote_ratio_trend`, `fact_top_paying_title_by_year`), 18 passing dbt tests.
-- **4 additional gold tables**, self-created by their own Python scripts (not dbt models): `skill_salary_growth`, `salary_forecast_multiyear`, `career_archetype`, `salary_predictor_metadata`.
+- **Bronze** (`bronze.news_articles_snapshot`) — raw article JSONB, one row per matched article per run.
+- **Silver/Gold** — `silver_news_articles.sql` + gold models: `dim_keyword`, `dim_source`, `fact_keyword_mention`, `fact_keyword_sentiment_trend`.
+- **2 honestly-gated ML tables**, self-created by their own Python scripts: `news_keyword_growth`, `news_keyword_breakout` — both report insufficient-data status rather than fabricating a trend from too few data points, matching the same discipline used everywhere else on this site.
 
-### Real bug found & fixed — double counting
+### Real Bugs Found & Fixed
 
-Running the DAG twice in one calendar day created two identical bronze batches, undetected by `snapshot_date` (date-only granularity — both loads got the same date). Every gold model silently summed both batches, doubling every respondent count (Rust showed 36,374 instead of the real 18,187). Root cause fixed properly: the load script now captures **one shared batch timestamp** before its row loop, instead of relying on each row's own INSERT-time default — making `loaded_at` a genuine, reusable batch identifier. `snapshot_date = MAX(snapshot_date)` filtering was also added to all 4 gold models as defense in depth.
-
-### The 5 ML Models
-
-| Model | What it does |
-|---|---|
-| Skill vs. adoption pairing | Real-time synced comparison — SO Survey adoption trend alongside this dataset's salary trend, for any of the 25 tracked tools |
-| Skill growth ranking | `skill_salary_growth.py` — regression slope of salary over time per tool, 4-year minimum history gate |
-| 3-year salary forecast | `forecast_salary_multiyear.py` — genuine statistical prediction intervals (manual OLS, standard-error-of-prediction formula), not an arbitrary heuristic — the uncertainty band widens the further out it predicts |
-| Career archetype clustering | `cluster_career_archetypes.py` — k-means on 93 job titles (≥200 respondents each) by salary/remote-ratio/company-size profile |
-| Live salary predictor | `train_salary_predictor.py` — a real `RandomForestRegressor`, trained on all 151K respondents, saved and loaded once by Django to serve live predictions per-request |
-
-### Real bug found & fixed — the predictor's naming collision
-
-`cluster_career_archetypes.py`'s initial naming logic used a simple above/below-average threshold on 2 dimensions — but nothing guaranteed k-means' 4 real clusters would land in 4 different quadrants, so two genuinely different clusters ended up sharing the same name. Fixed with rank-based naming (salary rank 1st–4th is inherently unique) plus a remote-tendency qualifier.
-
-### Real bug found & fixed — a genuinely weak first model
-
-The predictor's initial 3-feature model (`experience_level`, `remote_ratio`, `company_size`) was honest but weak — R² of just 0.109. Diagnosed via `feature_importances_` that `job_title` was the missing signal; adding it as a 4th feature more than doubled accuracy to R²=0.2475. The frontend shows this real accuracy in plain language alongside every prediction, never overstating confidence.
+- **Substring false positives, twice**: a naive keyword match flagged "data mesh" inside an unrelated CV paper title, and separately matched "Trino" as a substring of "neutrino" in a physics article. Fixed with word-boundary regex matching both times.
+- **HF's `api-inference` endpoint fully decommissioned mid-build**: had to migrate to `router.huggingface.co` and a new fine-grained-token permission model partway through development.
+- **A shared-DAG cascade failure**: a missing `dbt_seed` step for `dim_keyword` caused a downstream task failure — fixed by adding the seed step explicitly to the DAG rather than assuming it ran implicitly.
 
 ### Setup — Local
 
 ```bash
-docker exec portfolio_django python extract_ai_jobs_salaries.py
-docker exec portfolio_django python load_bronze_ai_jobs_salaries.py
+docker cp pipeline/extraction/extract_news_articles.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python extract_news_articles.py
+docker cp pipeline/extraction/load_bronze_news_articles.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python load_bronze_news_articles.py
 
-docker exec portfolio_dbt dbt seed --select tool_to_job_titles_crosswalk
-docker exec portfolio_dbt dbt run --select silver_ai_jobs_salaries fact_salary_by_tool fact_salary_by_experience fact_remote_ratio_trend fact_top_paying_title_by_year
-docker exec portfolio_dbt dbt test --select silver_ai_jobs_salaries fact_salary_by_experience fact_salary_by_tool fact_top_paying_title_by_year
+docker exec portfolio_dbt dbt run --select silver_news_articles dim_keyword dim_source fact_keyword_mention fact_keyword_sentiment_trend
+docker exec portfolio_dbt dbt test --select silver_news_articles dim_keyword dim_source fact_keyword_mention fact_keyword_sentiment_trend
 
-docker cp pipeline/extraction/skill_salary_growth.py portfolio_django:/tmp/
-docker exec -w /tmp portfolio_django python skill_salary_growth.py
+docker cp pipeline/extraction/score_news_sentiment.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python score_news_sentiment.py
 
-docker cp pipeline/extraction/forecast_salary_multiyear.py portfolio_django:/tmp/
-docker exec -w /tmp portfolio_django python forecast_salary_multiyear.py
+docker cp pipeline/extraction/news_keyword_growth.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python news_keyword_growth.py
 
-docker cp pipeline/extraction/cluster_career_archetypes.py portfolio_django:/tmp/
-docker exec -w /tmp portfolio_django python cluster_career_archetypes.py
-
-docker cp pipeline/extraction/train_salary_predictor.py portfolio_django:/tmp/
-docker exec -w /tmp portfolio_django python train_salary_predictor.py
+docker cp pipeline/extraction/news_keyword_breakout.py portfolio_django:/tmp/
+docker exec -w /tmp portfolio_django python news_keyword_breakout.py
 ```
 
-### Scheduling — Airflow
+### Scheduling — Airflow (shared DAG)
 
-`salary_pipeline_dag.py`, `@weekly` — a genuinely separate DAG, not folded into the daily `github_trends_dag`, because `@weekly` is this source's real update cadence.
+Runs as part of `github_trends_dag.py`'s existing `@daily` schedule — no separate trigger needed.
 
 ### Frontend
 
-`SalaryTrendsSlide.jsx` — bento layout, 3 animated KPI tiles with inline sparklines, an interactive skill-picker hero (two synced Recharts strips, permanent correlational-not-causal microcopy), and a 4-tab section below (scatter plot, gradient-uncertainty-band forecast, radar-chart archetypes, slider-driven live predictor).
+`NewsIntelligenceSlide.jsx` — a circular sentiment gauge, a D3 packed-bubble "most discussed topics" visualization, and a Live Wire timeline feed. Deliberately icon-free by design, after early user feedback on visual clutter.
 
 ---
-
----
-
 ## Pipeline 7 — AI & Data Engineering Research Intelligence
 
 A self-healing research-tracking pipeline spanning 9 real academic/tooling sources — the site's broadest single data-gathering effort, with two AI agents that diagnose their own pipeline's failures and check data quality after every load.
@@ -847,6 +846,63 @@ docker exec portfolio_airflow airflow tasks states-for-dag-run ai_dataeng_trends
 ---
 
 
+## Pipeline 8 — Job Market & Tools Explorer
+
+Real salary, hiring, and tooling data across 20 countries, refreshed automatically every 6 hours.
+
+### Architecture
+
+![Job Market Pipeline Architecture](./docs/architecture.png)
+
+## Analytics Dashboard
+![Job Market Analytics Dashboard](./docs/analytics2.png)
+
+### Data Sources
+
+- **Adzuna API** — salary histograms + job counts, 19 countries, 3 seniority-level searches per country (junior/mid/senior)
+- **Stack Overflow Developer Survey 2025** — tool usage + self-reported salary, filtered to 16 countries with 20+ data-professional respondents
+
+### Gold-Layer Star Schema
+
+- `dim_country` — 20 rows (Adzuna's 19 + Ukraine, via `country_mapping` seed)
+- `dim_tool` — 19 unique tools
+- `fact_job_market` — seniority-level job counts + salary, cross-referenced against SO Survey
+- `fact_tool_preference_global` — standalone global tool ranking (not per-country)
+
+### Setup — Local
+
+```bash
+# .env at repo root (gitignored)
+ADZUNA_APP_ID=your_app_id
+ADZUNA_APP_KEY=your_app_key
+
+# Run extraction + load + transform manually once, to seed data
+docker exec portfolio_django python extract_adzuna.py
+docker exec portfolio_django python extract_so_survey.py
+docker exec portfolio_django python load_bronze.py
+docker exec portfolio_dbt dbt run
+docker exec portfolio_dbt dbt test
+```
+
+### Scheduling — Jenkins
+
+Job type: **Pipeline script from SCM** → this repo, branch `main`, script path `infra/jenkins/Jenkinsfile`.
+Cron: `H */6 * * *` (every 6 hours, jittered start minute).
+
+Stages: `Extract Adzuna` → `Load Bronze` → `dbt run` → `dbt test`, with a `post { success/failure }` block writing a `PipelineRun` record for the site's Pipeline Health widget.
+
+### API Endpoints
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/job-market/` | Job counts + salary by country/seniority |
+| `GET /api/tool-usage/` | Tool usage by country |
+| `GET /api/tool-preference-global/` | Global tool ranking |
+| `GET /api/last-refreshed/` | Timestamp of the most recent bronze load |
+| `GET /api/pipeline-runs/` | Recent Jenkins run history (health widget) |
+
+---
+
 ## Shared Infrastructure
 
 - **PostgreSQL** (+pgvector) — one instance, separate bronze/gold schemas per pipeline
@@ -866,8 +922,7 @@ A chat widget on the live site, powered by Google's Gemini API, routing each que
 
 ## Full Tech Stack
 
-Django · Django REST Framework · React · PostgreSQL · pgvector · dbt · Terraform · Docker · Jenkins · Apache Airflow · Nginx · Cloudflare · Google Gemini API · Adzuna API · GitHub REST API · GitHub Search API · Stack Overflow Developer Survey
+Django · Django REST Framework · React · PostgreSQL · pgvector · dbt · Terraform · Docker · Jenkins · Apache Airflow · Nginx · Cloudflare · Google Gemini API · Adzuna API · GitHub REST API · GitHub Search API · Stack Overflow Developer Survey · arXiv API · Semantic Scholar API · OpenAlex API · Crossref API · DBLP API · Hugging Face Transformers · Zenodo API · Currents API · pypistats.org
 
 ---
 
-Live at **[aakashmanandhar.tech](https://aakashmanandhar.tech)** · Architecture deep-dive at [`/architecture`](https://aakashmanandhar.tech/architecture)
