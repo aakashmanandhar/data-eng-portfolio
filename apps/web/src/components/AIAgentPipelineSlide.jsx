@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import LineageExplorer from './LineageExplorer'
 import { AreaChart, Area, ComposedChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts'
-import { FileText, Wrench, ShieldCheck, Sparkles, Bot, ExternalLink, HelpCircle, BookOpen, Library, Link2, Database, Rocket, Archive, Quote, Layers, Zap, Users, TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react'
+import { FileText, Wrench, ShieldCheck, Sparkles, Bot, ExternalLink, HelpCircle, BookOpen, Library, Link2, Database, Rocket, Archive, Quote, Layers, Zap, Users, TrendingUp, TrendingDown, Minus, Activity, Search } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -85,7 +86,7 @@ function sourceMomentum(signals) {
     .slice(0, 5)
 }
 
-function KpiTile({ icon, label, help, children }) {
+function KpiTile({ icon, label, help, children, traceModel, onTrace }) {
   return (
     <div className="agent-kpi-tile">
       {icon}
@@ -99,6 +100,14 @@ function KpiTile({ icon, label, help, children }) {
         </span>
         {children}
       </div>
+      {traceModel && (
+        <span className="agent-kpi-trace">
+          <button className="agent-kpi-trace-icon" onClick={() => onTrace(traceModel)} aria-label="Trace where this number comes from">
+            <Search size={15} />
+          </button>
+          <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
+        </span>
+      )}
     </div>
   )
 }
@@ -195,6 +204,7 @@ function MomentumPanel({ signals }) {
 
 function AIAgentPipelineSlide() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 480)
+  const [traceModel, setTraceModel] = useState(null)
   const [signals, setSignals] = useState([])
   const [summary, setSummary] = useState(null)
   const [diagnoses, setDiagnoses] = useState([])
@@ -279,7 +289,7 @@ function AIAgentPipelineSlide() {
       </div>
 
       <div className="agent-kpi-row">
-        <KpiTile icon={<FileText size={16} color="var(--accent1)" />} label="Papers Tracked" help="Real papers indexed across arXiv, Semantic Scholar, OpenAlex, Crossref, DBLP, Hugging Face, and Zenodo">
+        <KpiTile icon={<FileText size={16} color="var(--accent1)" />} label="Papers Tracked" help="Real papers indexed across arXiv, Semantic Scholar, OpenAlex, Crossref, DBLP, Hugging Face, and Zenodo" traceModel="fact_research_signal" onTrace={setTraceModel}>
           <span className="agent-kpi-value">{papers.length.toLocaleString()}</span>
         </KpiTile>
         <KpiTile icon={<Zap size={16} color="#D97706" />} label="Published This Week" help="Share of tracked papers published in the last 7 days — how current this collection is">
@@ -409,6 +419,7 @@ function AIAgentPipelineSlide() {
           ))}
         </div>
       </div>
+      {traceModel && <LineageExplorer modelName={traceModel} onClose={() => setTraceModel(null)} />}
     </div>
   )
 }

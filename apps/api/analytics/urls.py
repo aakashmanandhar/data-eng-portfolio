@@ -6,6 +6,7 @@ from .views import (
     ResearchSignalListView, ToolAdoptionTrendListView, AgentActivitySummaryView,
     AIAdoptionForecastView, VisitorCountView, VisitorHeartbeatView, VisitorStatsView, CountryAISignalView, CountryArchetypeView,
     DeToolSummaryView, DeToolByCountryView, OrgArchetypeSummaryView, CountryToolSignalView, ToolListView, SalaryByToolView, NewsArticleFeedView,
+    LineageView,
 )
 
 urlpatterns = [
@@ -29,6 +30,7 @@ urlpatterns = [
     path('de-tool-by-country/', DeToolByCountryView.as_view(), name='de-tool-by-country'),
     path('org-archetype-summary/', OrgArchetypeSummaryView.as_view(), name='org-archetype-summary'),
     path('oss-landscape-summary/', OssLandscapeSummaryView.as_view(), name='oss-landscape-summary'),
+    path('lineage/<str:model_name>/', LineageView.as_view(), name='lineage'),
     path('sentiment-vs-adoption-gap/', SentimentVsAdoptionGapView.as_view(), name='sentiment-vs-adoption-gap'),
     path('country-tool-signal/', CountryToolSignalView.as_view(), name='country-tool-signal'),
     path('growth-forecast-status/', GrowthForecastStatusView.as_view(), name='growth-forecast-status'),

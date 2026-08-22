@@ -134,6 +134,12 @@ resource "docker_container" "django" {
     container_path = "/app"
   }
 
+  volumes {
+    host_path      = "${abspath(path.module)}/../../pipeline/dbt/target"
+    container_path = "/dbt_target"
+    read_only      = true
+  }
+
   depends_on = [docker_container.postgres]
 }
 

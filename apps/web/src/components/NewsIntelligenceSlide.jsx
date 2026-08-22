@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { hierarchy, pack } from 'd3-hierarchy'
+import LineageExplorer from './LineageExplorer'
+import { Search } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -87,6 +89,7 @@ function BubbleChart({ data, width, height, onSelect, highlightNames = [] }) {
 
 function NewsIntelligenceSlide() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 480)
+  const [traceModel, setTraceModel] = useState(null)
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth <= 480)
     window.addEventListener('resize', handler)
@@ -156,19 +159,43 @@ function NewsIntelligenceSlide() {
 
       <div className="news-kpi-row">
         <div className="news-kpi-tile">
+          <span className="agent-kpi-trace news-kpi-trace">
+            <button className="agent-kpi-trace-icon" onClick={() => setTraceModel('silver_news_articles')} aria-label="Trace where this number comes from">
+              <Search size={13} />
+            </button>
+            <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
+          </span>
           <span className="news-kpi-tile-label">Articles</span>
           <span className="news-kpi-tile-value">{kpi.total_articles}</span>
         </div>
         <div className="news-kpi-tile">
+          <span className="agent-kpi-trace news-kpi-trace">
+            <button className="agent-kpi-trace-icon" onClick={() => setTraceModel('fact_keyword_mention')} aria-label="Trace where this number comes from">
+              <Search size={13} />
+            </button>
+            <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
+          </span>
           <span className="news-kpi-tile-label">Top Topic</span>
           <span className="news-kpi-tile-value news-kpi-tile-value-text">{kpi.top_keyword?.keyword}</span>
         </div>
         <div className="news-kpi-tile news-kpi-tile-gauge">
+          <span className="agent-kpi-trace news-kpi-trace">
+            <button className="agent-kpi-trace-icon" onClick={() => setTraceModel('fact_keyword_sentiment_trend')} aria-label="Trace where this number comes from">
+              <Search size={13} />
+            </button>
+            <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
+          </span>
           <span className="news-kpi-tile-label">Sentiment</span>
           <SentimentGauge score={kpi.overall_sentiment} />
         </div>
         {mostPositive && (
           <div className="news-kpi-tile">
+            <span className="agent-kpi-trace news-kpi-trace">
+              <button className="agent-kpi-trace-icon" onClick={() => setTraceModel('fact_keyword_sentiment_trend')} aria-label="Trace where this number comes from">
+                <Search size={13} />
+              </button>
+              <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
+            </span>
             <span className="news-kpi-tile-label">Most Positive</span>
             <span className="news-kpi-tile-value news-kpi-tile-value-text" style={{ color: SENTIMENT_COLORS.positive }}>
               {mostPositive.keyword}
@@ -178,6 +205,12 @@ function NewsIntelligenceSlide() {
         )}
         {mostNegative && (
           <div className="news-kpi-tile">
+            <span className="agent-kpi-trace news-kpi-trace">
+              <button className="agent-kpi-trace-icon" onClick={() => setTraceModel('fact_keyword_sentiment_trend')} aria-label="Trace where this number comes from">
+                <Search size={13} />
+              </button>
+              <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
+            </span>
             <span className="news-kpi-tile-label">Most Negative</span>
             <span className="news-kpi-tile-value news-kpi-tile-value-text" style={{ color: SENTIMENT_COLORS.negative }}>
               {mostNegative.keyword}
@@ -238,6 +271,7 @@ function NewsIntelligenceSlide() {
           {insightText && <p className="news-bubble-insight">{insightText}</p>}
         </div>
       </div>
+      {traceModel && <LineageExplorer modelName={traceModel} onClose={() => setTraceModel(null)} />}
     </div>
   )
 }

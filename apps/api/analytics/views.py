@@ -1,4 +1,5 @@
 import joblib
+import json
 import os
 import psycopg2
 import psycopg2.extras
@@ -1006,4 +1007,84 @@ class AgentActivitySummaryView(APIView):
             "self_healing_rate": round((auto_retried / total_diagnoses * 100), 1) if total_diagnoses else 0,
             "total_dq_actions": total_dq_actions,
             "avg_confidence": round(avg_confidence, 2),
+        })
+
+MANIFEST_PATH = "/dbt_target/manifest.json"
+
+def _classify_layer(unique_id, node):
+    # Classify by real schema first — some sources (e.g. Python-scored
+    # sentiment tables) live directly in the gold schema even though
+    # they're registered as dbt sources, not models. Name-prefix and
+    # node-type checks are only a fallback for anything unusual.
+    schema = (node.get("schema") or "").lower()
+    if schema == "bronze":
+        return "bronze"
+    if "silver" in schema:
+        return "silver"
+    if "gold" in schema:
+        return "gold"
+    if unique_id.startswith("source."):
+        return "bronze"
+    name = node.get("name", "")
+    if name.startswith("silver_"):
+        return "silver"
+    if name.startswith(("dim_", "fact_")):
+        return "gold"
+    return "other"
+
+def _get_node(manifest, unique_id):
+    if unique_id.startswith("source."):
+        return manifest.get("sources", {}).get(unique_id)
+    return manifest.get("nodes", {}).get(unique_id)
+
+class LineageView(APIView):
+    def get(self, request, model_name):
+        if not os.path.exists(MANIFEST_PATH):
+            return Response({"error": "Lineage data not available. Run 'dbt docs generate' first."}, status=503)
+
+        with open(MANIFEST_PATH) as f:
+            manifest = json.load(f)
+
+        target_id = None
+        for uid, node in manifest.get("nodes", {}).items():
+            if node.get("name") == model_name:
+                target_id = uid
+                break
+
+        if target_id is None:
+            return Response({"error": f"Model '{model_name}' not found"}, status=404)
+
+        visited = set()
+        nodes_out = []
+        edges_out = []
+
+        def walk(unique_id):
+            if unique_id in visited:
+                return
+            visited.add(unique_id)
+            node = _get_node(manifest, unique_id)
+            if node is None:
+                return
+
+            nodes_out.append({
+                "id": unique_id,
+                "name": node.get("name"),
+                "layer": _classify_layer(unique_id, node),
+                "description": node.get("description", ""),
+                "sql": node.get("raw_code", None),
+                "database": node.get("database"),
+                "schema": node.get("schema"),
+            })
+
+            depends_on = node.get("depends_on", {}).get("nodes", [])
+            for upstream_id in depends_on:
+                edges_out.append({"from": upstream_id, "to": unique_id})
+                walk(upstream_id)
+
+        walk(target_id)
+
+        return Response({
+            "target": model_name,
+            "nodes": nodes_out,
+            "edges": edges_out,
         })

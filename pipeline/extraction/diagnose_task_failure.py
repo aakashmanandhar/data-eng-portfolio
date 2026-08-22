@@ -37,7 +37,7 @@ SEVERITY: <low, medium, or high>
 """
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.6-flash",
             contents=prompt,
         )
         text = response.text.strip()
@@ -76,7 +76,7 @@ def main():
     task_id, dag_run_id, error_summary = sys.argv[1], sys.argv[2], sys.argv[3]
     result = diagnose(task_id, dag_run_id, error_summary)
 
-    api_base = os.environ.get("INTERNAL_API_BASE", "http://portfolio_django:8000")
+    api_base = os.environ.get("INTERNAL_API_BASE", "http://host.docker.internal:8000")
     try:
         resp = requests.post(f"{api_base}/api/agent-diagnosis/", json=result, timeout=10)
         print(f"Logged diagnosis (status {resp.status_code}): {result['diagnosis']}")

@@ -2,16 +2,26 @@ import { useState, useEffect } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter, ZAxis, Label, AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts'
 import { useCountUp } from '../utils/useCountUp'
 import Sparkline from './Sparkline'
+import LineageExplorer from './LineageExplorer'
+import { Search } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
-function KpiTile({ label, value, prefix = '', suffix = '', sparklineData, icon }) {
+function KpiTile({ label, value, prefix = '', suffix = '', sparklineData, icon, traceModel, onTrace }) {
   const animated = useCountUp(value)
   return (
     <div className="salary-kpi-tile">
       <div className="salary-kpi-tile-header">
         <span className="salary-kpi-tile-icon">{icon}</span>
         <span className="salary-kpi-tile-label">{label}</span>
+        {traceModel && (
+          <span className="agent-kpi-trace">
+            <button className="agent-kpi-trace-icon" onClick={() => onTrace(traceModel)} aria-label="Trace where this number comes from">
+              <Search size={14} />
+            </button>
+            <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
+          </span>
+        )}
       </div>
       <div className="salary-kpi-tile-value">
         {prefix}{Math.round(animated).toLocaleString()}{suffix}
@@ -25,6 +35,7 @@ function KpiTile({ label, value, prefix = '', suffix = '', sparklineData, icon }
 
 function SalaryTrendsSlide() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 480)
+  const [traceModel, setTraceModel] = useState(null)
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth <= 480)
     window.addEventListener('resize', handler)
@@ -131,8 +142,8 @@ function SalaryTrendsSlide() {
     <div className="salary-slide">
       <div className="salary-bento">
         <div className="salary-satellite-tiles">
-          <KpiTile label="Median salary, all Senior roles" icon="💼" value={medianSeSalary} prefix="$" sparklineData={seSparkline} />
-          <KpiTile label={`Fully remote roles, ${remoteYears[remoteYears.length - 1]}`} icon="🌍" value={latestRemotePct} suffix="%" sparklineData={remoteSparkline} />
+          <KpiTile label="Median salary, all Senior roles" icon="💼" value={medianSeSalary} prefix="$" sparklineData={seSparkline} traceModel="fact_salary_by_experience" onTrace={setTraceModel} />
+          <KpiTile label={`Fully remote roles, ${remoteYears[remoteYears.length - 1]}`} icon="🌍" value={latestRemotePct} suffix="%" sparklineData={remoteSparkline} traceModel="fact_remote_ratio_trend" onTrace={setTraceModel} />
           {kpi.top_paying_title && (
             <div className="salary-kpi-tile">
               <div className="salary-kpi-tile-header">
@@ -373,6 +384,7 @@ function SalaryTrendsSlide() {
           )}
         </div>
       </div>
+      {traceModel && <LineageExplorer modelName={traceModel} onClose={() => setTraceModel(null)} />}
     </div>
   )
 }

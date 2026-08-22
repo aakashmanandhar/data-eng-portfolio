@@ -46,3 +46,4 @@ pipeline/extraction/survey_2026_data_engineering.csv
 apps/api/staticfiles/
 # Stray backup files
 *.bak
+tfplan
