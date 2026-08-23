@@ -35,11 +35,12 @@ function dedupeArticles(articles) {
 }
 
 function SentimentGauge({ score, size = 68 }) {
-  const pct = Math.max(0, Math.min(100, ((score + 1) / 2) * 100))
+  const safeScore = Number.isFinite(score) ? score : 0
+  const pct = Math.max(0, Math.min(100, ((safeScore + 1) / 2) * 100))
   const radius = size / 2 - 6
   const circumference = 2 * Math.PI * radius
   const offset = circumference * (1 - pct / 100)
-  const color = sentimentColor(score)
+  const color = sentimentColor(safeScore)
   return (
     <div style={{ position: 'relative', width: size, height: size }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
@@ -59,9 +60,11 @@ function SentimentGauge({ score, size = 68 }) {
 }
 
 function BubbleChart({ data, width, height, onSelect, highlightNames = [] }) {
-  const root = hierarchy({ children: data }).sum(d => d.value)
+  const validData = (data || []).filter(d => Number.isFinite(d.value) && d.value > 0)
+  if (validData.length === 0) return null
+  const root = hierarchy({ children: validData }).sum(d => d.value)
   const packLayout = pack().size([width, height]).padding(5)
-  const leaves = packLayout(root).leaves()
+  const leaves = packLayout(root).leaves().filter(leaf => Number.isFinite(leaf.r))
   return (
     <svg width="100%" viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }}>
       {leaves.map((leaf, i) => {
