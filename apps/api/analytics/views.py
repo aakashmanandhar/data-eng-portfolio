@@ -1088,3 +1088,118 @@ class LineageView(APIView):
             "nodes": nodes_out,
             "edges": edges_out,
         })
+
+
+from .models import Experience, Education, Certification, Language, Reference, AreaOfExpertise, Profile, KeyAchievement
+from .serializers import (
+    ExperienceSerializer, EducationSerializer, CertificationSerializer,
+    LanguageSerializer, ReferenceSerializer, AreaOfExpertiseSerializer, ProfileSerializer,
+    KeyAchievementSerializer,
+)
+
+
+class CareerTimelineView(APIView):
+    def get(self, request):
+        return Response({
+            "experience": ExperienceSerializer(Experience.objects.all(), many=True, context={"request": request}).data,
+            "education": EducationSerializer(Education.objects.all(), many=True).data,
+            "certifications": CertificationSerializer(Certification.objects.all(), many=True).data,
+            "languages": LanguageSerializer(Language.objects.all(), many=True).data,
+            "references": ReferenceSerializer(Reference.objects.all(), many=True).data,
+            "expertise": AreaOfExpertiseSerializer(AreaOfExpertise.objects.all(), many=True).data,
+            "profile": ProfileSerializer(Profile.load(), context={"request": request}).data,
+            "achievements": KeyAchievementSerializer(KeyAchievement.objects.all(), many=True).data,
+        })
+
+
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+from weasyprint import HTML
+
+
+CV_STATIC_CONTACT = {
+    "name": "Aakash Manandhar",
+    "profession": "Data Engineer",
+    "location": "Uppsala, Sweden",
+    "phone": "+46-0766351436",
+    "email": "aakashmanandhar@gmail.com",
+    "site": "aakashmanandhar.tech",
+    "linkedin": "linkedin.com/in/aakashmanandhar",
+}
+
+
+def _fmt_date(d):
+    return d.strftime("%m/%Y") if d else "Present"
+
+
+class CVPdfView(APIView):
+    def get(self, request):
+        experience = []
+        for e in Experience.objects.all():
+            meta_bits = [e.get_employment_type_display()]
+            if e.is_remote:
+                meta_bits.append("Remote")
+            elif e.location:
+                meta_bits.append(e.location)
+            experience.append({
+                "date_range": f"{_fmt_date(e.start_date)} - {_fmt_date(e.end_date)}",
+                "role": e.role,
+                "company": e.company,
+                "meta": " · ".join(meta_bits),
+                "highlights": [h.text for h in e.highlights.all()],
+                "skills": e.skills,
+            })
+
+        education = []
+        for ed in Education.objects.all():
+            education.append({
+                "date_range": f"{_fmt_date(ed.start_date)} - {_fmt_date(ed.end_date)}",
+                "degree": ed.degree,
+                "institution": ed.institution,
+                "location": ed.location,
+                "note": ed.thesis_or_note,
+            })
+
+        certifications = []
+        for c in Certification.objects.all():
+            status_note = c.target_date_note if c.status == "in_progress" else None
+            certifications.append({
+                "name": c.name,
+                "issuer": c.issuer,
+                "status_note": status_note,
+            })
+
+        languages = [
+            {"name": l.name, "level": l.get_proficiency_display()}
+            for l in Language.objects.all()
+        ]
+
+        expertise = [x.name for x in AreaOfExpertise.objects.all()]
+
+        achievements = [
+            {"title": a.title, "description": a.description}
+            for a in KeyAchievement.objects.all()
+        ]
+
+        profile = Profile.load()
+        headshot_url = None
+        if profile.headshot:
+            headshot_url = request.build_absolute_uri(profile.headshot.url)
+
+        html_string = render_to_string("analytics/cv_pdf.html", {
+            "contact": CV_STATIC_CONTACT,
+            "summary": profile.summary,
+            "headshot_url": headshot_url,
+            "achievements": achievements,
+            "experience": experience,
+            "education": education,
+            "expertise": expertise,
+            "certifications": certifications,
+            "languages": languages,
+        })
+
+        pdf_bytes = HTML(string=html_string, base_url=request.build_absolute_uri("/")).write_pdf()
+
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="Aakash_Manandhar_CV.pdf"'
+        return response

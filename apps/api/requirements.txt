@@ -11,3 +11,5 @@ google-genai>=1.0.0
 scikit-learn
 whitenoise
 huggingface_hub
+Pillow
+weasyprint

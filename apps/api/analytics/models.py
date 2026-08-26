@@ -88,3 +88,175 @@ class DataQualityAction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         ordering = ['-created_at']
+
+class Experience(models.Model):
+    EMPLOYMENT_TYPES = [
+        ("full_time", "Full-time"), ("part_time", "Part-time"),
+        ("freelance", "Freelance"), ("contract", "Contract"),
+    ]
+    company = models.CharField(max_length=200)
+    company_logo = models.ImageField(upload_to="logos/", blank=True, null=True)
+    role = models.CharField(max_length=200)
+    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPES, default="full_time")
+    location = models.CharField(max_length=200, blank=True)
+    is_remote = models.BooleanField(default=False)
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    order = models.PositiveIntegerField(default=0)
+    skills = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        ordering = ["order", "-start_date"]
+
+    def __str__(self):
+        return f"{self.role} @ {self.company}"
+
+
+class ExperienceHighlight(models.Model):
+    experience = models.ForeignKey(Experience, related_name="highlights", on_delete=models.CASCADE)
+    text = models.TextField()
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return self.text[:50]
+
+
+class Education(models.Model):
+    institution = models.CharField(max_length=200)
+    logo = models.ImageField(upload_to="logos/", blank=True, null=True)
+    degree = models.CharField(max_length=300)
+    field_of_study = models.CharField(max_length=200, blank=True)
+    location = models.CharField(max_length=200, blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    thesis_or_note = models.CharField(max_length=300, blank=True)
+    skills = models.JSONField(default=list, blank=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "-start_date"]
+
+    def __str__(self):
+        return f"{self.degree} - {self.institution}"
+
+
+class Certification(models.Model):
+    STATUS_CHOICES = [
+        ("completed", "Completed"),
+        ("in_progress", "In Progress"),
+    ]
+    name = models.CharField(max_length=300)
+    issuer = models.CharField(max_length=200)
+    issuer_logo = models.ImageField(upload_to="logos/", blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="completed")
+    issue_date = models.DateField(null=True, blank=True)
+    target_date_note = models.CharField(max_length=200, blank=True, help_text="e.g. 'Exam in February 2026'")
+    credential_url = models.URLField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "-issue_date"]
+
+    def __str__(self):
+        return self.name
+
+class Language(models.Model):
+    PROFICIENCY_CHOICES = [
+        ("native", "Native"),
+        ("full_professional", "Full Professional Proficiency"),
+        ("professional", "Professional Working Proficiency"),
+        ("intermediate", "Intermediate"),
+        ("basic", "Basic"),
+    ]
+    name = models.CharField(max_length=100)
+    proficiency = models.CharField(max_length=30, choices=PROFICIENCY_CHOICES)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return f"{self.name} ({self.get_proficiency_display()})"
+
+
+class Reference(models.Model):
+    name = models.CharField(max_length=200)
+    title = models.CharField(max_length=200, blank=True)
+    company = models.CharField(max_length=200, blank=True)
+    email = models.EmailField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return self.name
+
+
+class AreaOfExpertise(models.Model):
+    MAX_ITEMS = 8
+
+    name = models.CharField(max_length=200)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+        verbose_name_plural = "Areas of expertise"
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        existing_count = AreaOfExpertise.objects.exclude(pk=self.pk).count()
+        if existing_count >= self.MAX_ITEMS:
+            raise ValidationError(
+                f"Maximum of {self.MAX_ITEMS} areas of expertise allowed. "
+                f"Delete an existing one before adding a new one."
+            )
+
+
+class Profile(models.Model):
+    summary = models.TextField(help_text="Professional summary / about-me paragraph")
+    headshot = models.ImageField(upload_to="headshot/", blank=True, null=True)
+
+    class Meta:
+        verbose_name_plural = "Profile"
+
+    def __str__(self):
+        return "Profile"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
+class KeyAchievement(models.Model):
+    MAX_ITEMS = 2
+
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return self.title
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        existing_count = KeyAchievement.objects.exclude(pk=self.pk).count()
+        if existing_count >= self.MAX_ITEMS:
+            raise ValidationError(
+                f"Maximum of {self.MAX_ITEMS} key achievements allowed. "
+                f"Delete an existing one before adding a new one."
+            )

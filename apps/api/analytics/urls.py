@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    CareerTimelineView, CVPdfView,
     CareerArchetypeView, CareerFitView, CountryGrowthForecastView, GrowthForecastStatusView, JobMarketView, MomentumStatusView, NewsKPISummaryView, NewsKeywordBreakoutView, NewsKeywordGrowthView, NewsKeywordListView, NewsKeywordMentionsView, NewsSentimentTrendView, OssLandscapeSummaryView, SalaryForecastMultiyearView, SalaryKPISummaryView, SalaryPredictorMetaView, SalaryPredictorView, SalaryToolListView, SentimentVsAdoptionGapView, SkillSalaryGrowthView, ToolMomentumView, ToolUsageView, ToolPreferenceGlobalView, LastRefreshedView, PipelineRunListView,
     GitHubRepoRankingView, GitHubCohortTrendView, GitHubPlatformComparisonView, GitHubOrgActivityView,
     AgentDiagnosisCreateView, AgentDiagnosisListView, DataQualityActionCreateView, DataQualityActionListView,
@@ -10,6 +11,8 @@ from .views import (
 )
 
 urlpatterns = [
+    path('career-timeline/', CareerTimelineView.as_view(), name='career-timeline'),
+    path('cv-pdf/', CVPdfView.as_view(), name='cv-pdf'),
     path('career-fit/', CareerFitView.as_view(), name='career-fit'),
     path('job-market/', JobMarketView.as_view(), name='job-market'),
     path('tool-usage/', ToolUsageView.as_view(), name='tool-usage'),

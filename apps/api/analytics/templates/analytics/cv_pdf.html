@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.45;
+    color: #1a1a1a;
+    margin: 0;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #1a1a1a;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+  }
+  .header-name {
+    font-size: 22pt;
+    font-weight: 700;
+    margin: 0;
+  }
+  .header-profession {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #2563EB;
+    margin: 2px 0 8px;
+  }
+  .contact-line {
+    font-size: 8.5pt;
+    color: #444;
+  }
+  .contact-line span { margin-right: 12px; }
+  .headshot {
+    width: 26mm;
+    height: 26mm;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+  .section-title {
+    font-size: 10.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #999;
+    padding-bottom: 3px;
+    margin: 14px 0 8px;
+  }
+  .summary {
+    font-size: 9pt;
+    color: #333;
+  }
+  .entry {
+    display: flex;
+    margin-bottom: 8px;
+    page-break-inside: avoid;
+  }
+  .entry-date {
+    width: 24mm;
+    flex-shrink: 0;
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: #444;
+  }
+  .entry-body { flex: 1; }
+  .entry-title {
+    font-weight: 700;
+    font-size: 9.5pt;
+  }
+  .entry-subtitle {
+    font-size: 8.5pt;
+    color: #555;
+    margin-bottom: 3px;
+  }
+  .entry ul {
+    margin: 3px 0 0;
+    padding-left: 14px;
+  }
+  .entry li {
+    font-size: 8.5pt;
+    margin-bottom: 1.5px;
+  }
+  .skills-line {
+    font-size: 8pt;
+    color: #666;
+    margin-top: 3px;
+  }
+  .two-col {
+    display: flex;
+    gap: 20px;
+  }
+  .two-col > div { flex: 1; }
+  .expertise-list, .cert-list, .lang-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 8.5pt;
+  }
+  .expertise-list li, .cert-list li, .lang-list li {
+    margin-bottom: 3px;
+  }
+  .achievement {
+    margin-bottom: 6px;
+  }
+  .achievement-title {
+    font-weight: 700;
+    font-size: 9pt;
+  }
+  .achievement-desc {
+    font-size: 8.5pt;
+    color: #444;
+  }
+  .references-note {
+    font-size: 8.5pt;
+    color: #555;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <p class="header-name">{{ contact.name }}</p>
+      <p class="header-profession">{{ contact.profession }}</p>
+      <div class="contact-line">
+        <span>{{ contact.email }}</span>
+        <span>{{ contact.phone }}</span>
+        <span>{{ contact.location }}</span>
+        <span>{{ contact.site }}</span>
+        <span>{{ contact.linkedin }}</span>
+      </div>
+    </div>
+    {% if headshot_url %}
+    <img class="headshot" src="{{ headshot_url }}">
+    {% endif %}
+  </div>
+
+  {% if summary %}
+  <div class="summary">{{ summary }}</div>
+  {% endif %}
+
+  {% if achievements %}
+  <div class="section-title">Key Achievements</div>
+  {% for a in achievements %}
+  <div class="achievement">
+    <div class="achievement-title">{{ a.title }}</div>
+    <div class="achievement-desc">{{ a.description }}</div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="section-title">Professional Experience</div>
+  {% for e in experience %}
+  <div class="entry">
+    <div class="entry-date">{{ e.date_range }}</div>
+    <div class="entry-body">
+      <div class="entry-title">{{ e.role }}</div>
+      <div class="entry-subtitle">{{ e.company }}{% if e.meta %} &middot; {{ e.meta }}{% endif %}</div>
+      {% if e.highlights %}
+      <ul>
+        {% for h in e.highlights %}<li>{{ h }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+      {% if e.skills %}
+      <div class="skills-line">{{ e.skills|join:" &middot; " }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="section-title">Education</div>
+  {% for ed in education %}
+  <div class="entry">
+    <div class="entry-date">{{ ed.date_range }}</div>
+    <div class="entry-body">
+      <div class="entry-title">{{ ed.degree }}</div>
+      <div class="entry-subtitle">{{ ed.institution }}{% if ed.location %} &middot; {{ ed.location }}{% endif %}</div>
+      {% if ed.note %}<div class="skills-line">{{ ed.note }}</div>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="two-col">
+    <div>
+      {% if expertise %}
+      <div class="section-title">Areas of Expertise</div>
+      <ul class="expertise-list">
+        {% for x in expertise %}<li>&bull; {{ x }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    <div>
+      {% if certifications %}
+      <div class="section-title">Certifications</div>
+      <ul class="cert-list">
+        {% for c in certifications %}
+        <li>{{ c.name }} ({{ c.issuer }}{% if c.status_note %}, {{ c.status_note }}{% endif %})</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      {% if languages %}
+      <div class="section-title">Languages</div>
+      <ul class="lang-list">
+        {% for l in languages %}<li>{{ l.name }} &mdash; {{ l.level }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    <div>
+      <div class="section-title">References</div>
+      <div class="references-note">Available upon request.</div>
+    </div>
+  </div>
+
+</body>
+</html>
