@@ -39,7 +39,6 @@ function HomePage() {
   const [lastRefreshed, setLastRefreshed] = useState(null)
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' })
   const [contactStatus, setContactStatus] = useState(null)
-  const [resumeUrl, setResumeUrl] = useState(null)
   const [aboutText, setAboutText] = useState('')
   const [profilePhoto, setProfilePhoto] = useState(null)
   const [headlineMain, setHeadlineMain] = useState('Architecting the data infrastructure behind reliable pipelines.')
@@ -151,7 +150,6 @@ function HomePage() {
       .then((data) => {
         setStatus(data.status)
         setNowBuilding(data.now_building)
-        setResumeUrl(data.resume_pdf)
         setAboutText(data.about_text)
         setProfilePhoto(data.profile_photo)
         if (data.headline_main) setHeadlineMain(data.headline_main)
@@ -187,6 +185,7 @@ function HomePage() {
           <a href="#projects">Projects</a>
           <a href="#explorer" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })) }}>Explorer</a>
           <Link to="/architecture">Architecture</Link>
+          <Link to="/career" className="nav-link-highlight">Career</Link>
           <a href="#adrs">ADRs</a>
           <a href="#about">About</a>
           <a href="#contact">Contact</a>
@@ -385,11 +384,6 @@ function HomePage() {
         <div className="eyebrow">About</div>
         <div className="about-row">
           <p>{aboutText}</p>
-          {resumeUrl ? (
-            <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="resume-btn">⬇ Download Resume</a>
-          ) : (
-            <button className="resume-btn" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>⬇ Resume Coming Soon</button>
-          )}
         </div>
       </section>
 
@@ -441,6 +435,8 @@ function HomePage() {
         <a href="https://github.com/aakashmanandhar" target="_blank" rel="noopener noreferrer">github.com/aakashmanandhar</a>
         &nbsp;·&nbsp;
         <a href="https://www.linkedin.com/in/aakashmanandhar/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        &nbsp;·&nbsp;
+        <Link to="/career">Career</Link>
         &nbsp;·&nbsp;
         <a href="#contact">Contact</a>
       </footer>

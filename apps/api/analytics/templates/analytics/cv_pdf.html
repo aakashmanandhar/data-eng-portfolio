@@ -11,17 +11,19 @@
   body {
     font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif;
     font-size: 9.5pt;
-    line-height: 1.45;
+    line-height: 1.5;
     color: #1a1a1a;
     margin: 0;
   }
+
+  /* Header */
   .header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    border-bottom: 2px solid #1a1a1a;
-    padding-bottom: 10px;
-    margin-bottom: 14px;
+    border-bottom: 2pt solid #1a1a1a;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
   }
   .header-name {
     font-size: 22pt;
@@ -31,74 +33,125 @@
   .header-profession {
     font-size: 11pt;
     font-weight: 600;
-    color: #2563EB;
-    margin: 2px 0 8px;
+    color: #1a1a1a;
+    margin: 3px 0 10px;
   }
-  .contact-line {
+  .contact-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px 20px;
+  }
+  .contact-item {
+    display: flex;
+    align-items: center;
     font-size: 8.5pt;
-    color: #444;
+    color: #333;
+    white-space: nowrap;
   }
-  .contact-line span { margin-right: 12px; }
+  .contact-icon {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+    width: 10pt;
+    height: 10pt;
+  }
+  .contact-item svg {
+    display: inline-block;
+    vertical-align: -1.5pt;
+  }
   .headshot {
     width: 26mm;
     height: 26mm;
     object-fit: cover;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+    border-radius: 4pt;
+    border: 1pt solid #ccc;
   }
+
+  /* Sections */
   .section-title {
     font-size: 10.5pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid #999;
-    padding-bottom: 3px;
+    letter-spacing: 0.5pt;
+    color: #1a1a1a;
+    border-bottom: 1pt solid #999;
+    padding-bottom: 4px;
     margin: 14px 0 8px;
   }
   .summary {
     font-size: 9pt;
     color: #333;
+    margin-bottom: 4px;
   }
+
+  /* Achievements */
+  .achievement {
+    margin-bottom: 6pt;
+  }
+  .achievement-title {
+    font-weight: 700;
+    font-size: 9pt;
+    color: #1a1a1a;
+  }
+  .achievement-desc {
+    font-size: 8.5pt;
+    color: #444;
+    margin-top: 2pt;
+  }
+
+  /* Experience / Education entries */
   .entry {
     display: flex;
-    margin-bottom: 8px;
+    margin-bottom: 9px;
     page-break-inside: avoid;
   }
   .entry-date {
-    width: 24mm;
+    width: 26mm;
     flex-shrink: 0;
     font-size: 8.5pt;
-    font-weight: 600;
-    color: #444;
+    font-weight: 700;
+    color: #1a1a1a;
   }
   .entry-body { flex: 1; }
   .entry-title {
     font-weight: 700;
     font-size: 9.5pt;
+    color: #1a1a1a;
   }
   .entry-subtitle {
     font-size: 8.5pt;
     color: #555;
-    margin-bottom: 3px;
+    margin-bottom: 5px;
   }
   .entry ul {
-    margin: 3px 0 0;
-    padding-left: 14px;
+    margin: 5px 0 0;
+    padding-left: 15px;
   }
   .entry li {
     font-size: 8.5pt;
-    margin-bottom: 1.5px;
+    margin-bottom: 3px;
+  }
+  .skills-badges {
+    margin-top: 7px;
+  }
+  .skill-tag {
+    display: inline-block;
+    font-size: 7.5pt;
+    font-weight: 600;
+    color: #444;
+    background: #F0F0F0;
+    border: 0.75pt solid #D5D5D5;
+    border-radius: 10pt;
+    padding: 2pt 7pt;
+    margin: 0 4pt 4pt 0;
   }
   .skills-line {
     font-size: 8pt;
     color: #666;
-    margin-top: 3px;
+    margin-top: 4px;
   }
-  .two-col {
-    display: flex;
-    gap: 20px;
-  }
-  .two-col > div { flex: 1; }
+
+  /* Expertise / Certifications / Languages / References */
   .expertise-list, .cert-list, .lang-list {
     list-style: none;
     padding: 0;
@@ -106,18 +159,16 @@
     font-size: 8.5pt;
   }
   .expertise-list li, .cert-list li, .lang-list li {
-    margin-bottom: 3px;
+    margin-bottom: 4px;
   }
-  .achievement {
-    margin-bottom: 6px;
+
+  .lang-list li {
+    display: flex;
+    justify-content: space-between;
+    max-width: 260pt;
   }
-  .achievement-title {
-    font-weight: 700;
-    font-size: 9pt;
-  }
-  .achievement-desc {
-    font-size: 8.5pt;
-    color: #444;
+  .lang-level {
+    color: #555;
   }
   .references-note {
     font-size: 8.5pt;
@@ -132,12 +183,12 @@
     <div>
       <p class="header-name">{{ contact.name }}</p>
       <p class="header-profession">{{ contact.profession }}</p>
-      <div class="contact-line">
-        <span>{{ contact.email }}</span>
-        <span>{{ contact.phone }}</span>
-        <span>{{ contact.location }}</span>
-        <span>{{ contact.site }}</span>
-        <span>{{ contact.linkedin }}</span>
+      <div class="contact-grid">
+        <span class="contact-item"><svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="#333333" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg>{{ contact.email }}</span>
+        <span class="contact-item"><svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="#333333" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>{{ contact.phone }}</span>
+        <span class="contact-item"><svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="#333333" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>{{ contact.location }}</span>
+        <span class="contact-item"><svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="#333333" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>{{ contact.site }}</span>
+        <span class="contact-item"><svg class="contact-icon" viewBox="0 0 24 24" fill="#333333"><path d="M4.98 3.5C4.98 4.88 3.9 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8h4v14h-4V8zm7 0h3.8v1.9h.05c.53-.95 1.83-1.95 3.77-1.95 4.03 0 4.78 2.55 4.78 5.85V22h-4v-6.35c0-1.5-.03-3.43-2.1-3.43-2.1 0-2.42 1.6-2.42 3.32V22h-4V8z"/></svg>{{ contact.linkedin }}</span>
       </div>
     </div>
     {% if headshot_url %}
@@ -172,7 +223,7 @@
       </ul>
       {% endif %}
       {% if e.skills %}
-      <div class="skills-line">{{ e.skills|join:" &middot; " }}</div>
+      <div class="skills-badges">{% for s in e.skills %}<span class="skill-tag">{{ s }}</span>{% endfor %}</div>
       {% endif %}
     </div>
   </div>
@@ -190,41 +241,31 @@
   </div>
   {% endfor %}
 
-  <div class="two-col">
-    <div>
-      {% if expertise %}
-      <div class="section-title">Areas of Expertise</div>
-      <ul class="expertise-list">
-        {% for x in expertise %}<li>&bull; {{ x }}</li>{% endfor %}
-      </ul>
-      {% endif %}
-    </div>
-    <div>
-      {% if certifications %}
-      <div class="section-title">Certifications</div>
-      <ul class="cert-list">
-        {% for c in certifications %}
-        <li>{{ c.name }} ({{ c.issuer }}{% if c.status_note %}, {{ c.status_note }}{% endif %})</li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-    </div>
-  </div>
+  {% if expertise %}
+  <div class="section-title">Areas of Expertise</div>
+  <ul class="expertise-list">
+    {% for x in expertise %}<li>&#8226;&nbsp;{{ x }}</li>{% endfor %}
+  </ul>
+  {% endif %}
 
-  <div class="two-col">
-    <div>
-      {% if languages %}
-      <div class="section-title">Languages</div>
-      <ul class="lang-list">
-        {% for l in languages %}<li>{{ l.name }} &mdash; {{ l.level }}</li>{% endfor %}
-      </ul>
-      {% endif %}
-    </div>
-    <div>
-      <div class="section-title">References</div>
-      <div class="references-note">Available upon request.</div>
-    </div>
-  </div>
+  {% if certifications %}
+  <div class="section-title">Certifications</div>
+  <ul class="cert-list">
+    {% for c in certifications %}
+    <li>{{ c.name }} &mdash; {{ c.issuer }}{% if c.status_note %}, {{ c.status_note }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if languages %}
+  <div class="section-title">Languages</div>
+  <ul class="lang-list">
+    {% for l in languages %}<li><span>{{ l.name }}</span><span class="lang-level">{{ l.level }}</span></li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  <div class="section-title">References</div>
+  <div class="references-note">Available upon request.</div>
 
 </body>
 </html>

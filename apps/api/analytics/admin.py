@@ -13,7 +13,8 @@ class HighlightInline(admin.TabularInline):
 
 @admin.register(Experience)
 class ExperienceAdmin(admin.ModelAdmin):
-    list_display = ("role", "company", "start_date", "end_date", "order")
+    list_display = ("role", "company", "start_date", "end_date", "is_visible", "include_in_pdf", "order")
+    list_editable = ("is_visible", "include_in_pdf")
     inlines = [HighlightInline]
     ordering = ("order", "-start_date")
 

@@ -104,6 +104,8 @@ class Experience(models.Model):
     end_date = models.DateField(null=True, blank=True)
     order = models.PositiveIntegerField(default=0)
     skills = models.JSONField(default=list, blank=True)
+    include_in_pdf = models.BooleanField(default=True, help_text="Show this role in the downloadable CV PDF")
+    is_visible = models.BooleanField(default=True, help_text="Show this role on the website")
 
     class Meta:
         ordering = ["order", "-start_date"]

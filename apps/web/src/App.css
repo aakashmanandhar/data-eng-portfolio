@@ -4671,3 +4671,54 @@ a.cv-contact-chip:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* --- CV Download button --- */
+.cv-page-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.cv-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent1);
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cv-download-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--accent1) 50%, black);
+}
+
+@media (max-width: 500px) {
+  .cv-page-top-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+/* --- Career nav highlight --- */
+.nav-link-highlight {
+  background: linear-gradient(100deg, var(--accent1), var(--accent2));
+  color: #fff !important;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nav-link-highlight:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--accent1) 50%, black);
+}

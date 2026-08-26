@@ -1101,7 +1101,7 @@ from .serializers import (
 class CareerTimelineView(APIView):
     def get(self, request):
         return Response({
-            "experience": ExperienceSerializer(Experience.objects.all(), many=True, context={"request": request}).data,
+            "experience": ExperienceSerializer(Experience.objects.filter(is_visible=True), many=True, context={"request": request}).data,
             "education": EducationSerializer(Education.objects.all(), many=True).data,
             "certifications": CertificationSerializer(Certification.objects.all(), many=True).data,
             "languages": LanguageSerializer(Language.objects.all(), many=True).data,
@@ -1135,7 +1135,7 @@ def _fmt_date(d):
 class CVPdfView(APIView):
     def get(self, request):
         experience = []
-        for e in Experience.objects.all():
+        for e in Experience.objects.filter(include_in_pdf=True):
             meta_bits = [e.get_employment_type_display()]
             if e.is_remote:
                 meta_bits.append("Remote")
@@ -1201,5 +1201,5 @@ class CVPdfView(APIView):
         pdf_bytes = HTML(string=html_string, base_url=request.build_absolute_uri("/")).write_pdf()
 
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = 'attachment; filename="Aakash_Manandhar_CV.pdf"'
+        response["Content-Disposition"] = 'attachment; filename="01_Aakash_Manandhar_CV.pdf"'
         return response
