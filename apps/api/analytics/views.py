@@ -1201,5 +1201,5 @@ class CVPdfView(APIView):
         pdf_bytes = HTML(string=html_string, base_url=request.build_absolute_uri("/")).write_pdf()
 
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = 'attachment; filename="01_Aakash_Manandhar_CV.pdf"'
+        response["Content-Disposition"] = 'attachment; filename="01_Aakash_Data_Engineer.pdf"'
         return response
