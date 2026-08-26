@@ -7,7 +7,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState([
-    { sender: 'bot', text: 'Hi! Ask me about data engineering salaries/tools by country, or about my projects.' }
+    { sender: 'bot', text: "Hi! Ask me about my career, credentials and expertise, or how this site's live data pipeline works." }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -36,6 +36,8 @@ function ChatWidget() {
   }, [])
 
   const examples = [
+    "What is Aakash's work experience?",
+    "What tools/technologies is he an expert in?",
     'What data pipelines power this site?',
     'Which skill\'s salary is growing the fastest?',
     'Is AI tooling on GitHub growing faster than traditional tools?',
@@ -74,7 +76,7 @@ function ChatWidget() {
       {showHook && !isOpen && (
         <div className="chat-hook" onClick={() => { setIsOpen(true); setShowHook(false); }}>
           <button className="chat-hook-close" onClick={(e) => { e.stopPropagation(); setShowHook(false); }}>✕</button>
-          👋 Curious how I built a live AI adoption model from GitHub data? Ask me anything.
+          👋 Ask me about my career, tools I work with, or how this site's live data pipeline works.
         </div>
       )}
       <button className="chat-fab" onClick={() => { setIsOpen(!isOpen); setShowHook(false); }}>💬</button>
@@ -83,8 +85,8 @@ function ChatWidget() {
         <div className="chat-panel">
           <div className="chat-header">
             <div>
-              <div className="chat-title">Ask about my work & data</div>
-              <div className="chat-subtitle">Routes to live data or project docs</div>
+              <div className="chat-title">Ask about my career & work</div>
+              <div className="chat-subtitle">My background, credentials, tools, or live pipeline data</div>
             </div>
             <button className="chat-close" onClick={() => setIsOpen(false)}>✕</button>
           </div>

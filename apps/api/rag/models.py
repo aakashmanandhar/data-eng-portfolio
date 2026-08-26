@@ -7,6 +7,7 @@ class Embedding(models.Model):
         ('case_study', 'Case Study'),
         ('blog_post', 'Blog Post'),
         ('adr', 'ADR'),
+        ('career', 'Career/CV Data'),
     ]
 
     source_type = models.CharField(max_length=20, choices=SOURCE_CHOICES)

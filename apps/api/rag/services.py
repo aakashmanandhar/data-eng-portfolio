@@ -13,7 +13,9 @@ def classify_question(question):
     """
     prompt = f"""Classify this question into exactly one category: "analytics" or "project".
 
-"analytics" = questions about data engineering salaries, job postings, tool popularity, statistics by country, GitHub repo/star/contributor data, cohort comparisons (AI vs traditional tooling), the AI adoption forecast model (growth rates, predictions, confidence scores, days of history, crossover timing), latest AI/data-engineering research papers and tooling signals (arXiv/GitHub/Hacker News), real PyPI tool download/adoption numbers, or the self-healing pipeline's own agent activity (failure diagnoses, data quality checks it ran) — e.g. "what's the average salary in Germany?", "what are the top tools in the US?", "how many stars does LangChain have?", "how confident is the forecast model?", "how many days of history is the forecast based on?", "what's the latest research on AI agents?", "which tool has the most downloads?", "has the pipeline fixed itself lately?"
+"analytics" = questions about the data warehouse's own aggregate/industry data: general data engineering SALARY STATISTICS ACROSS THE INDUSTRY (not Aakash's personal salary), job postings, tool popularity, statistics by country, GitHub repo/star/contributor data, cohort comparisons (AI vs traditional tooling), the AI adoption forecast model, latest AI/data-engineering research papers, real PyPI tool download/adoption numbers, or the self-healing pipeline's own agent activity — e.g. "what's the average salary in Germany?", "what are the top tools in the US?", "how many stars does LangChain have?", "which tool has the most downloads?"
+
+CRITICAL DISAMBIGUATION: any question about AAKASH MANANDHAR PERSONALLY — his own salary, his own location/nationality, his own specific tool experience ("does he know X", "has he used X"), his own years of experience, his employment history/gaps, his job search status, his contact info, or any other personal/biographical fact about him — is ALWAYS "project", never "analytics", even if the topic (salary, tools, years of experience) sounds similar to an analytics topic. The word "he", "his", "Aakash", or "you" (when asking the assistant about itself/its creator) referring to a specific personal fact about him is a strong signal for "project". Analytics is ONLY for industry-wide aggregate statistics, never for a question about one specific named individual (Aakash).
 
 "project" = questions about how this portfolio site itself was built — its architecture, tech stack, or engineering decisions (e.g. "what stack did you use?", "how does the RAG assistant work?", "why did you choose Airflow over Jenkins?")
 Question: {question}
@@ -308,7 +310,7 @@ def embed_query(question):
     return response.embeddings[0].values
 
 
-def answer_project_question(question, top_k=4):
+def answer_project_question(question, top_k=6):
     query_embedding = embed_query(question)
 
     conn = get_readonly_connection()
