@@ -1187,7 +1187,16 @@ class CVPdfView(APIView):
         if profile.headshot:
             headshot_url = request.build_absolute_uri(profile.headshot.url)
 
-        html_string = render_to_string("analytics/cv_pdf.html", {
+        import base64, os
+        from datetime import date
+        signature_path = os.path.join(os.path.dirname(__file__), "assets", "signature.png")
+        signature_b64 = None
+        if os.path.exists(signature_path):
+            with open(signature_path, "rb") as f:
+                signature_b64 = base64.b64encode(f.read()).decode("ascii")
+        today_str = date.today().strftime("%d.%m.%Y")
+
+        context = {
             "contact": CV_STATIC_CONTACT,
             "summary": profile.summary,
             "headshot_url": headshot_url,
@@ -1197,9 +1206,24 @@ class CVPdfView(APIView):
             "expertise": expertise,
             "certifications": certifications,
             "languages": languages,
-        })
+            "signature_b64": signature_b64,
+            "signing_date": today_str,
+            "signing_location": CV_STATIC_CONTACT["location"].split(",")[0],
+        }
 
-        pdf_bytes = HTML(string=html_string, base_url=request.build_absolute_uri("/")).write_pdf()
+        # Auto-fit: try full size first, shrink incrementally if content exceeds 2 pages.
+        # Always produces output - falls back to the smallest scale even if that still
+        # doesn't fit, rather than silently failing.
+        scale_options = [1.0, 0.97, 0.94, 0.91, 0.88, 0.85]
+        pdf_bytes = None
+        for i, scale in enumerate(scale_options):
+            context["scale"] = scale
+            html_string = render_to_string("analytics/cv_pdf.html", context)
+            document = HTML(string=html_string, base_url=request.build_absolute_uri("/")).render()
+            is_last_attempt = i == len(scale_options) - 1
+            if len(document.pages) <= 2 or is_last_attempt:
+                pdf_bytes = document.write_pdf()
+                break
 
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
         response["Content-Disposition"] = 'attachment; filename="01_Aakash_Data_Engineer.pdf"'

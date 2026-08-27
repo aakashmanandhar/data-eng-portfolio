@@ -4865,3 +4865,25 @@ a.cv-contact-chip:hover {
     animation: none;
   }
 }
+
+/* --- Mobile fixes: About header centering + tabs width --- */
+@media (max-width: 640px) {
+  .cv-about-header-text {
+    align-items: center;
+  }
+
+  .cv-tabs {
+    display: flex;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .cv-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 6px;
+    font-size: 12px;
+    gap: 4px;
+    white-space: nowrap;
+  }
+}

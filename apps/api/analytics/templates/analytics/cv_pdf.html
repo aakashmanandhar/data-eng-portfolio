@@ -1,21 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html style="--scale: {{ scale }};">
 <head>
 <meta charset="utf-8">
 <style>
   @page {
     size: A4;
-    margin: 14mm 15mm;
+    margin: 8mm 15mm 8mm 15mm;
   }
   * { box-sizing: border-box; }
   body {
     font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif;
-    font-size: 9.5pt;
+    font-size: calc(9.5pt * var(--scale));
     line-height: 1.42;
     color: #1a1a1a;
     margin: 0;
   }
-
   /* Header */
   .header {
     display: flex;
@@ -23,22 +22,22 @@
     align-items: stretch;
     border-bottom: 2pt solid #1a1a1a;
     padding-bottom: 6px;
-    margin-bottom: 8px;
+    margin-bottom: calc(8px * var(--scale));
   }
   .header-text {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 5pt;
+    gap: calc(5pt * var(--scale));
     flex: 1;
   }
   .header-name {
-    font-size: 21pt;
+    font-size: calc(21pt * var(--scale));
     font-weight: 700;
     margin: 0;
   }
   .header-profession {
-    font-size: 10.5pt;
+    font-size: calc(10.5pt * var(--scale));
     font-weight: 600;
     color: #1a1a1a;
     margin: 0;
@@ -51,7 +50,7 @@
   .contact-item {
     display: flex;
     align-items: center;
-    font-size: 8.25pt;
+    font-size: calc(8.25pt * var(--scale));
     color: #333;
     white-space: nowrap;
   }
@@ -89,73 +88,71 @@
     letter-spacing: -0.5pt;
     flex-shrink: 0;
   }
-
   /* Sections */
   .section-title {
-    font-size: 10pt;
+    font-size: calc(10pt * var(--scale));
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.4pt;
     color: #1a1a1a;
     border-bottom: 1pt solid #999;
     padding-bottom: 2px;
-    margin: 18px 0 8px;
+    margin: calc(18px * var(--scale)) 0 calc(8px * var(--scale));
+    page-break-after: avoid;
   }
   .summary {
-    font-size: 9pt;
+    font-size: calc(9pt * var(--scale));
     color: #333;
     margin-bottom: 2px;
   }
-
   /* Achievements */
   .achievement {
-    margin-bottom: 4pt;
+    margin-bottom: calc(4pt * var(--scale));
   }
   .achievement-title {
     font-weight: 700;
-    font-size: 9pt;
+    font-size: calc(9pt * var(--scale));
     color: #1a1a1a;
   }
   .achievement-desc {
-    font-size: 8.25pt;
+    font-size: calc(8.25pt * var(--scale));
     color: #444;
     margin-top: 1pt;
   }
-
   /* Experience / Education entries */
   .entry {
     display: flex;
-    margin-bottom: 6px;
+    margin-bottom: calc(6px * var(--scale));
     page-break-inside: avoid;
   }
   .entry-date {
     width: 24mm;
     flex-shrink: 0;
-    font-size: 8.25pt;
+    font-size: calc(8.25pt * var(--scale));
     font-weight: 700;
     color: #1a1a1a;
   }
   .entry-body { flex: 1; }
   .entry-title {
     font-weight: 700;
-    font-size: 9.5pt;
+    font-size: calc(9.5pt * var(--scale));
     color: #1a1a1a;
   }
   .entry-subtitle {
-    font-size: 8.25pt;
+    font-size: calc(8.25pt * var(--scale));
     color: #555;
     margin-bottom: 3px;
   }
   .entry ul {
-    margin: 3px 0 0;
+    margin: calc(3px * var(--scale)) 0 0;
     padding-left: 13px;
   }
   .entry li {
-    font-size: 8.25pt;
-    margin-bottom: 2px;
+    font-size: calc(8.25pt * var(--scale));
+    margin-bottom: calc(2px * var(--scale));
   }
   .skills-line {
-    font-size: 7.75pt;
+    font-size: calc(7.75pt * var(--scale));
     color: #666;
     margin-top: 3px;
   }
@@ -163,16 +160,15 @@
     color: #444;
     font-weight: 600;
   }
-
   /* Expertise / Certifications / Languages / References */
   .expertise-list, .cert-list, .lang-list {
     list-style: none;
     padding: 0;
     margin: 0;
-    font-size: 8.25pt;
+    font-size: calc(8.25pt * var(--scale));
   }
   .expertise-list li, .cert-list li, .lang-list li {
-    margin-bottom: 3px;
+    margin-bottom: calc(3px * var(--scale));
   }
   .lang-list li {
     display: flex;
@@ -183,14 +179,40 @@
     color: #555;
   }
   .references-note {
-    font-size: 8pt;
+    font-size: calc(8pt * var(--scale));
     color: #555;
     font-style: italic;
+  }
+  .section-block {
+    page-break-inside: avoid;
+  }
+  .signing-block {
+    margin-top: calc(74mm * var(--scale) * var(--scale));
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    page-break-inside: avoid;
+  }
+  .signing-location-date {
+    font-size: calc(8.5pt * var(--scale));
+    color: #333;
+    margin-bottom: 6pt;
+  }
+  .signature-img {
+    height: calc(20mm * var(--scale));
+    margin-bottom: 2pt;
+  }
+  .signing-name {
+    font-size: calc(8.5pt * var(--scale));
+    color: #1a1a1a;
+    border-top: 1pt solid #999;
+    padding-top: 3pt;
+    display: inline-block;
+    width: auto;
   }
 </style>
 </head>
 <body>
-
   <div class="header">
     <div class="header-text">
       <p class="header-name">{{ contact.name }}</p>
@@ -209,11 +231,9 @@
     <div class="headshot-placeholder">{{ contact.initials }}</div>
     {% endif %}
   </div>
-
   {% if summary %}
   <div class="summary">{{ summary }}</div>
   {% endif %}
-
   {% if achievements %}
   <div class="section-title">Key Achievements</div>
   {% for a in achievements %}
@@ -223,7 +243,6 @@
   </div>
   {% endfor %}
   {% endif %}
-
   <div class="section-title">Professional Experience</div>
   {% for e in experience %}
   <div class="entry">
@@ -242,7 +261,7 @@
     </div>
   </div>
   {% endfor %}
-
+  <div class="section-block">
   <div class="section-title">Education</div>
   {% for ed in education %}
   <div class="entry">
@@ -254,32 +273,43 @@
     </div>
   </div>
   {% endfor %}
-
+  </div>
   {% if expertise %}
+  <div class="section-block">
   <div class="section-title">Areas of Expertise</div>
   <ul class="expertise-list">
     {% for x in expertise %}<li>&#8226;&nbsp;{{ x }}</li>{% endfor %}
   </ul>
+  </div>
   {% endif %}
-
   {% if certifications %}
+  <div class="section-block">
   <div class="section-title">Certifications</div>
   <ul class="cert-list">
     {% for c in certifications %}
     <li>{{ c.name }} &mdash; {{ c.issuer }}{% if c.status_note %}, {{ c.status_note }}{% endif %}</li>
     {% endfor %}
   </ul>
+  </div>
   {% endif %}
-
   {% if languages %}
+  <div class="section-block">
   <div class="section-title">Languages</div>
   <ul class="lang-list">
     {% for l in languages %}<li><span>{{ l.name }}</span><span class="lang-level">{{ l.level }}</span></li>{% endfor %}
   </ul>
+  </div>
   {% endif %}
-
+  <div class="section-block">
   <div class="section-title">References</div>
   <div class="references-note">Available upon request.</div>
-
+  </div>
+  <div class="signing-block">
+    <div class="signing-location-date">{{ signing_location }}, {{ signing_date }}</div>
+    {% if signature_b64 %}
+    <img class="signature-img" src="data:image/png;base64,{{ signature_b64 }}">
+    {% endif %}
+    <div class="signing-name">{{ contact.name }}</div>
+  </div>
 </body>
 </html>
