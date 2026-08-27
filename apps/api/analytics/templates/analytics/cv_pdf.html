@@ -5,13 +5,13 @@
 <style>
   @page {
     size: A4;
-    margin: 18mm 16mm;
+    margin: 14mm 15mm;
   }
   * { box-sizing: border-box; }
   body {
     font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif;
-    font-size: 9.5pt;
-    line-height: 1.5;
+    font-size: 9pt;
+    line-height: 1.4;
     color: #1a1a1a;
     margin: 0;
   }
@@ -20,135 +20,148 @@
   .header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: stretch;
     border-bottom: 2pt solid #1a1a1a;
-    padding-bottom: 8px;
-    margin-bottom: 10px;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+  }
+  .header-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5pt;
+    flex: 1;
   }
   .header-name {
-    font-size: 22pt;
+    font-size: 20pt;
     font-weight: 700;
     margin: 0;
   }
   .header-profession {
-    font-size: 11pt;
+    font-size: 10pt;
     font-weight: 600;
     color: #1a1a1a;
-    margin: 3px 0 10px;
+    margin: 0;
   }
   .contact-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px 20px;
+    gap: 4px 18px;
   }
   .contact-item {
     display: flex;
     align-items: center;
-    font-size: 8.5pt;
+    font-size: 8pt;
     color: #333;
     white-space: nowrap;
   }
   .contact-icon {
     display: inline-block;
     vertical-align: middle;
-    margin-right: 5px;
-    width: 10pt;
-    height: 10pt;
+    margin-right: 4px;
+    width: 9pt;
+    height: 9pt;
   }
   .contact-item svg {
     display: inline-block;
     vertical-align: -1.5pt;
   }
   .headshot {
-    width: 26mm;
-    height: 26mm;
+    width: 30mm;
+    height: 38mm;
     object-fit: cover;
-    border-radius: 4pt;
+    border-radius: 2pt;
     border: 1pt solid #ccc;
+    flex-shrink: 0;
+  }
+  .headshot-placeholder {
+    width: 30mm;
+    height: 38mm;
+    border-radius: 2pt;
+    background: #E8E8E8;
+    border: 1pt solid #B0B0B0;
+    color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16pt;
+    font-weight: 700;
+    letter-spacing: -0.5pt;
+    flex-shrink: 0;
   }
 
   /* Sections */
   .section-title {
-    font-size: 10.5pt;
+    font-size: 9.5pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5pt;
+    letter-spacing: 0.4pt;
     color: #1a1a1a;
     border-bottom: 1pt solid #999;
-    padding-bottom: 4px;
-    margin: 14px 0 8px;
+    padding-bottom: 2px;
+    margin: 18px 0 8px;
   }
   .summary {
-    font-size: 9pt;
+    font-size: 8.5pt;
     color: #333;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
 
   /* Achievements */
   .achievement {
-    margin-bottom: 6pt;
+    margin-bottom: 4pt;
   }
   .achievement-title {
     font-weight: 700;
-    font-size: 9pt;
+    font-size: 8.5pt;
     color: #1a1a1a;
   }
   .achievement-desc {
-    font-size: 8.5pt;
+    font-size: 8pt;
     color: #444;
-    margin-top: 2pt;
+    margin-top: 1pt;
   }
 
   /* Experience / Education entries */
   .entry {
     display: flex;
-    margin-bottom: 9px;
+    margin-bottom: 6px;
     page-break-inside: avoid;
   }
   .entry-date {
-    width: 26mm;
+    width: 24mm;
     flex-shrink: 0;
-    font-size: 8.5pt;
+    font-size: 8pt;
     font-weight: 700;
     color: #1a1a1a;
   }
   .entry-body { flex: 1; }
   .entry-title {
     font-weight: 700;
-    font-size: 9.5pt;
+    font-size: 9pt;
     color: #1a1a1a;
   }
   .entry-subtitle {
-    font-size: 8.5pt;
+    font-size: 8pt;
     color: #555;
-    margin-bottom: 5px;
-  }
-  .entry ul {
-    margin: 5px 0 0;
-    padding-left: 15px;
-  }
-  .entry li {
-    font-size: 8.5pt;
     margin-bottom: 3px;
   }
-  .skills-badges {
-    margin-top: 7px;
+  .entry ul {
+    margin: 3px 0 0;
+    padding-left: 13px;
   }
-  .skill-tag {
-    display: inline-block;
-    font-size: 7.5pt;
-    font-weight: 600;
-    color: #444;
-    background: #F0F0F0;
-    border: 0.75pt solid #D5D5D5;
-    border-radius: 10pt;
-    padding: 2pt 7pt;
-    margin: 0 4pt 4pt 0;
+  .entry li {
+    font-size: 8pt;
+    margin-bottom: 2px;
   }
   .skills-line {
-    font-size: 8pt;
+    font-size: 7.5pt;
     color: #666;
-    margin-top: 4px;
+    margin-top: 3px;
+  }
+  .skills-line strong {
+    color: #444;
+    font-weight: 600;
   }
 
   /* Expertise / Certifications / Languages / References */
@@ -156,12 +169,11 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    font-size: 8.5pt;
+    font-size: 8pt;
   }
   .expertise-list li, .cert-list li, .lang-list li {
-    margin-bottom: 4px;
+    margin-bottom: 2.5px;
   }
-
   .lang-list li {
     display: flex;
     justify-content: space-between;
@@ -171,7 +183,7 @@
     color: #555;
   }
   .references-note {
-    font-size: 8.5pt;
+    font-size: 8pt;
     color: #555;
     font-style: italic;
   }
@@ -180,7 +192,7 @@
 <body>
 
   <div class="header">
-    <div>
+    <div class="header-text">
       <p class="header-name">{{ contact.name }}</p>
       <p class="header-profession">{{ contact.profession }}</p>
       <div class="contact-grid">
@@ -193,6 +205,8 @@
     </div>
     {% if headshot_url %}
     <img class="headshot" src="{{ headshot_url }}">
+    {% else %}
+    <div class="headshot-placeholder">{{ contact.initials }}</div>
     {% endif %}
   </div>
 
@@ -223,7 +237,7 @@
       </ul>
       {% endif %}
       {% if e.skills %}
-      <div class="skills-badges">{% for s in e.skills %}<span class="skill-tag">{{ s }}</span>{% endfor %}</div>
+      <div class="skills-line"><strong>Skills:</strong> {{ e.skills|join:", " }}</div>
       {% endif %}
     </div>
   </div>

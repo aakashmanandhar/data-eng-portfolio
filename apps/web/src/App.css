@@ -4094,49 +4094,47 @@ footer a:hover {
 }
 
 .cv-about-photo {
-  width: 108px;
-  height: 108px;
-  border-radius: 16px;
+  width: 112px;
+  height: 112px;
+  border-radius: 20px;
   object-fit: cover;
-  border: 1px solid var(--border);
+  border: none;
 }
 
 .cv-about-photo-fallback {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(155deg, color-mix(in srgb, var(--accent1) 18%, var(--bg)), var(--bg) 75%);
-  color: var(--accent1);
-  font-size: 32px;
+  background: linear-gradient(150deg, var(--accent1) 0%, color-mix(in srgb, var(--accent1) 55%, var(--accent2)) 55%, color-mix(in srgb, var(--accent2) 70%, transparent) 100%);
+  color: #fff;
+  font-size: 34px;
   font-weight: 800;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent1) 15%, transparent);
+  letter-spacing: -0.5px;
+  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--accent1) 55%, transparent);
 }
 
-.cv-about-content {
-  flex: 1;
-  min-width: 0;
-}
 
 .cv-about-name {
   font-size: 27px;
   font-weight: 800;
   color: var(--text);
   letter-spacing: -0.015em;
-  line-height: 1.15;
+  line-height: 1;
   margin: 0;
 }
 
 .cv-about-profession-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 7px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--accent1);
   background: color-mix(in srgb, var(--accent1) 10%, transparent);
-  padding: 4px 11px;
+  border: 1px solid color-mix(in srgb, var(--accent1) 22%, transparent);
+  padding: 6px 14px;
   border-radius: 20px;
-  margin-top: 8px;
+  margin-top: 2px;
   letter-spacing: 0.01em;
 }
 
@@ -4721,4 +4719,149 @@ a.cv-contact-chip:hover {
 .nav-link-highlight:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--accent1) 50%, black);
+}
+
+/* --- About card restructure: full-width sections below header --- */
+.cv-about-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cv-about-photo-wrap {
+  flex-shrink: 0;
+}
+
+.cv-about-header-text {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.cv-about-contact-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  flex: 1;
+  min-width: 240px;
+  justify-content: flex-end;
+}
+
+.cv-about-summary-wrap {
+  position: relative;
+  margin-top: 20px;
+  padding-right: 56px;
+}
+
+.cv-about-summary {
+  font-size: 14px;
+  line-height: 1.75;
+  color: color-mix(in srgb, var(--text) 90%, var(--muted));
+  margin: 0;
+}
+
+.cv-about-summary-quote {
+  position: absolute;
+  top: -6px;
+  right: 0;
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+  color: color-mix(in srgb, var(--accent1) 12%, transparent);
+  font-family: Georgia, serif;
+  pointer-events: none;
+  user-select: none;
+}
+
+.cv-achievements {
+  margin-top: 22px;
+}
+
+.cv-about-expertise {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .cv-about-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .cv-about-contact-row {
+    justify-content: center;
+    min-width: 0;
+  }
+}
+
+/* --- About card elevation pass 3 --- */
+.cv-about-photo-wrap {
+  position: relative;
+}
+
+.cv-about-photo-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 23px;
+  background: linear-gradient(135deg, var(--accent1), var(--accent2), var(--accent1));
+  background-size: 200% 200%;
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.3s ease;
+  animation: cv-gradient-shift 4s ease infinite;
+}
+
+.cv-about-card:hover .cv-about-photo-wrap::before {
+  opacity: 1;
+}
+
+@keyframes cv-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.cv-contact-chip {
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+a.cv-contact-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--accent1) 30%, transparent);
+  border-color: color-mix(in srgb, var(--accent1) 30%, var(--border));
+}
+
+.cv-about-header::after {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent1) 8%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.cv-about-header {
+  position: relative;
+}
+
+.cv-about-card:hover .cv-about-header::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-about-photo-wrap::before {
+    animation: none;
+  }
 }

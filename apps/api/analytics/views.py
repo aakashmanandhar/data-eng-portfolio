@@ -1119,6 +1119,7 @@ from weasyprint import HTML
 
 CV_STATIC_CONTACT = {
     "name": "Aakash Manandhar",
+    "initials": "AM",
     "profession": "Data Engineer",
     "location": "Uppsala, Sweden",
     "phone": "+46-0766351436",
