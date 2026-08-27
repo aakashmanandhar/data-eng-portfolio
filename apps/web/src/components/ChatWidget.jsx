@@ -106,12 +106,14 @@ function ChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
+          {messages.length === 1 && (
           <div className="chat-examples">
             {examples.map((ex) => (
               <span className="chat-example" key={ex} onClick={() => sendMessage(ex)}>{ex}</span>
             ))}
           </div>
 
+          )}
           <div className="chat-input-row">
             <input
               type="text"
