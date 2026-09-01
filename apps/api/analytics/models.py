@@ -168,10 +168,11 @@ class Certification(models.Model):
 class Language(models.Model):
     PROFICIENCY_CHOICES = [
         ("native", "Native"),
-        ("full_professional", "Full Professional Proficiency"),
-        ("professional", "Professional Working Proficiency"),
-        ("intermediate", "Intermediate"),
-        ("basic", "Basic"),
+        ("full_professional", "Fluent (C1)"),
+        ("professional", "Professional Working Proficiency (B2)"),
+        ("intermediate", "Intermediate (B1)"),
+        ("basic", "Basic (A2)"),
+        ("learning", "A1–B1 (Ongoing)"),
     ]
     name = models.CharField(max_length=100)
     proficiency = models.CharField(max_length=30, choices=PROFICIENCY_CHOICES)

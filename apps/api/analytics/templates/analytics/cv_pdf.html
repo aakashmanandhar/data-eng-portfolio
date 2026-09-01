@@ -5,7 +5,7 @@
 <style>
   @page {
     size: A4;
-    margin: 8mm 15mm 8mm 15mm;
+    margin: 8mm 7mm 5mm 7mm;
   }
   * { box-sizing: border-box; }
   body {
@@ -121,18 +121,17 @@
   }
   /* Experience / Education entries */
   .entry {
-    display: flex;
-    margin-bottom: calc(6px * var(--scale));
-    page-break-inside: avoid;
+    margin-bottom: calc(10px * var(--scale));
   }
   .entry-date {
-    width: 24mm;
-    flex-shrink: 0;
-    font-size: calc(8.25pt * var(--scale));
+    font-size: calc(8pt * var(--scale));
     font-weight: 700;
-    color: #1a1a1a;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+    margin-bottom: 1pt;
   }
-  .entry-body { flex: 1; }
+  .entry-body {}
   .entry-title {
     font-weight: 700;
     font-size: calc(9.5pt * var(--scale));
@@ -170,13 +169,23 @@
   .expertise-list li, .cert-list li, .lang-list li {
     margin-bottom: calc(3px * var(--scale));
   }
-  .lang-list li {
+  .lang-row {
     display: flex;
     justify-content: space-between;
-    max-width: 260pt;
+    align-items: baseline;
+    padding: 5pt 0;
+    border-bottom: 0.5pt solid #e5e5e5;
+  }
+  .lang-row:last-child {
+    border-bottom: none;
+  }
+  .lang-name {
+    font-weight: 600;
+    color: #1a1a1a;
   }
   .lang-level {
     color: #555;
+    font-size: 0.95em;
   }
   .references-note {
     font-size: calc(8pt * var(--scale));
@@ -187,7 +196,7 @@
     page-break-inside: avoid;
   }
   .signing-block {
-    margin-top: calc(74mm * var(--scale) * var(--scale));
+    margin-top: {{ signature_margin_mm }}mm;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -295,9 +304,9 @@
   {% if languages %}
   <div class="section-block">
   <div class="section-title">Languages</div>
-  <ul class="lang-list">
-    {% for l in languages %}<li><span>{{ l.name }}</span><span class="lang-level">{{ l.level }}</span></li>{% endfor %}
-  </ul>
+  <div class="lang-list">
+    {% for l in languages %}<div class="lang-row"><span class="lang-name">{{ l.name }}</span><span class="lang-level">{{ l.level }}</span></div>{% endfor %}
+  </div>
   </div>
   {% endif %}
   <div class="section-block">

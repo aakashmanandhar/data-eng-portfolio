@@ -1211,19 +1211,42 @@ class CVPdfView(APIView):
             "signing_location": CV_STATIC_CONTACT["location"].split(",")[0],
         }
 
-        # Auto-fit: try full size first, shrink incrementally if content exceeds 2 pages.
-        # Always produces output - falls back to the smallest scale even if that still
-        # doesn't fit, rather than silently failing.
+        # Auto-fit, two phases:
+        # Phase 1 - find the largest scale (least shrink) whose CONTENT fits within 2
+        # pages, using a small placeholder signature margin so the signature block
+        # never influences this decision.
         scale_options = [1.0, 0.97, 0.94, 0.91, 0.88, 0.85]
-        pdf_bytes = None
+        context["signature_margin_mm"] = 15
+        chosen_scale = scale_options[-1]
         for i, scale in enumerate(scale_options):
             context["scale"] = scale
             html_string = render_to_string("analytics/cv_pdf.html", context)
             document = HTML(string=html_string, base_url=request.build_absolute_uri("/")).render()
-            is_last_attempt = i == len(scale_options) - 1
-            if len(document.pages) <= 2 or is_last_attempt:
-                pdf_bytes = document.write_pdf()
+            if len(document.pages) <= 2 or i == len(scale_options) - 1:
+                chosen_scale = scale
                 break
+
+        # Phase 2 - with that scale locked in, binary-search the LARGEST signature
+        # margin (in mm) that still keeps the document at 2 pages, so the signature
+        # lands as close to the true bottom of the last page as the content allows.
+        context["scale"] = chosen_scale
+        low, high = 10, 220
+        best_margin = low
+        while low <= high:
+            mid = (low + high) // 2
+            context["signature_margin_mm"] = mid
+            html_string = render_to_string("analytics/cv_pdf.html", context)
+            document = HTML(string=html_string, base_url=request.build_absolute_uri("/")).render()
+            if len(document.pages) <= 2:
+                best_margin = mid
+                low = mid + 5
+            else:
+                high = mid - 5
+
+        context["signature_margin_mm"] = best_margin
+        html_string = render_to_string("analytics/cv_pdf.html", context)
+        document = HTML(string=html_string, base_url=request.build_absolute_uri("/")).render()
+        pdf_bytes = document.write_pdf()
 
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
         response["Content-Disposition"] = 'attachment; filename="01_Aakash_Data_Engineer.pdf"'
