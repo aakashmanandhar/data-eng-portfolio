@@ -4907,3 +4907,25 @@ a.cv-contact-chip:hover {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* --- Contact form submit spinner --- */
+.contact-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.contact-submit-btn:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.contact-submit-spinner {
+  animation: contact-spin 0.8s linear infinite;
+}
+
+@keyframes contact-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

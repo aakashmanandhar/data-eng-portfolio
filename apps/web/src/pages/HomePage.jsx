@@ -10,7 +10,7 @@ import OrgArchetypeSlide from '../components/OrgArchetypeSlide'
 import OssLandscapeSlide from '../components/OssLandscapeSlide'
 import NewsIntelligenceSlide from '../components/NewsIntelligenceSlide'
 import AIAgentPipelineSlide from '../components/AIAgentPipelineSlide'
-import { CheckCircle2, XCircle, Clock, BarChart3, Sparkles, Newspaper, DollarSign, Globe2, Bot, MessageCircle, FileSearch, Wrench, Github, History, Users, Package } from 'lucide-react'
+import { CheckCircle2, XCircle, Clock, BarChart3, Sparkles, Newspaper, DollarSign, Globe2, Bot, MessageCircle, FileSearch, Wrench, Github, History, Users, Package, Loader2 } from 'lucide-react'
 
 function relativeTime(dateStr) {
   const diffMs = Date.now() - new Date(dateStr).getTime()
@@ -39,6 +39,7 @@ function HomePage() {
   const [lastRefreshed, setLastRefreshed] = useState(null)
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' })
   const [contactStatus, setContactStatus] = useState(null)
+  const [sending, setSending] = useState(false)
   const [aboutText, setAboutText] = useState('')
   const [profilePhoto, setProfilePhoto] = useState(null)
   const [headlineMain, setHeadlineMain] = useState('Architecting the data infrastructure behind reliable pipelines.')
@@ -160,6 +161,9 @@ function HomePage() {
 
   const handleContactSubmit = async (e) => {
     e.preventDefault()
+    if (sending) return
+    setSending(true)
+    setContactStatus(null)
     try {
       const res = await fetch(`${API_BASE}/api/contact/`, {
         method: 'POST',
@@ -174,6 +178,9 @@ function HomePage() {
       }
     } catch (err) {
       setContactStatus('error')
+    } finally {
+      setSending(false)
+      setTimeout(() => setContactStatus(null), 4000)
     }
   }
 
@@ -411,7 +418,16 @@ function HomePage() {
             onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
             required
           ></textarea>
-          <button type="submit">Send Message</button>
+          <button type="submit" disabled={sending} className="contact-submit-btn">
+            {sending ? (
+              <>
+                <Loader2 size={15} className="contact-submit-spinner" />
+                Sending Message...
+              </>
+            ) : (
+              'Send Message'
+            )}
+          </button>
           {contactStatus === 'success' && (
             <div className="form-status success">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
