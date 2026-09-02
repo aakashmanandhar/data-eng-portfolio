@@ -1135,6 +1135,13 @@ def _fmt_date(d):
 
 class CVPdfView(APIView):
     def get(self, request):
+        from .models import CachedCVPdf
+        cached = CachedCVPdf.get_or_none()
+        if cached:
+            response = HttpResponse(bytes(cached.pdf_data), content_type="application/pdf")
+            response["Content-Disposition"] = 'attachment; filename="01_Aakash_Data_Engineer.pdf"'
+            return response
+
         experience = []
         for e in Experience.objects.filter(include_in_pdf=True):
             meta_bits = [e.get_employment_type_display()]
@@ -1247,6 +1254,9 @@ class CVPdfView(APIView):
         html_string = render_to_string("analytics/cv_pdf.html", context)
         document = HTML(string=html_string, base_url=request.build_absolute_uri("/")).render()
         pdf_bytes = document.write_pdf()
+
+        from .models import CachedCVPdf
+        CachedCVPdf.objects.update_or_create(pk=1, defaults={"pdf_data": pdf_bytes})
 
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
         response["Content-Disposition"] = 'attachment; filename="01_Aakash_Data_Engineer.pdf"'

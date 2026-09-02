@@ -263,3 +263,36 @@ class KeyAchievement(models.Model):
                 f"Maximum of {self.MAX_ITEMS} key achievements allowed. "
                 f"Delete an existing one before adding a new one."
             )
+
+
+class CachedCVPdf(models.Model):
+    """Singleton cache of the generated CV PDF, regenerated only when career data changes."""
+    pdf_data = models.BinaryField()
+    generated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_or_none(cls):
+        return cls.objects.filter(pk=1).first()
+
+
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
+_CV_RELEVANT_MODELS = None  # set after all model classes are defined below
+
+
+@receiver(post_save)
+@receiver(post_delete)
+def invalidate_cv_cache(sender, **kwargs):
+    if _CV_RELEVANT_MODELS and sender in _CV_RELEVANT_MODELS:
+        CachedCVPdf.objects.filter(pk=1).delete()
+
+
+_CV_RELEVANT_MODELS = {
+    Experience, ExperienceHighlight, Education, Certification,
+    Language, AreaOfExpertise, Profile, KeyAchievement,
+}

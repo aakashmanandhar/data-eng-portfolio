@@ -4887,3 +4887,23 @@ a.cv-contact-chip:hover {
     white-space: nowrap;
   }
 }
+
+/* --- CV download button spinner --- */
+.cv-download-btn {
+  border: none;
+  font-family: inherit;
+}
+
+.cv-download-btn:disabled {
+  opacity: 0.85;
+  cursor: default;
+}
+
+.cv-download-spinner {
+  animation: cv-spin 0.8s linear infinite;
+}
+
+@keyframes cv-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
