@@ -47,3 +47,5 @@ apps/api/staticfiles/
 # Stray backup files
 *.bak
 tfplan
+code
+vscode_cli.tar.gz

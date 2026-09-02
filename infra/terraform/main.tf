@@ -23,6 +23,7 @@ resource "docker_image" "postgres" {
 }
 
 resource "docker_container" "postgres" {
+  restart = "unless-stopped"
   name  = "portfolio_postgres"
   image = docker_image.postgres.image_id
 
@@ -63,6 +64,7 @@ resource "docker_image" "jenkins" {
 }
 
 resource "docker_container" "jenkins" {
+  restart = "unless-stopped"
   name  = "portfolio_jenkins"
   image = docker_image.jenkins.image_id
   user  = "root"
@@ -104,6 +106,7 @@ resource "docker_image" "django" {
 }
 
 resource "docker_container" "django" {
+  restart = "unless-stopped"
   name  = "portfolio_django"
   image = docker_image.django.image_id
 
@@ -149,6 +152,7 @@ resource "docker_image" "react" {
 }
 
 resource "docker_container" "react" {
+  restart = "unless-stopped"
   name  = "portfolio_react"
   image = docker_image.react.image_id
 
@@ -169,6 +173,7 @@ resource "docker_image" "dbt" {
 }
 
 resource "docker_container" "dbt" {
+  restart = "unless-stopped"
   name  = "portfolio_dbt"
   image = docker_image.dbt.image_id
 
@@ -195,6 +200,7 @@ resource "docker_image" "airflow" {
 }
 
 resource "docker_container" "airflow" {
+  restart = "unless-stopped"
   name  = "portfolio_airflow"
   image = docker_image.airflow.image_id
   user  = "root"
