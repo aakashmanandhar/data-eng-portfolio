@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin, Globe, Linkedin, Sparkles, BadgeCheck, Trophy } from 'lucide-react'
+import { Mail, Phone, MapPin, Globe, Linkedin, Github, Sparkles, BadgeCheck, Trophy } from 'lucide-react'
 
 const STATIC_CONTACT = {
   name: 'Aakash Manandhar',
@@ -8,6 +8,7 @@ const STATIC_CONTACT = {
   email: 'aakashmanandhar@gmail.com',
   site: 'https://aakashmanandhar.tech/',
   linkedin: 'https://www.linkedin.com/in/aakashmanandhar/',
+  github: 'https://github.com/aakashmanandhar',
 }
 
 function CareerAbout({ profile, expertise, achievements }) {
@@ -47,6 +48,9 @@ function CareerAbout({ profile, expertise, achievements }) {
           </a>
           <a href={STATIC_CONTACT.linkedin} target="_blank" rel="noopener noreferrer" className="cv-contact-chip">
             <Linkedin size={12} /> LinkedIn
+          </a>
+          <a href={STATIC_CONTACT.github} target="_blank" rel="noopener noreferrer" className="cv-contact-chip">
+            <Github size={12} /> GitHub
           </a>
         </div>
       </div>

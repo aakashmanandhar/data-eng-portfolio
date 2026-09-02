@@ -1126,6 +1126,7 @@ CV_STATIC_CONTACT = {
     "email": "aakashmanandhar@gmail.com",
     "site": "aakashmanandhar.tech",
     "linkedin": "linkedin.com/in/aakashmanandhar",
+    "github": "github.com/aakashmanandhar",
 }
 
 
@@ -1246,9 +1247,9 @@ class CVPdfView(APIView):
             document = HTML(string=html_string, base_url=request.build_absolute_uri("/")).render()
             if len(document.pages) <= 2:
                 best_margin = mid
-                low = mid + 5
+                low = mid + 1
             else:
-                high = mid - 5
+                high = mid - 1
 
         context["signature_margin_mm"] = best_margin
         html_string = render_to_string("analytics/cv_pdf.html", context)
