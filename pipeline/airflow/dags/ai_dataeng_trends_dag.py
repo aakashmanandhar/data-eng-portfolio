@@ -54,7 +54,7 @@ def diagnose_failure(context):
             retry_cmd = [
                 "airflow", "tasks", "clear", dag_id,
                 "-s", execution_date, "-e", execution_date,
-                "-t", failed_task, "-y",
+                "-t", failed_task, "-f", "-y",
             ]
             subprocess.run(retry_cmd, check=False)
             print(f"Self-healing: real retry triggered for {failed_task} on {execution_date}")
