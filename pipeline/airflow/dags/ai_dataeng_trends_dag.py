@@ -32,16 +32,34 @@ PipelineRun.objects.create(pipeline_name='ai_dataeng_trends', status='failure', 
 
 
 def diagnose_failure(context):
-    """Self-healing agent callback: on any task failure, send it to the diagnosis agent."""
+    """Self-healing agent callback: diagnoses the failure via Gemini, logs it, and
+    if the diagnosis judges the error genuinely safe to retry (transient/network/
+    rate-limit), actually re-runs the failed task via the Airflow CLI - a real
+    action, not just a label."""
     failed_task = context['task_instance'].task_id
     dag_run_id = context['dag_run'].run_id
+    dag_id = context['dag'].dag_id
+    execution_date = context['ds']
     exception = str(context.get('exception', 'Unknown error'))[:1500].replace('"', "'").replace('\n', ' ')
     cmd = (
         f"docker cp /repo/pipeline/extraction/diagnose_task_failure.py portfolio_django:/tmp/diagnose_task_failure.py && "
         f"docker exec -e GEMINI_API_KEY=$(grep GEMINI_API_KEY /repo/.env | cut -d '=' -f2) "
         f"-w /tmp portfolio_django python diagnose_task_failure.py \"{failed_task}\" \"{dag_run_id}\" \"{exception}\""
     )
-    subprocess.run(cmd, shell=True)
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    output = (result.stdout or "") + (result.stderr or "")
+
+    if "AUTO_RETRY_DECISION:True" in output:
+        try:
+            retry_cmd = [
+                "airflow", "tasks", "clear", dag_id,
+                "-s", execution_date, "-e", execution_date,
+                "-t", failed_task, "-y",
+            ]
+            subprocess.run(retry_cmd, check=False)
+            print(f"Self-healing: real retry triggered for {failed_task} on {execution_date}")
+        except Exception as e:
+            print(f"Self-healing: retry attempt failed to trigger: {e}")
 
 
 with DAG(

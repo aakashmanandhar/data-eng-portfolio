@@ -84,6 +84,10 @@ def main():
         print(f"Failed to log diagnosis via API: {e}")
         print(json.dumps(result, indent=2))
 
+    # Machine-parseable marker: the calling Airflow context reads this to decide
+    # whether to actually issue a real task retry via the Airflow CLI.
+    print(f"AUTO_RETRY_DECISION:{result['auto_retried']}")
+
 
 if __name__ == "__main__":
     main()
