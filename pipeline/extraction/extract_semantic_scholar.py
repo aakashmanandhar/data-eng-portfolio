@@ -107,7 +107,7 @@ FIELDS = "title,abstract,url,authors,year,publicationDate,citationCount,external
 LIMIT = 25
 
 
-def search_papers(query, max_retries=3):
+def search_papers(query, max_retries=1):
     params = {
         "query": query,
         "fields": FIELDS,
@@ -120,8 +120,8 @@ def search_papers(query, max_retries=3):
             if resp.status_code == 200:
                 return resp.json().get("data", [])
             if resp.status_code == 429:
-                print(f"  rate limited, waiting before retry {attempt + 1}/{max_retries}")
-                time.sleep(12)
+                print(f"  rate limited, giving up on this query (attempt {attempt + 1}/{max_retries})")
+                time.sleep(4)
                 continue
             print(f"  status {resp.status_code} on attempt {attempt + 1}")
         except requests.exceptions.RequestException as e:
