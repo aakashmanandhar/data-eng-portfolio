@@ -56,6 +56,9 @@ for i, q in enumerate(QUERIES):
             authors_raw = [authors_raw]
         authors = ", ".join([a.get("text", "") for a in authors_raw][:6]) if authors_raw else ""
         year = info.get("year")
+        if isinstance(year, list):
+            # DBLP sometimes returns a list of years for cross-listed publications - use the most recent
+            year = year[-1] if year else None
         results[key] = {
             "external_id": str(key),
             "title": title[:500],
