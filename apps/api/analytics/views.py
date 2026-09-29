@@ -884,7 +884,16 @@ class NewsArticleFeedView(APIView):
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         base_query = """
             SELECT a.title, a.description, a.url, a.source_domain, a.published_at, a.matched_keyword,
-                   s.sentiment_label, s.sentiment_score
+                   s.sentiment_label, s.sentiment_score,
+                   -- sentiment_score is the model's confidence in sentiment_label (0 to 1),
+                   -- not a signed polarity. Fold the label in here so the frontend gets a
+                   -- single ready-to-use -1..+1 value instead of re-deriving (or misusing
+                   -- the raw confidence as if it were signed).
+                   CASE
+                       WHEN s.sentiment_label = 'positive' THEN s.sentiment_score
+                       WHEN s.sentiment_label = 'negative' THEN -s.sentiment_score
+                       ELSE 0
+                   END AS sentiment_polarity
             FROM dbt_dev_silver.silver_news_articles a
             LEFT JOIN dbt_dev_gold.news_article_sentiment s ON a.article_id = s.article_id
         """
@@ -915,11 +924,22 @@ class NewsKPISummaryView(APIView):
         """)
         top_keyword = cur.fetchone()
 
+        # Scope to the last 7 days (matching the "last 7 days" window the rest of
+        # this slide uses) and weight each day's sentiment by how many mentions
+        # it represents, so one heavily-covered keyword doesn't count the same
+        # as a keyword mentioned once. An unweighted, all-time average here
+        # previously made this number silently disagree with everything else
+        # labeled "today" / "last 7 days" on the same screen.
         cur.execute("""
-            SELECT round(AVG(weighted_sentiment)::numeric, 3) as overall_sentiment
+            SELECT
+                round((SUM(weighted_sentiment * mention_count) / NULLIF(SUM(mention_count), 0))::numeric, 3) as overall_sentiment,
+                SUM(mention_count) as mention_count
             FROM dbt_dev_gold.fact_keyword_sentiment_trend
+            WHERE sentiment_date >= CURRENT_DATE - INTERVAL '7 days'
         """)
-        overall_sentiment = cur.fetchone()["overall_sentiment"]
+        sentiment_row = cur.fetchone()
+        overall_sentiment = sentiment_row["overall_sentiment"]
+        overall_sentiment_mentions = sentiment_row["mention_count"]
 
         cur.close()
         conn.close()
@@ -927,6 +947,7 @@ class NewsKPISummaryView(APIView):
             "total_articles": total_articles,
             "top_keyword": top_keyword,
             "overall_sentiment": overall_sentiment,
+            "overall_sentiment_mentions": overall_sentiment_mentions,
         })
 
 from .models import AgentDiagnosis, DataQualityAction, ResearchSignal, ToolAdoptionTrend

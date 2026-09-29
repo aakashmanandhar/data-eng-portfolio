@@ -17,6 +17,11 @@ function sentimentLabel(score) {
   if (score < -0.15) return 'Leaning Negative'
   return 'Mixed / Neutral'
 }
+function sentimentWord(score) {
+  if (score > 0.15) return 'Positive'
+  if (score < -0.15) return 'Negative'
+  return 'Mixed'
+}
 function timeAgo(dateStr) {
   const diffMs = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diffMs / 60000)
@@ -34,26 +39,24 @@ function dedupeArticles(articles) {
   return Object.values(byTitle)
 }
 
-function SentimentGauge({ score, size = 68 }) {
+// A 0-100% ring around a signed -1..+1 score reads to most visitors as "46% of
+// something good", when 46% here actually just means "a touch below neutral".
+// A word first ("Mixed"/"Positive"/"Negative") plus a labeled negative<->positive
+// bar with a marker is legible without knowing how the score is built.
+function SentimentBar({ score }) {
   const safeScore = Number.isFinite(score) ? score : 0
   const pct = Math.max(0, Math.min(100, ((safeScore + 1) / 2) * 100))
-  const radius = size / 2 - 6
-  const circumference = 2 * Math.PI * radius
-  const offset = circumference * (1 - pct / 100)
   const color = sentimentColor(safeScore)
+  const word = sentimentWord(safeScore)
   return (
-    <div style={{ position: 'relative', width: size, height: size }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--bg)" strokeWidth={6} />
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={6}
-                strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
-      </svg>
-      <div style={{
-        position: 'absolute', top: 0, left: 0, width: size, height: size,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: size * 0.24, fontWeight: 800, color: 'var(--text)',
-      }}>
-        {Math.round(pct)}%
+    <div className="sentiment-bar-wrap">
+      <div className="sentiment-bar-word" style={{ color }}>{word}</div>
+      <div className="sentiment-bar-track">
+        <span className="sentiment-bar-marker" style={{ left: `${pct}%`, background: color }} />
+      </div>
+      <div className="sentiment-bar-scale">
+        <span>Negative</span>
+        <span>Positive</span>
       </div>
     </div>
   )
@@ -189,7 +192,8 @@ function NewsIntelligenceSlide() {
             <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
           </span>
           <span className="news-kpi-tile-label">Sentiment</span>
-          <SentimentGauge score={kpi.overall_sentiment} />
+          <SentimentBar score={kpi.overall_sentiment} />
+          <span className="news-kpi-tile-sublabel">how today's coverage leans, weighted by volume</span>
         </div>
         {mostPositive && (
           <div className="news-kpi-tile">
@@ -232,10 +236,14 @@ function NewsIntelligenceSlide() {
           <div className="news-wire-timeline">
             {articles.map((a, i) => {
               const isOpen = expandedIdx === i
+              // sentiment_score from the API is the model's confidence in its
+              // label (0-1), not a signed polarity - sentiment_polarity is the
+              // already-signed -1..+1 value derived from label + confidence.
+              const polarity = Number.isFinite(a.sentiment_polarity) ? a.sentiment_polarity : 0
               return (
                 <div key={i} className="news-wire-row">
                   <div className="news-wire-rail">
-                    <span className="news-wire-dot" style={{ background: sentimentColor(a.sentiment_score - 0.5) }}></span>
+                    <span className="news-wire-dot" style={{ background: sentimentColor(polarity) }}></span>
                     {i < articles.length - 1 && <span className="news-wire-line"></span>}
                   </div>
                   <div className="news-wire-item" onClick={() => setExpandedIdx(isOpen ? null : i)}>
@@ -245,6 +253,7 @@ function NewsIntelligenceSlide() {
                     </div>
                     <div className="news-wire-meta">
                       <span className="news-wire-keyword-pill">{a.matched_keyword}</span>
+                      <span className="news-wire-sentiment-tag" style={{ color: sentimentColor(polarity) }}>{sentimentWord(polarity)}</span>
                       <span>{a.sources.length > 1 ? `${a.sources.length} sources` : a.source_domain} · {timeAgo(a.published_at)}</span>
                     </div>
                     {isOpen && (
@@ -267,9 +276,9 @@ function NewsIntelligenceSlide() {
           <div className="news-bubble-desc">Circle size = article volume · color intensity = sentiment strength, last 7 days</div>
           <BubbleChart data={bubbleData} width={isMobile ? 300 : 380} height={isMobile ? 220 : 260} onSelect={setSelectedKeyword} highlightNames={[mostPositive?.keyword, mostNegative?.keyword].filter(Boolean)} />
           <div className="news-bubble-legend">
-            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: SENTIMENT_COLORS.positive }}></span>Positive</span>
-            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: '#D14545' }}></span>Negative</span>
-            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: 'var(--muted)' }}></span>Mixed</span>
+            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: SENTIMENT_COLORS.positive }}></span>Positive coverage</span>
+            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: '#D14545' }}></span>Negative coverage</span>
+            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: 'var(--muted)' }}></span>Mixed / no clear lean</span>
           </div>
           {insightText && <p className="news-bubble-insight">{insightText}</p>}
         </div>
