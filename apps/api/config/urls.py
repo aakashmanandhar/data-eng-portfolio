@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/', include('content.urls')),
     path('api/', include('analytics.urls')),
     path('api/', include('rag.urls')),
+    path('api/', include('todolist.urls')),
 ]
 
 urlpatterns += [

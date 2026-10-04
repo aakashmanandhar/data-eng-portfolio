@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'content',
     'rag',
     'analytics',
+    'todolist',
 ]
 
 MIDDLEWARE = [
@@ -72,6 +73,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://aakashmanandhar.tech",
     "http://www.aakashmanandhar.tech",
 ]
+
+from corsheaders.defaults import default_headers
+CORS_ALLOW_HEADERS = list(default_headers) + ["x-todo-token"]
 
 ROOT_URLCONF = 'config.urls'
 

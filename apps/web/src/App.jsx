@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage'
 import CaseStudyDetailPage from './pages/CaseStudyDetailPage'
 import ArchitecturePage from './pages/ArchitecturePage'
 import CareerPage from './pages/CareerPage'
+import TodoListPage from './pages/TodoListPage'
 import ChatWidget from './components/ChatWidget'
 import VisitorWidget from './components/VisitorWidget'
 
@@ -14,6 +15,7 @@ function App() {
         <Route path="/case-studies/:slug" element={<CaseStudyDetailPage />} />
         <Route path="/architecture" element={<ArchitecturePage />} />
         <Route path="/career" element={<CareerPage />} />
+        <Route path="/aakashtodolist" element={<TodoListPage />} />
       </Routes>
       <ChatWidget />
       <VisitorWidget />
