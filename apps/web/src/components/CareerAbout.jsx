@@ -34,14 +34,19 @@ function CareerAbout({ profile, expertise, achievements }) {
           </div>
         </div>
         <div className="cv-about-contact-row">
-          <a href={`mailto:${STATIC_CONTACT.email}`} className="cv-contact-chip">
-            <Mail size={12} /> {STATIC_CONTACT.email}
-          </a>
+          {(profile?.emails?.length ? profile.emails : [{ email: STATIC_CONTACT.email }]).map((e, i) => (
+            <a key={`email-${i}`} href={`mailto:${e.email}`} className="cv-contact-chip">
+              <Mail size={12} /> {e.email}
+            </a>
+          ))}
+          {(profile?.phones?.length ? profile.phones : [{ phone_number: STATIC_CONTACT.phone, messaging_app: 'none', messaging_app_display: null }]).map((ph, i) => (
+            <span key={`phone-${i}`} className="cv-contact-chip">
+              <Phone size={12} /> {ph.phone_number}
+              {ph.messaging_app && ph.messaging_app !== 'none' ? ` (${ph.messaging_app_display})` : ''}
+            </span>
+          ))}
           <span className="cv-contact-chip">
-            <Phone size={12} /> {STATIC_CONTACT.phone}
-          </span>
-          <span className="cv-contact-chip">
-            <MapPin size={12} /> {STATIC_CONTACT.location}
+            <MapPin size={12} /> {profile?.location || STATIC_CONTACT.location}
           </span>
           <a href={STATIC_CONTACT.site} target="_blank" rel="noopener noreferrer" className="cv-contact-chip">
             <Globe size={12} /> aakashmanandhar.tech

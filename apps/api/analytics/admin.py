@@ -29,7 +29,7 @@ class CertificationAdmin(admin.ModelAdmin):
     list_display = ("name", "issuer", "status", "issue_date")
 
 
-from .models import Language, Reference, AreaOfExpertise, Profile
+from .models import Language, Reference, AreaOfExpertise, Profile, ProfileEmail, ProfilePhone
 
 
 @admin.register(Language)
@@ -47,9 +47,21 @@ class AreaOfExpertiseAdmin(admin.ModelAdmin):
     list_display = ("name", "order")
 
 
+class ProfileEmailInline(admin.TabularInline):
+    model = ProfileEmail
+    extra = 1
+
+
+class ProfilePhoneInline(admin.TabularInline):
+    model = ProfilePhone
+    extra = 1
+
+
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ("__str__",)
+    fields = ("summary", "headshot", "location", "show_photo_in_pdf")
+    inlines = [ProfileEmailInline, ProfilePhoneInline]
 
     def has_add_permission(self, request):
         return not Profile.objects.exists()

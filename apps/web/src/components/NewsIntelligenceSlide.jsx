@@ -234,6 +234,13 @@ function NewsIntelligenceSlide() {
             {selectedKeyword && <button className="news-wire-clear" onClick={() => setSelectedKeyword(null)}>× {selectedKeyword}</button>}
           </div>
           <div className="news-wire-timeline">
+            {articles.length === 0 && (
+              <div className="news-wire-empty">
+                {selectedKeyword
+                  ? `No recent articles found for "${selectedKeyword}" in the last 30 days.`
+                  : 'No articles available right now.'}
+              </div>
+            )}
             {articles.map((a, i) => {
               const isOpen = expandedIdx === i
               // sentiment_score from the API is the model's confidence in its

@@ -89,12 +89,31 @@ class AreaOfExpertiseSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
+from .models import ProfileEmail, ProfilePhone
+
+
+class ProfileEmailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileEmail
+        fields = ["email", "order"]
+
+
+class ProfilePhoneSerializer(serializers.ModelSerializer):
+    messaging_app_display = serializers.CharField(source="get_messaging_app_display", read_only=True)
+
+    class Meta:
+        model = ProfilePhone
+        fields = ["phone_number", "messaging_app", "messaging_app_display", "order"]
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     headshot = serializers.ImageField(use_url=True, required=False)
+    emails = ProfileEmailSerializer(many=True, read_only=True)
+    phones = ProfilePhoneSerializer(many=True, read_only=True)
 
     class Meta:
         model = Profile
-        fields = ["summary", "headshot"]
+        fields = ["summary", "headshot", "location", "emails", "phones"]
 
 
 from .models import KeyAchievement

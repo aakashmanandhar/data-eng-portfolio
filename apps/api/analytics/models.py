@@ -225,6 +225,8 @@ class AreaOfExpertise(models.Model):
 class Profile(models.Model):
     summary = models.TextField(help_text="Professional summary / about-me paragraph")
     headshot = models.ImageField(upload_to="headshot/", blank=True, null=True)
+    location = models.CharField(max_length=200, blank=True, help_text="e.g. Uppsala, Sweden")
+    show_photo_in_pdf = models.BooleanField(default=True, help_text="Web always shows the photo/placeholder. This only controls whether it appears in the downloadable PDF.")
 
     class Meta:
         verbose_name_plural = "Profile"
@@ -240,6 +242,38 @@ class Profile(models.Model):
     def load(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class ProfileEmail(models.Model):
+    profile = models.ForeignKey(Profile, related_name="emails", on_delete=models.CASCADE)
+    email = models.EmailField()
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.email
+
+
+class ProfilePhone(models.Model):
+    MESSAGING_APP_CHOICES = [
+        ("none", "None"),
+        ("whatsapp", "WhatsApp"),
+        ("viber", "Viber"),
+        ("telegram", "Telegram"),
+    ]
+
+    profile = models.ForeignKey(Profile, related_name="phones", on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=30)
+    messaging_app = models.CharField(max_length=10, choices=MESSAGING_APP_CHOICES, default="none")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.phone_number
 
 
 class KeyAchievement(models.Model):
@@ -295,4 +329,5 @@ def invalidate_cv_cache(sender, **kwargs):
 _CV_RELEVANT_MODELS = {
     Experience, ExperienceHighlight, Education, Certification,
     Language, AreaOfExpertise, Profile, KeyAchievement,
+    ProfileEmail, ProfilePhone,
 }

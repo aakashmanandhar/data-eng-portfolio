@@ -150,7 +150,7 @@ with DAG(
             "silver_github_org_snapshot fact_github_org_trend dim_github_org "
             "silver_arxiv_snapshot silver_hackernews_snapshot fact_ai_adoption_signal "
             "silver_oss_insight_stargazers fact_country_ai_signal fact_country_tool_signal "
-            "silver_news_articles dim_keyword dim_source fact_keyword_mention"
+            "silver_news_articles dim_keyword dim_source fact_keyword_mention silver_news_articles_history"
         ),
     )
 

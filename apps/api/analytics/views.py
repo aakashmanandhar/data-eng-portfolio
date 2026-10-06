@@ -830,11 +830,16 @@ class NewsSentimentTrendView(APIView):
     def get(self, request):
         conn = get_readonly_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        # Scoped to the last 7 days to match this data's "last 7 days" caption
+        # everywhere it's shown on the slide - without this, a keyword with no
+        # recent coverage could still surface as today's "latest" row from
+        # weeks/months ago, showing as a misleadingly "active" bubble.
         cur.execute("""
             SELECT dk.keyword, dk.category, t.sentiment_date, t.mention_count,
                    t.weighted_sentiment, t.avg_confidence
             FROM dbt_dev_gold.fact_keyword_sentiment_trend t
             JOIN dbt_dev_gold.dim_keyword dk ON t.keyword_id = dk.keyword_id
+            WHERE t.sentiment_date >= CURRENT_DATE - INTERVAL '7 days'
             ORDER BY t.sentiment_date, dk.keyword
         """)
         rows = cur.fetchall()
@@ -882,7 +887,15 @@ class NewsArticleFeedView(APIView):
         keyword = request.query_params.get('keyword')
         conn = get_readonly_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        base_query = """
+        # A keyword's bubble/sentiment can reflect coverage from any day in its
+        # history (gold's news_article_sentiment is append-only and never
+        # pruned), so filtering by keyword must query the full article history
+        # table - querying only today's snapshot silently returned zero
+        # articles for any keyword not freshly mentioned today. The unfiltered
+        # "everything" view stays on today's snapshot, which is what the
+        # default Live Wire feed is meant to show.
+        source_table = "dbt_dev_silver.silver_news_articles_history" if keyword else "dbt_dev_silver.silver_news_articles"
+        base_query = f"""
             SELECT a.title, a.description, a.url, a.source_domain, a.published_at, a.matched_keyword,
                    s.sentiment_label, s.sentiment_score,
                    -- sentiment_score is the model's confidence in sentiment_label (0 to 1),
@@ -894,12 +907,12 @@ class NewsArticleFeedView(APIView):
                        WHEN s.sentiment_label = 'negative' THEN -s.sentiment_score
                        ELSE 0
                    END AS sentiment_polarity
-            FROM dbt_dev_silver.silver_news_articles a
+            FROM {source_table} a
             LEFT JOIN dbt_dev_gold.news_article_sentiment s ON a.article_id = s.article_id
         """
         params = []
         if keyword:
-            base_query += " WHERE a.matched_keyword = %s"
+            base_query += " WHERE a.matched_keyword = %s AND a.published_at >= NOW() - INTERVAL '30 days'"
             params.append(keyword)
         base_query += " ORDER BY a.published_at DESC LIMIT 50"
         cur.execute(base_query, params)
@@ -1142,13 +1155,14 @@ CV_STATIC_CONTACT = {
     "name": "Aakash Manandhar",
     "initials": "AM",
     "profession": "Data Engineer",
-    "location": "Uppsala, Sweden",
-    "phone": "+46-0766351436",
-    "email": "aakashmanandhar@gmail.com",
     "site": "aakashmanandhar.tech",
     "linkedin": "linkedin.com/in/aakashmanandhar",
     "github": "github.com/aakashmanandhar",
 }
+
+CV_FALLBACK_EMAIL = "aakashmanandhar@gmail.com"
+CV_FALLBACK_PHONE = "+46-0766351436"
+CV_FALLBACK_LOCATION = "Uppsala, Sweden"
 
 
 def _fmt_date(d):
@@ -1212,8 +1226,20 @@ class CVPdfView(APIView):
         ]
 
         profile = Profile.load()
+
+        emails = [e.email for e in profile.emails.all()] or [CV_FALLBACK_EMAIL]
+        phones = []
+        for ph in profile.phones.all():
+            label = ph.phone_number
+            if ph.messaging_app != "none":
+                label += f" ({ph.get_messaging_app_display()})"
+            phones.append(label)
+        if not phones:
+            phones = [CV_FALLBACK_PHONE]
+        location = profile.location or CV_FALLBACK_LOCATION
+
         headshot_url = None
-        if profile.headshot:
+        if profile.show_photo_in_pdf and profile.headshot:
             headshot_url = request.build_absolute_uri(profile.headshot.url)
 
         import base64, os
@@ -1225,10 +1251,16 @@ class CVPdfView(APIView):
                 signature_b64 = base64.b64encode(f.read()).decode("ascii")
         today_str = date.today().strftime("%d.%m.%Y")
 
+        contact = dict(CV_STATIC_CONTACT)
+        contact["emails"] = emails
+        contact["phones"] = phones
+        contact["location"] = location
+
         context = {
-            "contact": CV_STATIC_CONTACT,
+            "contact": contact,
             "summary": profile.summary,
             "headshot_url": headshot_url,
+            "show_photo_in_pdf": profile.show_photo_in_pdf,
             "achievements": achievements,
             "experience": experience,
             "education": education,
@@ -1237,7 +1269,7 @@ class CVPdfView(APIView):
             "languages": languages,
             "signature_b64": signature_b64,
             "signing_date": today_str,
-            "signing_location": CV_STATIC_CONTACT["location"].split(",")[0],
+            "signing_location": location.split(",")[0],
         }
 
         # Auto-fit, two phases:
