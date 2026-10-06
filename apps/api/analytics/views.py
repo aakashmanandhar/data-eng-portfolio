@@ -1173,7 +1173,7 @@ class CVPdfView(APIView):
     def get(self, request):
         from .models import CachedCVPdf
         cached = CachedCVPdf.get_or_none()
-        if cached:
+        if cached and cached.pdf_data:
             response = HttpResponse(bytes(cached.pdf_data), content_type="application/pdf")
             response["Content-Disposition"] = 'attachment; filename="01_Aakash_Data_Engineer.pdf"'
             return response
@@ -1272,45 +1272,64 @@ class CVPdfView(APIView):
             "signing_location": location.split(",")[0],
         }
 
-        # Auto-fit, two phases:
-        # Phase 1 - find the largest scale (least shrink) whose CONTENT fits within 2
-        # pages, using a small placeholder signature margin so the signature block
-        # never influences this decision.
-        scale_options = [1.0, 0.97, 0.94, 0.91, 0.88, 0.85]
-        context["signature_margin_mm"] = 15
-        chosen_scale = scale_options[-1]
-        for i, scale in enumerate(scale_options):
+        def render(scale, margin):
             context["scale"] = scale
+            context["signature_margin_mm"] = margin
             html_string = render_to_string("analytics/cv_pdf.html", context)
-            document = HTML(string=html_string, base_url=request.build_absolute_uri("/")).render()
-            if len(document.pages) <= 2 or i == len(scale_options) - 1:
-                chosen_scale = scale
-                break
+            return HTML(string=html_string, base_url=request.build_absolute_uri("/")).render()
 
-        # Phase 2 - with that scale locked in, binary-search the LARGEST signature
-        # margin (in mm) that still keeps the document at 2 pages, so the signature
-        # lands as close to the true bottom of the last page as the content allows.
-        context["scale"] = chosen_scale
-        low, high = 10, 220
-        best_margin = low
-        while low <= high:
-            mid = (low + high) // 2
-            context["signature_margin_mm"] = mid
-            html_string = render_to_string("analytics/cv_pdf.html", context)
-            document = HTML(string=html_string, base_url=request.build_absolute_uri("/")).render()
-            if len(document.pages) <= 2:
-                best_margin = mid
-                low = mid + 1
-            else:
-                high = mid - 1
+        # Fast path: most edits (a new phone number, a tweaked bullet) don't
+        # change page-fit at all, so try last time's known-good scale/margin
+        # first. Only falls back to the full auto-fit search below if that no
+        # longer fits - avoids ~14 weasyprint renders on every small edit.
+        document = None
+        chosen_scale = None
+        best_margin = None
+        if cached and cached.last_scale and cached.last_signature_margin_mm:
+            doc = render(cached.last_scale, cached.last_signature_margin_mm)
+            if len(doc.pages) <= 2:
+                document = doc
+                chosen_scale = cached.last_scale
+                best_margin = cached.last_signature_margin_mm
 
-        context["signature_margin_mm"] = best_margin
-        html_string = render_to_string("analytics/cv_pdf.html", context)
-        document = HTML(string=html_string, base_url=request.build_absolute_uri("/")).render()
+        if document is None:
+            # Auto-fit, two phases:
+            # Phase 1 - find the largest scale (least shrink) whose CONTENT fits within 2
+            # pages, using a small placeholder signature margin so the signature block
+            # never influences this decision.
+            scale_options = [1.0, 0.97, 0.94, 0.91, 0.88, 0.85]
+            chosen_scale = scale_options[-1]
+            for i, scale in enumerate(scale_options):
+                doc = render(scale, 15)
+                if len(doc.pages) <= 2 or i == len(scale_options) - 1:
+                    chosen_scale = scale
+                    break
+
+            # Phase 2 - with that scale locked in, binary-search the LARGEST signature
+            # margin (in mm) that still keeps the document at 2 pages, so the signature
+            # lands as close to the true bottom of the last page as the content allows.
+            low, high = 10, 220
+            best_margin = low
+            best_doc = None
+            while low <= high:
+                mid = (low + high) // 2
+                doc = render(chosen_scale, mid)
+                if len(doc.pages) <= 2:
+                    best_margin = mid
+                    best_doc = doc
+                    low = mid + 1
+                else:
+                    high = mid - 1
+            document = best_doc if best_doc is not None else render(chosen_scale, best_margin)
+
         pdf_bytes = document.write_pdf()
 
         from .models import CachedCVPdf
-        CachedCVPdf.objects.update_or_create(pk=1, defaults={"pdf_data": pdf_bytes})
+        CachedCVPdf.objects.update_or_create(pk=1, defaults={
+            "pdf_data": pdf_bytes,
+            "last_scale": chosen_scale,
+            "last_signature_margin_mm": best_margin,
+        })
 
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
         response["Content-Disposition"] = 'attachment; filename="01_Aakash_Data_Engineer.pdf"'

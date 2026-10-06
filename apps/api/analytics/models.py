@@ -300,8 +300,14 @@ class KeyAchievement(models.Model):
 
 
 class CachedCVPdf(models.Model):
-    """Singleton cache of the generated CV PDF, regenerated only when career data changes."""
-    pdf_data = models.BinaryField()
+    """Singleton cache of the generated CV PDF, regenerated only when career data
+    changes. pdf_data is cleared (not the whole row) on invalidation, so the
+    auto-fit scale/margin from the last successful render survive as a fast-path
+    hint - most edits don't change page-fit at all, so re-rendering can usually
+    reuse the known-good values instead of re-searching from scratch."""
+    pdf_data = models.BinaryField(null=True, blank=True)
+    last_scale = models.FloatField(null=True, blank=True)
+    last_signature_margin_mm = models.IntegerField(null=True, blank=True)
     generated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
@@ -323,7 +329,9 @@ _CV_RELEVANT_MODELS = None  # set after all model classes are defined below
 @receiver(post_delete)
 def invalidate_cv_cache(sender, **kwargs):
     if _CV_RELEVANT_MODELS and sender in _CV_RELEVANT_MODELS:
-        CachedCVPdf.objects.filter(pk=1).delete()
+        # Clear only the cached bytes, not the whole row - keeps last_scale/
+        # last_signature_margin_mm around as a fast-path hint for the next render.
+        CachedCVPdf.objects.filter(pk=1).update(pdf_data=None)
 
 
 _CV_RELEVANT_MODELS = {
