@@ -5,6 +5,7 @@ from django.contrib import messages
 from .models import CaseStudy, BlogPost, ADR
 import re
 from .models import CaseStudy, BlogPost, ADR, ProfileStatus, ContactMessage
+from .models import Platform
 
 
 def fetch_from_github(modeladmin, request, queryset):
@@ -89,3 +90,10 @@ class ProfileStatusAdmin(admin.ModelAdmin):
 class ContactMessageAdmin(admin.ModelAdmin):
     list_display = ('name', 'email', 'created_at', 'is_read')
     list_filter = ('is_read',)
+
+
+@admin.register(Platform)
+class PlatformAdmin(admin.ModelAdmin):
+    list_display = ("name", "tagline", "badge", "url", "order", "is_published")
+    list_editable = ("order", "is_published")
+    prepopulated_fields = {"slug": ("name",)}

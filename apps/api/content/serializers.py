@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CaseStudy, BlogPost, ADR, ProfileStatus, ContactMessage
+from .models import CaseStudy, BlogPost, ADR, ProfileStatus, ContactMessage, Platform
 
 
 class CaseStudySerializer(serializers.ModelSerializer):
@@ -38,3 +38,9 @@ class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactMessage
         fields = ['id', 'name', 'email', 'message', 'created_at', 'is_read']
+
+
+class PlatformSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Platform
+        fields = ["id", "name", "slug", "tagline", "url", "icon", "badge", "open_in_new_tab"]

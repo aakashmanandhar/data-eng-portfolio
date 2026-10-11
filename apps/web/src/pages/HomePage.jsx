@@ -10,6 +10,7 @@ import OrgArchetypeSlide from '../components/OrgArchetypeSlide'
 import OssLandscapeSlide from '../components/OssLandscapeSlide'
 import NewsIntelligenceSlide from '../components/NewsIntelligenceSlide'
 import AIAgentPipelineSlide from '../components/AIAgentPipelineSlide'
+import PlatformsMenu from '../components/PlatformsMenu'
 import { CheckCircle2, XCircle, Clock, BarChart3, Sparkles, Newspaper, DollarSign, Globe2, Bot, MessageCircle, FileSearch, Wrench, Github, History, Users, Package, Loader2 } from 'lucide-react'
 
 function relativeTime(dateStr) {
@@ -192,6 +193,7 @@ function HomePage() {
           <a href="#projects">Projects</a>
           <a href="#explorer" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })) }}>Explorer</a>
           <Link to="/architecture">Architecture</Link>
+          <PlatformsMenu />
           <Link to="/career" className="nav-link-highlight">Career</Link>
           <a href="#adrs">ADRs</a>
           <a href="#about">About</a>

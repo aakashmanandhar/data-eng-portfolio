@@ -97,3 +97,33 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.email}) - {self.created_at.strftime('%Y-%m-%d')}"
+
+
+class Platform(models.Model):
+    ICON_CHOICES = [
+        ("layers", "Layers (general platform)"),
+        ("database", "Database"),
+        ("cpu", "CPU / ML model"),
+        ("brain", "Brain / AI"),
+        ("chart", "Analytics chart"),
+        ("workflow", "Pipeline / workflow"),
+        ("cloud", "Cloud"),
+        ("globe", "Globe / geo"),
+        ("rocket", "Rocket"),
+    ]
+
+    name = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=80, unique=True)
+    tagline = models.CharField(max_length=140, help_text="One short line shown under the name in the nav dropdown")
+    url = models.CharField(max_length=300, help_text="Full URL (https://...) or a site path like /aurora/")
+    icon = models.CharField(max_length=20, choices=ICON_CHOICES, default="layers")
+    badge = models.CharField(max_length=30, blank=True, help_text="Optional small label, e.g. Live, New, Beta")
+    open_in_new_tab = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0, help_text="Lower numbers appear first")
+    is_published = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order", "name"]
+
+    def __str__(self):
+        return self.name

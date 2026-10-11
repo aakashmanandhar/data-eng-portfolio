@@ -3,8 +3,8 @@ from django.core.mail import EmailMultiAlternatives
 import os
 from rest_framework.permissions import AllowAny
 from rest_framework.authentication import SessionAuthentication
-from .models import CaseStudy, BlogPost, ADR, ProfileStatus, ContactMessage
-from .serializers import CaseStudySerializer, BlogPostSerializer, ADRSerializer, ProfileStatusSerializer, ContactMessageSerializer
+from .models import CaseStudy, BlogPost, ADR, ProfileStatus, ContactMessage, Platform
+from .serializers import CaseStudySerializer, BlogPostSerializer, ADRSerializer, ProfileStatusSerializer, ContactMessageSerializer, PlatformSerializer
 
 class CaseStudyListView(generics.ListAPIView):
     serializer_class = CaseStudySerializer
@@ -117,3 +117,11 @@ class ContactMessageCreateView(generics.CreateAPIView):
                 email.attach(img)
 
         email.send(fail_silently=True)
+
+
+class PlatformListView(generics.ListAPIView):
+    serializer_class = PlatformSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return Platform.objects.filter(is_published=True)

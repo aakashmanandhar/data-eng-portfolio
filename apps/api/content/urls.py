@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CaseStudyListView, CaseStudyDetailView, BlogPostListView, ADRListView, ProfileStatusView, ContactMessageCreateView
+from .views import CaseStudyListView, CaseStudyDetailView, BlogPostListView, ADRListView, ProfileStatusView, ContactMessageCreateView, PlatformListView
 
 urlpatterns = [
     path('case-studies/', CaseStudyListView.as_view(), name='case-study-list'),
@@ -8,4 +8,5 @@ urlpatterns = [
     path('adrs/', ADRListView.as_view(), name='adr-list'),
     path('profile-status/', ProfileStatusView.as_view(), name='profile-status'),
     path('contact/', ContactMessageCreateView.as_view(), name='contact'),
+    path('platforms/', PlatformListView.as_view(), name='platform-list'),
 ]
