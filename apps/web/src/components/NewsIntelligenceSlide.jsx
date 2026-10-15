@@ -9,7 +9,8 @@ const PAGE = 10
 
 const COLORS = { positive: '#3B6D11', negative: '#D14545', neutral: '#8A8875' }
 const sentimentColor = (s) => (s > 0.15 ? COLORS.positive : s < -0.15 ? COLORS.negative : COLORS.neutral)
-const sentimentWord = (s) => (s > 0.15 ? 'Positive' : s < -0.15 ? 'Negative' : 'Mixed')
+const sentimentWord = (s) => (s > 0.15 ? 'Positive' : s < -0.15 ? 'Negative' : 'Neutral')
+const overallWord = (s) => (s > 0.4 ? 'Positive' : s > 0.15 ? 'Leaning positive' : s < -0.4 ? 'Negative' : s < -0.15 ? 'Leaning negative' : 'Neutral')
 const isScored = (a) => a.sentiment_label != null && a.sentiment_label !== ''
 const okJson = (r) => { if (!r.ok) throw new Error(String(r.status)); return r.json() }
 
@@ -35,7 +36,7 @@ function SentimentBar({ score }) {
   const color = sentimentColor(score)
   return (
     <div className="nx-sbar">
-      <b style={{ color }}>{sentimentWord(score)}</b>
+      <b style={{ color }}>{overallWord(score)}</b>
       <div className="nx-sbar-track"><span style={{ left: `${pct}%`, background: color }} /></div>
       <div className="nx-sbar-scale"><span>Negative</span><span>Positive</span></div>
     </div>
@@ -199,7 +200,7 @@ function NewsIntelligenceSlide() {
   const traceBtn = (model) => (
     <button type="button" className="nx-trace" onClick={() => setTrace(model)} aria-label="Trace where this number comes from" title="Trace where this number comes from"><Search size={12} /></button>
   )
-  const counts = { positive: 0, mixed: 0, negative: 0 }
+  const counts = { positive: 0, neutral: 0, negative: 0 }
   base.filter(isScored).forEach((a) => { counts[sentimentWord(a.sentiment_polarity || 0).toLowerCase()] += 1 })
   const maxDay = Math.max(1, ...days.map((d) => d.n))
 
@@ -218,7 +219,7 @@ function NewsIntelligenceSlide() {
 
       <div className="gx-kpis nx-kpis">
         <div className="gx-kpi">{traceBtn('silver_news_articles')}<span className="gx-kpi-ico"><Newspaper size={16} /></span><div><div className="gx-kpi-val">{kpi.total_articles}</div><div className="gx-kpi-lbl">Articles tracked</div></div></div>
-        <div className="gx-kpi">{traceBtn('fact_keyword_mention')}<span className="gx-kpi-ico"><Hash size={16} /></span><div><div className="gx-kpi-val">{kpi.top_keyword?.keyword || '—'}</div><div className="gx-kpi-lbl">Top topic{kpi.top_keyword ? ` · ${Math.round(kpi.top_keyword.total_mentions)} mentions` : ''}</div></div></div>
+        <div className="gx-kpi">{traceBtn('fact_keyword_mention')}<span className="gx-kpi-ico"><Hash size={16} /></span><div><div className="gx-kpi-val">{kpi.top_keyword?.keyword || '—'}</div><div className="gx-kpi-lbl">Top topic overall{kpi.top_keyword ? ` · ${Math.round(kpi.top_keyword.total_mentions)} mentions` : ''}</div></div></div>
         <div className="gx-kpi"><span className="gx-kpi-ico"><Globe2 size={16} /></span><div><div className="gx-kpi-val">{sources.length}</div><div className="gx-kpi-lbl">Sources in the latest {base.length}</div></div></div>
         <div className="gx-kpi"><span className="gx-kpi-ico"><Clock size={16} /></span><div><div className="gx-kpi-val">{freshest ? timeAgo(freshest) : '—'}</div><div className="gx-kpi-lbl">Freshest story</div></div></div>
         <div className="gx-kpi nx-kpi-sent">{traceBtn('fact_keyword_sentiment_trend')}
@@ -251,7 +252,7 @@ function NewsIntelligenceSlide() {
           </div>
           {anyScored && (
             <div className="nx-sent-filter" role="group" aria-label="Filter by sentiment">
-              {[['all', 'All'], ['positive', 'Positive'], ['mixed', 'Mixed'], ['negative', 'Negative'], ['unscored', 'Unscored']].map(([id, label]) => (
+              {[['all', 'All'], ['positive', 'Positive'], ['neutral', 'Neutral'], ['negative', 'Negative'], ['unscored', 'Unscored']].map(([id, label]) => (
                 <button key={id} type="button" className={sent === id ? 'on' : ''} onClick={() => setSent(id)}>{label}</button>
               ))}
             </div>
@@ -304,7 +305,7 @@ function NewsIntelligenceSlide() {
         <div className="gx-col">
           <section className="gx-card" aria-label="Most-discussed topics">
             <div className="nx-card-top">
-              <div><div className="gx-card-title">Most-discussed topics</div><p className="gx-card-sub">{anyScored ? 'Sized by coverage, coloured by sentiment.' : 'Ranked by how often each topic is covered.'}</p></div>
+              <div><div className="gx-card-title">Most-discussed topics</div><p className="gx-card-sub">{anyScored ? `Latest ${base.length} stories · sized by coverage, coloured by sentiment.` : `Latest ${base.length} stories · ranked by how often each topic is covered.`}</p></div>
               <div className="nx-seg" role="group" aria-label="Chart style">
                 <button type="button" className={view === 'bars' ? 'on' : ''} onClick={() => setView('bars')}>Bars</button>
                 <button type="button" className={view === 'bubbles' ? 'on' : ''} onClick={() => setView('bubbles')}>Bubbles</button>
@@ -327,7 +328,7 @@ function NewsIntelligenceSlide() {
               <div className="nx-legend">
                 <span><i style={{ background: COLORS.positive }} />Positive</span>
                 <span><i style={{ background: COLORS.negative }} />Negative</span>
-                <span><i style={{ background: COLORS.neutral }} />Mixed</span>
+                <span><i style={{ background: COLORS.neutral }} />Neutral</span>
               </div>
             )}
             {lead && (
@@ -360,7 +361,7 @@ function NewsIntelligenceSlide() {
             {anyScored && base.some(isScored) && (
               <div className="nx-split" aria-label="Sentiment split">
                 <span style={{ flex: counts.positive || 0.001, background: COLORS.positive }} title={`${counts.positive} positive`} />
-                <span style={{ flex: counts.mixed || 0.001, background: COLORS.neutral }} title={`${counts.mixed} mixed`} />
+                <span style={{ flex: counts.neutral || 0.001, background: COLORS.neutral }} title={`${counts.neutral} neutral`} />
                 <span style={{ flex: counts.negative || 0.001, background: COLORS.negative }} title={`${counts.negative} negative`} />
               </div>
             )}
