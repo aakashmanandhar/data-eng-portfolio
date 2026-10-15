@@ -350,7 +350,6 @@ function GisAiMapSlide() {
           <div className="eyebrow gx-eyebrow">AI Adoption Map · Where the shift is happening</div>
           <p className="gx-sub">Each country is coloured by what its developers explore on GitHub: AI-native tools or traditional data engineering tools. Spin the globe and click a country.</p>
         </div>
-        <span className="gx-live"><i />Updated daily</span>
       </div>
 
       <div className="gx-kpis">

@@ -1,293 +1,353 @@
-import { useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  DollarSign, Github, Globe2, History, Package, Newspaper, Bot, TrendingUp,
-  ChevronDown, Clock, Zap, Database, Server, Layers, ShieldCheck, Sparkles
+  ArrowLeft, Moon, Sun, Play, Pause, ChevronLeft, ChevronRight, Search, SearchX, Clock, Database,
+  Sparkles, Github, ArrowUpRight, Table2, ChevronDown, Layers
 } from 'lucide-react'
+import {
+  SECTIONS, STATS, FLOW, GROUPS, PIPELINES, MODEL_CATS, ML_MODELS, CAT_META, PRINCIPLES, STACK
+} from './archData'
 import '../App.css'
 
-const stack = [
-  'Django', 'Django REST Framework', 'React', 'PostgreSQL', 'pgvector',
-  'dbt', 'Terraform', 'Docker', 'Jenkins', 'Apache Airflow', 'Nginx', 'Cloudflare',
-  'Google Gemini API', 'Adzuna API', 'GitHub API', 'Stack Overflow Developer Survey',
-  'scikit-learn', 'react-leaflet', 'Recharts', 'OSS Insight API', 'Practical Data Community Survey',
-  'ai-jobs-net-salaries', 'Currents API', 'Hugging Face Transformers', 'arXiv API',
-  'Semantic Scholar API', 'OpenAlex API', 'Crossref API', 'DBLP API', 'Zenodo API'
-]
+const REPO_URL = 'https://github.com/aakashmanandhar/data-eng-portfolio'
+const reduced = () => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-const PIPELINES = [
-  {
-    id: 'jobmarket',
-    title: 'Job Market & Tools Explorer',
-    tagline: 'The project that started it all — real salary and hiring data across 20 countries.',
-    Icon: DollarSign,
-    color: '#2563EB',
-    orchestrator: 'Jenkins',
-    schedule: 'Every 6 hours',
-    sources: [
-      { name: 'Adzuna API', detail: 'salary histograms + job counts, 19 countries' },
-      { name: 'Stack Overflow Developer Survey', detail: 'tool usage + self-reported salary' },
-    ],
-    warehouse: 'dim_country, dim_tool → fact_job_market, fact_tool_preference_global',
-    note: 'The dedicated dashboard for this pipeline was retired — its data is still live and queryable, just through the RAG assistant now rather than a standalone UI.',
-  },
-  {
-    id: 'github',
-    title: 'GitHub Trends',
-    tagline: 'Tracking the real shift toward AI-native data engineering tooling, daily.',
-    Icon: Github,
-    color: '#16A34A',
-    orchestrator: 'Apache Airflow',
-    schedule: 'Daily · shared DAG',
-    sources: [
-      { name: 'GitHub API', detail: '122 tracked repos across 11 cohorts (traditional vs. AI-native)' },
-    ],
-    warehouse: 'dim_github_repo, dim_github_org → fact_github_repo_trend (LAG() growth)',
-    note: 'Two orchestrators, deliberately — Airflow proves genuine parallel fan-out/fan-in scheduling alongside Jenkins\' simple linear cron.',
-  },
-  {
-    id: 'gis',
-    title: 'Interactive AI/ML GIS Map',
-    tagline: 'A choropleth map of where the AI-native shift is actually happening, geographically.',
-    Icon: Globe2,
-    color: '#0D9488',
-    orchestrator: 'Apache Airflow',
-    schedule: 'Daily · shares GitHub Trends DAG',
-    sources: [
-      { name: 'OSS Insight API', detail: 'per-country stargazer breakdown, ~122 repos' },
-    ],
-    warehouse: 'fact_country_ai_signal, fact_country_tool_signal, dim_country_archetype',
-    note: 'Built entirely on top of GitHub Trends\' own repo universe — no new API scope, just a new lens on existing data.',
-  },
-  {
-    id: 'survey',
-    title: 'Historical Survey Analytics',
-    tagline: 'A full decade of Stack Overflow tool-adoption data, plus a 2026 industry survey.',
-    Icon: History,
-    color: '#7C3AED',
-    orchestrator: 'Apache Airflow',
-    schedule: 'Manual-trigger only',
-    sources: [
-      { name: 'SO Developer Survey (Historical)', detail: '2016-2025, 720,140 respondents, 3 harmonized naming eras' },
-      { name: 'Practical Data Community Survey', detail: '2026 snapshot, 1,101 respondents' },
-    ],
-    warehouse: 'fact_de_tool_by_country_year, fact_de_tool_ranking',
-    note: 'Deliberately not on a live schedule — neither source has a public API, so a human downloads new data first, then this DAG handles everything after that.',
-  },
-  {
-    id: 'oss',
-    title: 'OSS Ecosystem Landscape',
-    tagline: 'Org leaderboard, tool co-adoption clustering, hype-vs-reality gap, lifecycle staging.',
-    Icon: Package,
-    color: '#D97706',
-    orchestrator: 'Apache Airflow',
-    schedule: 'Daily · shares GitHub Trends DAG',
-    sources: [
-      { name: 'GitHub Trends\' own repo universe', detail: 'no new orchestration, reuses Pipeline 2\'s data' },
-    ],
-    warehouse: 'derived analytics on top of dim_github_repo / fact_github_repo_trend',
-    note: 'k-means cluster IDs aren\'t stable across runs — real bug found and fixed with anchor-repo detection instead of a fragile fixed-ID mapping.',
-  },
-  {
-    id: 'salary',
-    title: 'Salary & Career Intelligence',
-    tagline: 'A live salary predictor, real forecasting, and career clustering from 151,445 respondents.',
-    Icon: TrendingUp,
-    color: '#DB2777',
-    orchestrator: 'Apache Airflow',
-    schedule: 'Weekly · own dedicated DAG',
-    sources: [
-      { name: 'ai-jobs-net-salaries', detail: 'weekly-updated public GitHub dataset, 2021-2025+' },
-    ],
-    warehouse: 'fact_salary_by_experience, fact_salary_by_tool, fact_remote_ratio_trend, fact_top_paying_title_by_year',
-    note: 'The predictor\'s first model was honest but weak (R²=0.109) — adding job_title as a feature more than doubled accuracy to R²=0.2475.',
-  },
-  {
-    id: 'news',
-    title: 'News & Sentiment Intelligence',
-    tagline: 'Real-time sentiment scoring on data engineering news and discussion.',
-    Icon: Newspaper,
-    color: '#F97316',
-    orchestrator: 'Apache Airflow',
-    schedule: 'Daily · shared DAG',
-    sources: [
-      { name: 'Currents API', detail: '70-term curated DE/AI-DE keyword sweep' },
-    ],
-    warehouse: 'dim_keyword, dim_source → fact_keyword_mention, fact_keyword_sentiment_trend',
-    note: 'Sentiment scored via a real Hugging Face transformer (cardiffnlp/twitter-roberta-base-sentiment-latest), confidence-weighted.',
-  },
-  {
-    id: 'research',
-    title: 'AI & Data Engineering Research',
-    tagline: 'The newest and most feature-dense — a self-healing pipeline across 9 real academic sources.',
-    Icon: Bot,
-    color: '#4F46E5',
-    orchestrator: 'Apache Airflow',
-    schedule: 'Daily · own dedicated DAG (19 tasks)',
-    sources: [
-      { name: 'arXiv, Semantic Scholar, OpenAlex, Crossref, DBLP, Hugging Face Papers, Zenodo', detail: '93-keyword DE/AI-DE sweep across all 7' },
-      { name: 'GitHub + Hacker News', detail: 'tooling and discussion signal' },
-    ],
-    warehouse: 'dim_research_source (9 rows), fact_research_signal (UNION ALL 9), fact_tool_adoption',
-    note: 'The most significant bug in the whole platform: sorting all 9 sources by recency alone starved 5 of them to zero representation. Fixed with fair per-source sampling.',
-  },
-]
+function CountUp({ to, suffix = '' }) {
+  const [n, setN] = useState(reduced() ? to : 0)
+  useEffect(() => {
+    if (reduced()) return undefined
+    let raf
+    const t0 = performance.now()
+    const step = (t) => {
+      const p = Math.min(1, (t - t0) / 1000)
+      setN(Math.round(to * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [to])
+  return <>{n}{suffix}</>
+}
 
-const ML_MODELS = [
-  ['AI Adoption Forecast', 'GitHub + arXiv + HN, LinearRegression', 'Forecasts AI tool adoption'],
-  ['DE Tool Forecast', '10yr SO Survey, per-country + overall', 'Forecasts DE tool usage'],
-  ['Tool Momentum Staging', 'Emerging/Accelerating/Mature/Declining', 'Stages tools by lifecycle'],
-  ['3-Year Salary Forecast', 'Real statistical prediction intervals', 'Forecasts salary trends'],
-  ['7-Day Research Forecast', 'LinearRegression, daily paper volume', 'Predicts daily paper volume'],
-  ['Country AI Archetypes', 'k-means, 4 clusters', 'Clusters countries by AI maturity'],
-  ['Org Maturity Clustering', 'k-means, 4 archetypes', 'Clusters organizations'],
-  ['Career Fit Recommender', 'Growth + salary joined', 'Recommends best-fit careers'],
-  ['Career Archetype Clustering', 'k-means, 93 job titles', 'Groups similar job roles'],
-  ['Growth Forecast', 'Per-country LinearRegression', 'Forecasts country growth'],
-  ['Tool Co-Adoption Clustering', 'k-means on country pattern', 'Finds co-adoption patterns'],
-  ['Skill Growth Ranking', 'Per-tool salary regression slope', 'Ranks skills by growth'],
-  ['Live Salary Predictor', 'RandomForest, real-time inputs', 'Predicts live salaries'],
-  ['Sentiment Scoring', 'HF transformer, confidence-weighted', 'Real-time sentiment scoring'],
-  ['Keyword Growth/Breakout Detection', 'Honestly-gated, threshold-based', 'Detects real breakouts, not noise'],
-]
-
-function PipelineCard({ pipeline, isOpen, onToggle }) {
-  const { Icon, color } = pipeline
+function SectionHead({ id, eyebrow, title, sub, right }) {
   return (
-    <div className="arch-pipeline-card" style={isOpen ? { borderColor: color } : {}}>
-      <button className="arch-pipeline-header" onClick={onToggle}>
-        <span className="arch-pipeline-icon" style={{ background: `${color}22`, color }}>
-          <Icon size={18} />
-        </span>
-        <div className="arch-pipeline-header-text">
-          <span className="arch-pipeline-title">{pipeline.title}</span>
-          <span className="arch-pipeline-tagline">{pipeline.tagline}</span>
-        </div>
-        <ChevronDown size={18} className={`arch-pipeline-chevron ${isOpen ? 'arch-pipeline-chevron-open' : ''}`} />
-      </button>
-      {isOpen && (
-        <div className="arch-pipeline-body">
-          <div className="arch-pipeline-meta-row">
-            <span className="arch-pipeline-meta"><Clock size={12} /> {pipeline.orchestrator} · {pipeline.schedule}</span>
-          </div>
-          <div className="arch-pipeline-section">
-            <span className="arch-pipeline-section-label"><Database size={12} /> Sources</span>
-            {pipeline.sources.map((s, i) => (
-              <div key={i} className="arch-pipeline-source">
-                <strong>{s.name}</strong> — {s.detail}
-              </div>
-            ))}
-          </div>
-          <div className="arch-pipeline-section">
-            <span className="arch-pipeline-section-label"><Layers size={12} /> Warehouse</span>
-            <div className="arch-pipeline-source">{pipeline.warehouse}</div>
-          </div>
-          <div className="arch-pipeline-note">
-            <Sparkles size={12} /> {pipeline.note}
-          </div>
-        </div>
-      )}
-    </div>
+    <header className="ar-head">
+      <div>
+        <div className="ar-eyebrow">{eyebrow}</div>
+        <h2 id={`${id}-h`}>{title}</h2>
+        {sub && <p>{sub}</p>}
+      </div>
+      {right}
+    </header>
   )
 }
 
 function ArchitecturePage() {
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))
+  const [scrolled, setScrolled] = useState(false)
+  const [activeSec, setActiveSec] = useState('')
+  const [flowIdx, setFlowIdx] = useState(0)
+  const [playing, setPlaying] = useState(() => !reduced())
+  const [flowSeen, setFlowSeen] = useState(false)
+  const [group, setGroup] = useState('all')
   const [openId, setOpenId] = useState('research')
+  const [cat, setCat] = useState('All')
+  const [query, setQuery] = useState('')
+  const [openP, setOpenP] = useState({})
+  const progress = useRef(null)
+  const flowRef = useRef(null)
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    try { localStorage.setItem('theme', theme) } catch { /* private mode */ }
+  }, [theme])
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    const prev = document.title
+    document.title = 'Architecture | Aakash Manandhar'
+    return () => { document.title = prev }
+  }, [])
+  // progress bar, header state and active section (scroll-spy)
+  useEffect(() => {
+    let tick = false
+    const run = () => {
+      tick = false
+      const y = window.scrollY
+      const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+      setScrolled(y > 160)
+      if (progress.current) progress.current.style.transform = `scaleX(${Math.min(1, y / max)})`
+      let cur = ''
+      SECTIONS.forEach((s) => {
+        const el = document.getElementById(s.id)
+        if (el && el.getBoundingClientRect().top <= 140) cur = s.id
+      })
+      if (y + window.innerHeight >= document.documentElement.scrollHeight - 4) cur = SECTIONS[SECTIONS.length - 1].id
+      setActiveSec(cur)
+    }
+    const onScroll = () => { if (!tick) { tick = true; requestAnimationFrame(run) } }
+    run()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll) }
+  }, [])
+
+  // scroll-reveal
+  useEffect(() => {
+    const els = [...document.querySelectorAll('.ar-rv')]
+    if (reduced() || !('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('in')); return undefined }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) } })
+    }, { threshold: 0.08 })
+    els.forEach((e) => { e.classList.add('rv'); io.observe(e) })
+    return () => io.disconnect()
+  }, [])
+
+  // data-flow diagram: autoplay only while it is on screen
+  useEffect(() => {
+    const el = flowRef.current
+    if (!el || !('IntersectionObserver' in window)) { setFlowSeen(true); return undefined }
+    const io = new IntersectionObserver(([e]) => setFlowSeen(e.isIntersecting), { threshold: 0.35 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!playing || !flowSeen) return undefined
+    const t = setInterval(() => setFlowIdx((i) => (i + 1) % FLOW.length), 5200)
+    return () => clearInterval(t)
+  }, [playing, flowSeen])
+
+  const pick = (i) => { setFlowIdx((i + FLOW.length) % FLOW.length); setPlaying(false) }
+
+  const goTo = (id) => {
+    const el = document.getElementById(id)
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 112, behavior: reduced() ? 'auto' : 'smooth' })
+  }
+
+  const list = useMemo(() => PIPELINES.filter((p) => group === 'all' || p.group === group), [group])
+  const sel = list.find((p) => p.id === openId) || list[0]
+  const counts = useMemo(() => {
+    const c = { all: PIPELINES.length }
+    PIPELINES.forEach((p) => { c[p.group] = (c[p.group] || 0) + 1 })
+    return c
+  }, [])
+
+  const models = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return ML_MODELS.filter(([name, tech, desc, c]) =>
+      (cat === 'All' || c === cat) && (!q || `${name} ${tech} ${desc} ${c}`.toLowerCase().includes(q)))
+  }, [cat, query])
+  const catCount = (c) => (c === 'All' ? ML_MODELS.length : ML_MODELS.filter((m) => m[3] === c).length)
+
+  const node = FLOW[flowIdx]
+  const NodeIcon = node.icon
   return (
-    <div className="detail-page">
-      <Link to="/" className="back-link">← Back to portfolio</Link>
-      <h1>How This Site Works</h1>
-      <p style={{ color: 'var(--muted)', fontSize: '14.5px', lineHeight: 1.7, marginBottom: '24px' }}>
-        This portfolio isn't just a static page describing my work — it's a live, self-hosted data platform
-        running eight independently-orchestrated pipelines, 15+ real trained ML models, 2 self-healing AI
-        agents, and one RAG assistant grounded in all of it. Here's the architecture behind every piece.
-      </p>
-
-      <div className="arch-stats-row">
-        <div className="arch-stat"><Server size={16} color="var(--accent1)" /><div><span className="arch-stat-value">8</span><span className="arch-stat-label">Pipelines</span></div></div>
-        <div className="arch-stat"><Zap size={16} color="#D97706" /><div><span className="arch-stat-value">4</span><span className="arch-stat-label">Orchestration Schedules</span></div></div>
-        <div className="arch-stat"><TrendingUp size={16} color="#16A34A" /><div><span className="arch-stat-value">15+</span><span className="arch-stat-label">ML Models</span></div></div>
-        <div className="arch-stat"><ShieldCheck size={16} color="#7C3AED" /><div><span className="arch-stat-value">2</span><span className="arch-stat-label">Self-Healing Agents</span></div></div>
-      </div>
-
-      <h2 style={{ fontSize: '18px', marginTop: '30px', marginBottom: '14px' }}>The 8 Pipelines</h2>
-      <div className="arch-pipeline-list">
-        {PIPELINES.map((p) => (
-          <PipelineCard key={p.id} pipeline={p} isOpen={openId === p.id} onToggle={() => setOpenId(openId === p.id ? null : p.id)} />
-        ))}
-      </div>
-
-      <h2 style={{ fontSize: '18px', marginTop: '34px', marginBottom: '14px' }}>ML & Analytics Layer — 15+ real models</h2>
-      <div className="arch-model-table">
-        <div className="arch-model-row arch-model-header">
-          <span>Model</span>
-          <span>Technique</span>
-          <span>What It Does</span>
-        </div>
-        {ML_MODELS.map(([name, tech, desc], i) => (
-          <div key={i} className="arch-model-row">
-            <span className="arch-model-name">{name}</span>
-            <span className="arch-model-tech">{tech}</span>
-            <span className="arch-model-desc">{desc}</span>
+    <>
+      <div className={`cd-bar${scrolled ? ' scrolled' : ''}`}>
+        <div className="cd-bar-in">
+          <Link to="/" className="cd-back"><ArrowLeft size={15} /> <span>Portfolio</span></Link>
+          <span className="cd-bar-title">How this site works</span>
+          <div className="cd-bar-actions">
+            <a className="cd-btn sm" href={REPO_URL} target="_blank" rel="noopener noreferrer"><Github size={14} /> <span>Source</span></a>
+            <button type="button" className="cd-icon" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
+              {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
           </div>
-        ))}
+        </div>
+        <div className="cd-progress" aria-hidden="true"><i ref={progress} /></div>
       </div>
 
-      <h2 style={{ fontSize: '18px', marginTop: '34px', marginBottom: '10px' }}>Why these choices</h2>
-      <div style={{ fontSize: '13.5px', color: 'var(--muted)', lineHeight: 1.8 }}>
-        <p style={{ marginBottom: '14px' }}>
-          <strong style={{ color: 'var(--text)' }}>ELT over ETL:</strong> raw data lands untouched in Postgres first (bronze),
-          and all transformation logic lives in version-controlled dbt models — so the source of truth is always inspectable,
-          and transformations can be rebuilt without re-fetching from source APIs.
-        </p>
-        <p style={{ marginBottom: '14px' }}>
-          <strong style={{ color: 'var(--text)' }}>Medallion architecture:</strong> bronze/silver/gold schemas separate raw ingestion,
-          cleaning, and business-ready star-schema modeling — each layer testable independently via dbt tests.
-        </p>
-        <p style={{ marginBottom: '14px' }}>
-          <strong style={{ color: 'var(--text)' }}>Four orchestration schedules, deliberately:</strong> Jenkins for the job-market
-          pipeline's simple linear cron (every 6 hours), one shared Airflow DAG for GitHub Trends/GIS Map/OSS Landscape/News
-          Intelligence (daily, genuine parallel fan-out/fan-in), Salary's own dedicated weekly DAG (matching its real update
-          cadence), and the AI & DE Research pipeline's own dedicated daily DAG (19 tasks, not shared with anything else).
-        </p>
-        <p style={{ marginBottom: '14px' }}>
-          <strong style={{ color: 'var(--text)' }}>Self-hosted, not managed:</strong> every piece — Postgres, Jenkins, Airflow,
-          Django, React, dbt — runs in Docker on a single VPS I administer directly, giving full control over cost and
-          configuration at the expense of the convenience managed services provide.
-        </p>
-        <p style={{ marginBottom: '14px' }}>
-          <strong style={{ color: 'var(--text)' }}>RAG grounded in real data:</strong> the chat assistant routes questions
-          to either live SQL over all eight pipelines' gold schemas or vector retrieval over embedded case study content — it's
-          built to say "I don't know" rather than hallucinate when source material doesn't cover something.
-        </p>
-        <p style={{ marginBottom: '14px' }}>
-          <strong style={{ color: 'var(--text)' }}>Honest data-sufficiency gates, everywhere:</strong> every forecast model
-          in this system reports "insufficient_data" below a real threshold rather than fabricating a confident trend from
-          too few points — the same discipline that also drives the two self-healing AI agents to log honestly, even when
-          their log is empty because nothing's gone wrong yet.
-        </p>
-        <p style={{ marginBottom: '14px' }}>
-          <strong style={{ color: 'var(--text)' }}>Cluster IDs are not stable — name by content, not position:</strong> a real
-          bug found via testing against the server's independently-accumulated data: k-means assigns numeric cluster IDs
-          arbitrarily, so the same semantic group can get a different ID from one run to the next. Every clustering model
-          here names clusters by inspecting real anchor members or centroid characteristics, never by a fixed ID mapping.
-        </p>
-        <p>
-          <strong style={{ color: 'var(--text)' }}>Fair sampling over naive sorting:</strong> the newest lesson, from the
-          research pipeline — sorting 9 sources together by a shared "recency" field looked correct until it silently
-          starved sources whose date semantics differ. The fix generalizes: never trust one shared sort order across
-          genuinely heterogeneous sources.
-        </p>
-      </div>
+      <nav className="ar-nav" aria-label="Sections">
+        <div className="ar-nav-in">
+          {SECTIONS.map((s) => (
+            <button key={s.id} type="button" className={activeSec === s.id ? 'on' : ''} onClick={() => goTo(s.id)}>{s.label}</button>
+          ))}
+        </div>
+      </nav>
 
-      <h2 style={{ fontSize: '18px', marginTop: '30px', marginBottom: '14px' }}>Full stack</h2>
-      <div className="pills">
-        {stack.map((tech) => (
-          <span className="pill" key={tech}>{tech}</span>
-        ))}
-      </div>
-    </div>
+      <main className="ar-page">
+        <section className="ar-hero">
+          <div className="ar-eyebrow"><Sparkles size={13} /> Platform architecture</div>
+          <h1>How this site works</h1>
+          <p>
+            This portfolio isn't a static page describing my work. It is a live, self-hosted data platform:
+            eight independently orchestrated pipelines, 15+ trained ML models, two self-healing AI agents and one RAG
+            assistant grounded in all of it. Explore the architecture behind every piece.
+          </p>
+          <div className="ar-stats">
+            {STATS.map((s) => (
+              <div key={s.label} className="ar-stat" style={{ '--c': s.color }}>
+                <span className="ar-stat-ic"><s.icon size={18} /></span>
+                <div><strong><CountUp to={s.value} suffix={s.suffix} /></strong><small>{s.label}</small></div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="flow" className="ar-sec ar-rv" aria-labelledby="flow-h">
+          <SectionHead id="flow" eyebrow="End to end" title="From raw API to what you see"
+            sub="Seven stages. Click one, or let it play."
+            right={(
+              <button type="button" className="cd-btn sm" onClick={() => setPlaying(!playing)} aria-pressed={playing}>
+                {playing ? <Pause size={13} /> : <Play size={13} />} <span>{playing ? 'Pause' : 'Play tour'}</span>
+              </button>
+            )} />
+          <div className="ar-flow" ref={flowRef} role="tablist" aria-label="Data flow stages">
+            {FLOW.map((n, i) => (
+              <Fragment key={n.id}>
+                <button type="button" role="tab" aria-selected={i === flowIdx} style={{ '--c': n.color }}
+                  className={`ar-node${i === flowIdx ? ' on' : ''}${i < flowIdx ? ' done' : ''}`} onClick={() => pick(i)}>
+                  <span className="ar-node-ic"><n.icon size={20} /></span>
+                  <span className="ar-node-t"><b>{n.title}</b><small>{n.short}</small></span>
+                </button>
+                {i < FLOW.length - 1 && <span className={`ar-link${i < flowIdx ? ' done' : ''}${i === flowIdx ? ' live' : ''}`} aria-hidden="true"><i /></span>}
+              </Fragment>
+            ))}
+          </div>
+          <div className="ar-panel" key={flowIdx} style={{ '--c': node.color }} role="tabpanel">
+            <div className="ar-panel-top">
+              <span className="ar-panel-ic"><NodeIcon size={22} /></span>
+              <div><small>Stage {flowIdx + 1} of {FLOW.length}</small><h3>{node.title}</h3></div>
+              <div className="ar-panel-nav">
+                <button type="button" className="cd-icon" onClick={() => pick(flowIdx - 1)} aria-label="Previous stage"><ChevronLeft size={16} /></button>
+                <button type="button" className="cd-icon" onClick={() => pick(flowIdx + 1)} aria-label="Next stage"><ChevronRight size={16} /></button>
+              </div>
+            </div>
+            <p>{node.text}</p>
+            <ul>{node.points.map((p) => <li key={p}>{p}</li>)}</ul>
+            <div className="ar-chips">{node.chips.map((c) => <span key={c}>{c}</span>)}</div>
+            {playing && flowSeen && <i className="ar-timer" key={`t${flowIdx}`} />}
+          </div>
+        </section>
+        <section id="pipelines" className="ar-sec ar-rv" aria-labelledby="pipelines-h">
+          <SectionHead id="pipelines" eyebrow="Eight pipelines" title="Pipeline explorer"
+            sub="Filter by orchestrator, then pick a pipeline to see its sources, schedule and warehouse tables." />
+          <div className="ar-filters" role="group" aria-label="Filter pipelines by orchestrator">
+            {GROUPS.map((g) => (
+              <button key={g.id} type="button" className={group === g.id ? 'on' : ''} onClick={() => setGroup(g.id)}>
+                {g.label} <em>{counts[g.id] || 0}</em>
+              </button>
+            ))}
+          </div>
+          <div className="ar-pl">
+            <div className="ar-pl-list" role="listbox" aria-label="Pipelines">
+              {list.map((p) => (
+                <button key={p.id} type="button" role="option" aria-selected={sel?.id === p.id} style={{ '--c': p.color }}
+                  className={`ar-pl-item${sel?.id === p.id ? ' on' : ''}`} onClick={() => setOpenId(p.id)}>
+                  <span className="ar-pl-ic"><p.Icon size={17} /></span>
+                  <span className="ar-pl-t"><b>{p.title}</b><small>{p.schedule}</small></span>
+                </button>
+              ))}
+            </div>
+            {sel && (
+              <article className="ar-pl-detail" key={sel.id} style={{ '--c': sel.color }}>
+                <div className="ar-pl-head">
+                  <span className="ar-panel-ic"><sel.Icon size={22} /></span>
+                  <div><h3>{sel.title}</h3><p>{sel.tagline}</p></div>
+                </div>
+                <div className="ar-badges">
+                  <span><Sparkles size={12} /> {sel.orchestrator}</span>
+                  <span><Clock size={12} /> {sel.schedule}</span>
+                </div>
+                <div className="ar-block">
+                  <h4><Database size={13} /> Sources <em>{sel.sources.length}</em></h4>
+                  {sel.sources.map((s) => (
+                    <div key={s.name} className="ar-src"><strong>{s.name}</strong><span>{s.detail}</span></div>
+                  ))}
+                </div>
+                <div className="ar-block">
+                  <h4><Table2 size={13} /> Warehouse tables <em>{sel.tables.length}</em></h4>
+                  <div className="ar-tables">
+                    {sel.tables.map((t) => <code key={t} className={t.startsWith('dim_') ? 'dim' : 'fact'}>{t}</code>)}
+                  </div>
+                </div>
+                <div className="ar-note"><Sparkles size={14} /> <span>{sel.note}</span></div>
+              </article>
+            )}
+          </div>
+        </section>
+
+        <section id="models" className="ar-sec ar-rv" aria-labelledby="models-h">
+          <SectionHead id="models" eyebrow="Analytics layer" title="15+ real, trained models"
+            sub="Search or filter by what the model does." />
+          <div className="ar-tools">
+            <div className="ar-filters" role="group" aria-label="Filter models by type">
+              {MODEL_CATS.map((c) => (
+                <button key={c} type="button" className={cat === c ? 'on' : ''} onClick={() => setCat(c)}>{c} <em>{catCount(c)}</em></button>
+              ))}
+            </div>
+            <label className="ar-search">
+              <Search size={15} />
+              <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search models, e.g. k-means" aria-label="Search models" />
+            </label>
+          </div>
+          <div className="ar-models">
+            {models.map(([name, tech, desc, c]) => {
+              const m = CAT_META[c]
+              return (
+                <div key={name} className="ar-model" style={{ '--c': m.color }}>
+                  <span className="ar-model-ic"><m.icon size={17} /></span>
+                  <div>
+                    <b>{name}</b>
+                    <p>{desc}</p>
+                    <code>{tech}</code>
+                    <em>{c}</em>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {models.length === 0 && (
+            <div className="sx-empty"><SearchX size={26} /><p>No model matches "{query}".</p></div>
+          )}
+          <p className="ar-count" aria-live="polite">Showing {models.length} of {ML_MODELS.length}</p>
+        </section>
+        <section id="principles" className="ar-sec ar-rv" aria-labelledby="principles-h">
+          <SectionHead id="principles" eyebrow="Why these choices" title="Design decisions and the bugs behind them"
+            sub="Several of these came from real failures found by testing against live data." />
+          <div className="ar-pr">
+            {PRINCIPLES.map((p) => {
+              const open = !!openP[p.title]
+              return (
+                <article key={p.title} className={`ar-pr-card${open ? ' open' : ''}`} style={{ '--c': p.color }}>
+                  <span className="ar-pr-ic"><p.icon size={18} /></span>
+                  <h3>{p.title}</h3>
+                  <p>{p.text}</p>
+                  <button type="button" onClick={() => setOpenP({ ...openP, [p.title]: !open })} aria-expanded={open}>
+                    {open ? 'Show less' : 'Read more'} <ChevronDown size={13} />
+                  </button>
+                </article>
+              )
+            })}
+          </div>
+        </section>
+
+        <section id="stack" className="ar-sec ar-rv" aria-labelledby="stack-h">
+          <SectionHead id="stack" eyebrow="Everything in the box" title="Full tech stack" />
+          <div className="ar-stack">
+            {STACK.map((g) => (
+              <div key={g.group} className="ar-stack-g" style={{ '--c': g.color }}>
+                <h3><i /> {g.group} <em>{g.items.length}</em></h3>
+                <div className="ar-chips">{g.items.map((t) => <span key={t}>{t}</span>)}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="ar-cta ar-rv">
+          <div>
+            <h2>See it running</h2>
+            <p>The dashboards on the home page are fed by exactly this pipeline. The code is open.</p>
+          </div>
+          <div className="ar-cta-btns">
+            <Link to="/#explorer" className="cd-btn primary"><Layers size={15} /> Open the dashboards</Link>
+            <a className="cd-btn" href={REPO_URL} target="_blank" rel="noopener noreferrer"><Github size={15} /> View the code <ArrowUpRight size={14} /></a>
+          </div>
+        </section>
+      </main>
+    </>
   )
 }
 

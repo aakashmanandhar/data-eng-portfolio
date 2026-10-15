@@ -69,7 +69,7 @@ function Carousel({ slides, labels = [], onSlideChange }) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTouchStart = (e) => {
-    if (e.target.closest('.leaflet-container, .gx-globe-wrap')) {
+    if (e.target.closest('.leaflet-container, .gx-globe-wrap, .gx-tabs')) {
       touchStartX.current = null
       return
     }

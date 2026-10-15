@@ -52,6 +52,18 @@ function HomePage() {
   const [pipelineRuns, setPipelineRuns] = useState([])
   const [activeSlide, setActiveSlide] = useState(0)
   const [githubPipelineRuns, setGithubPipelineRuns] = useState([])
+  // arriving from another page: honour #section links, otherwise start at the top
+  useEffect(() => {
+    const hash = window.location.hash
+    if (!hash || hash.startsWith('#slide=')) { window.scrollTo(0, 0); return undefined }
+    const t = setTimeout(() => {
+      try {
+        const el = hash === '#explorer' ? document.querySelector('.carousel') : document.querySelector(hash)
+        if (el) el.scrollIntoView()
+      } catch { /* invalid selector */ }
+    }, 150)
+    return () => clearTimeout(t)
+  }, [])
   const [salaryPipelineRuns, setSalaryPipelineRuns] = useState([])
   const [aiAgentPipelineRuns, setAiAgentPipelineRuns] = useState([])
   useEffect(() => {
