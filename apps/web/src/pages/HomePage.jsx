@@ -11,6 +11,8 @@ import OssLandscapeSlide from '../components/OssLandscapeSlide'
 import NewsIntelligenceSlide from '../components/NewsIntelligenceSlide'
 import AIAgentPipelineSlide from '../components/AIAgentPipelineSlide'
 import PlatformsMenu from '../components/PlatformsMenu'
+import CaseStudiesShowcase from '../components/CaseStudiesShowcase'
+import AdrExplorer from '../components/AdrExplorer'
 import { CheckCircle2, XCircle, Clock, BarChart3, Sparkles, Newspaper, DollarSign, Globe2, Bot, MessageCircle, FileSearch, Wrench, Github, History, Users, Package, Loader2 } from 'lucide-react'
 
 function relativeTime(dateStr) {
@@ -360,33 +362,11 @@ function HomePage() {
       />
 
       <section className="case-studies-section" id="projects">
-        <div className="eyebrow">Case Studies</div>
-        <div className="card-row">
-          {caseStudies.map((cs) => (
-            <div className={cs.is_featured ? "case-card featured" : "case-card"} key={cs.id}>
-              <div>
-                <h3>{cs.title}</h3>
-                <p>{cs.summary}</p>
-                <div className="pills">
-                  {cs.tech_stack.split(',').map((tech) => (
-                    <span className="pill" key={tech}>{tech.trim()}</span>
-                  ))}
-                </div>
-              </div>
-              <Link to={`/case-studies/${cs.slug}`} className="case-link">Read case study →</Link>
-            </div>
-          ))}
-        </div>
+        <CaseStudiesShowcase caseStudies={caseStudies} />
       </section>
 
       <section className="adr-section" id="adrs">
-        <div className="eyebrow">Architecture Decisions</div>
-        {adrs.map((adr) => (
-          <div className="adr-item" key={adr.id}>
-            <h4><span className="adr-tag">ADR-{String(adr.id).padStart(2, '0')}</span>{adr.title}</h4>
-            <p>{adr.decision}</p>
-          </div>
-        ))}
+        <AdrExplorer adrs={adrs} />
       </section>
 
       <section className="about-section" id="about">
