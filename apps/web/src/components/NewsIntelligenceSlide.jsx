@@ -1,3 +1,4 @@
+import { SlideSkeleton } from './SiteExtras'
 import { useState, useEffect } from 'react'
 import { hierarchy, pack } from 'd3-hierarchy'
 import LineageExplorer from './LineageExplorer'
@@ -123,10 +124,7 @@ function NewsIntelligenceSlide() {
   if (!kpi) {
     return (
       <div className="news-slide">
-        <div className="layer-pending">
-          <span className="layer-pending-icon">📡</span>
-          <div className="layer-pending-title">Loading live intelligence…</div>
-        </div>
+        <SlideSkeleton label="Loading live intelligence…" />
       </div>
     )
   }

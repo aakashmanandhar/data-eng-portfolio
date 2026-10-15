@@ -1,3 +1,4 @@
+import { SlideSkeleton } from './SiteExtras'
 import { useState, useEffect } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter, ZAxis, Label, AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts'
 import { useCountUp } from '../utils/useCountUp'
@@ -78,10 +79,7 @@ function SalaryTrendsSlide() {
   if (!kpi) {
     return (
       <div className="salary-slide">
-        <div className="layer-pending">
-          <span className="layer-pending-icon">💰</span>
-          <div className="layer-pending-title">Loading salary data…</div>
-        </div>
+        <SlideSkeleton label="Loading salary data…" />
       </div>
     )
   }

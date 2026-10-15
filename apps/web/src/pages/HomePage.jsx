@@ -13,7 +13,8 @@ import AIAgentPipelineSlide from '../components/AIAgentPipelineSlide'
 import PlatformsMenu from '../components/PlatformsMenu'
 import CaseStudiesShowcase from '../components/CaseStudiesShowcase'
 import AdrExplorer from '../components/AdrExplorer'
-import { CheckCircle2, XCircle, Clock, BarChart3, Sparkles, Newspaper, DollarSign, Globe2, Bot, MessageCircle, FileSearch, Wrench, Github, History, Users, Package, Loader2 } from 'lucide-react'
+import SiteExtras, { HeroStats } from '../components/SiteExtras'
+import { CheckCircle2, XCircle, Clock, BarChart3, Sparkles, Newspaper, DollarSign, Globe2, Bot, MessageCircle, FileSearch, Wrench, Github, History, Users, Package, Loader2, Moon, Sun, Linkedin, Mail } from 'lucide-react'
 
 function relativeTime(dateStr) {
   const diffMs = Date.now() - new Date(dateStr).getTime()
@@ -47,7 +48,7 @@ function HomePage() {
   const [profilePhoto, setProfilePhoto] = useState(null)
   const [headlineMain, setHeadlineMain] = useState('Architecting the data infrastructure behind reliable pipelines.')
   const [subtext, setSubtext] = useState('I build production-grade ETL/ELT pipelines, and I run a live end-to-end pipeline.')
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))
   const [pipelineRuns, setPipelineRuns] = useState([])
   const [activeSlide, setActiveSlide] = useState(0)
   const [githubPipelineRuns, setGithubPipelineRuns] = useState([])
@@ -189,6 +190,7 @@ function HomePage() {
 
   return (
     <>
+      <SiteExtras />
       <nav className="nav">
         <strong>Aakash Manandhar</strong>
         <div className="nav-links">
@@ -200,7 +202,7 @@ function HomePage() {
           <a href="#adrs">ADRs</a>
           <a href="#about">About</a>
           <a href="#contact">Contact</a>
-          <button className="theme-toggle" onClick={toggleTheme}>{theme === 'light' ? '🌙' : '☀️'}</button>
+          <button className="theme-toggle" onClick={toggleTheme} aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} title={theme === 'light' ? 'Dark mode' : 'Light mode'}>{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
         </div>
       </nav>
 
@@ -218,11 +220,12 @@ function HomePage() {
             )
           })()}
           <p className="hero-sub">{subtext}</p>
+          <HeroStats />
           <div className="hero-btns">
             <button className="btn-primary" onClick={() => window.dispatchEvent(new Event('open-chat-widget'))}><MessageCircle size={13} /> Talk to Assistant</button>
             <a href="#explorer" className="btn-secondary" onClick={(e)=> { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })) }}><BarChart3 size={13} /> Explore Data</a>
-            <a href="#explorer" className="btn-primary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 6 } })) }}><Newspaper size={13} /> DE & AI News</a>
-            <a href="#explorer" className="btn-secondary" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 7 } })) }}><FileSearch size={13} /> AI & DE Research</a>
+            <a href="#explorer" className="btn-ghost" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 6 } })) }}><Newspaper size={13} /> DE & AI News</a>
+            <a href="#explorer" className="btn-ghost" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 7 } })) }}><FileSearch size={13} /> AI & DE Research</a>
           </div>
         </div>
 
@@ -256,6 +259,11 @@ function HomePage() {
               <img src="https://cdn.simpleicons.org/snowflake/29B5E8" alt="Snowflake" title="Snowflake" />
               <img src="https://cdn.simpleicons.org/apachespark/E25A1C" alt="PySpark" title="PySpark (Apache Spark)" />
             </div>
+            <div className="quick-links">
+              <a href="https://github.com/aakashmanandhar" target="_blank" rel="noopener noreferrer"><Github size={13} /> GitHub</a>
+              <a href="https://www.linkedin.com/in/aakashmanandhar/" target="_blank" rel="noopener noreferrer"><Linkedin size={13} /> LinkedIn</a>
+              <a href="#contact"><Mail size={13} /> Message</a>
+            </div>
           </div>
           <div className="now-card">
             <div className="now-icon-badge">
@@ -288,7 +296,7 @@ function HomePage() {
               ].map((item, i) => (
                 <button
                   key={i}
-                  className="analytics-chip"
+                  className={`analytics-chip${activeSlide === item.idx ? ' on' : ''}`}
                   onClick={() => window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: item.idx } }))}
                 >
                   {item.icon} {item.label}
@@ -347,6 +355,7 @@ function HomePage() {
           })()}
         </div>
       <Carousel
+        labels={['Salary Intelligence', 'GitHub Trends', 'AI Adoption', 'Historical Survey', 'Community Survey', 'OSS Landscape', 'News & Sentiment', 'AI & DE Research']}
         onSlideChange={setActiveSlide}
         slides={[
           
@@ -411,7 +420,7 @@ function HomePage() {
             )}
           </button>
           {contactStatus === 'success' && (
-            <div className="form-status success">
+            <div className="form-status success" role="status">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -419,7 +428,7 @@ function HomePage() {
             </div>
           )}
           {contactStatus === 'error' && (
-            <div className="form-status error">
+            <div className="form-status error" role="alert">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -429,14 +438,18 @@ function HomePage() {
         </form>
       </section>
 
-      <footer>
-        <a href="https://github.com/aakashmanandhar" target="_blank" rel="noopener noreferrer">github.com/aakashmanandhar</a>
-        &nbsp;·&nbsp;
-        <a href="https://www.linkedin.com/in/aakashmanandhar/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-        &nbsp;·&nbsp;
-        <Link to="/career">Career</Link>
-        &nbsp;·&nbsp;
-        <a href="#contact">Contact</a>
+      <footer className="site-footer">
+        <div className="foot-main">
+          <div className="foot-brand"><strong>Aakash Manandhar</strong><span>Data Engineer</span></div>
+          <nav className="foot-links" aria-label="Footer">
+            <a href="https://github.com/aakashmanandhar" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="https://www.linkedin.com/in/aakashmanandhar/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <Link to="/career">Career</Link>
+            <Link to="/architecture">Architecture</Link>
+            <a href="#contact">Contact</a>
+          </nav>
+        </div>
+        <div className="foot-note">Built with Django, React, PostgreSQL, Airflow, dbt and Terraform. Every chart on this page runs on a live pipeline.</div>
       </footer>
     </>
   )

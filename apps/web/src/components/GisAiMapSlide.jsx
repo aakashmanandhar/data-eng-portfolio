@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import { MapContainer, GeoJSON } from 'react-leaflet'
+import { useState, useEffect, useMemo } from 'react'
+import { Globe2, Wrench, Target, TrendingUp, Briefcase, Info, X, MapPin, ChevronDown, Sparkles, Github } from 'lucide-react'
+import Globe, { prepareFeatures } from './Globe'
 import 'leaflet/dist/leaflet.css'
 import { COUNTRY_NAMES } from '../utils/countryNames'
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
@@ -47,14 +48,6 @@ const ARCHETYPE_DESCRIPTIONS = {
   'Emerging Market': 'Growing markets currently leaning more traditional than AI.',
 }
 
-const LAYERS = [
-  { id: 'ai-vs-traditional', label: 'AI vs Traditional', icon: '🌐', ready: true },
-  { id: 'per-tool', label: 'Per-Tool Breakdown', icon: '🔧', ready: true },
-  { id: 'archetype', label: 'Archetype Clusters', icon: '🎯', ready: true },
-  { id: 'growth', label: 'Growth Forecast', icon: '📈', ready: true },
-  { id: 'career', label: 'Career Fit', icon: '💼', ready: true },
-]
-
 const TOOL_DISPLAY_NAMES = {
   'apache/airflow': 'Airflow', 'dbt-labs/dbt-core': 'dbt', 'apache/spark': 'Spark',
   'apache/kafka': 'Kafka', 'airbytehq/airbyte': 'Airbyte', 'dagster-io/dagster': 'Dagster',
@@ -94,47 +87,55 @@ function aiShareColor(pct) {
   return `rgb(${rgb.join(',')})`
 }
 
-// Single-hue intensity gradient — used for Per-Tool Breakdown, since a single
-// tool has no "AI vs traditional" lean of its own, just relative popularity
-function toolIntensityColor(ratio) {
-  if (ratio == null) return null
-  const t = Math.max(0, Math.min(1, ratio))
-  const from = [30, 41, 59]     // dark slate (low popularity here)
-  const to = [139, 92, 246]     // violet (highest popularity here)
-  const rgb = from.map((c, i) => Math.round(c + (to[i] - c) * t))
-  return `rgb(${rgb.join(',')})`
+const LAYER_META = [
+  { id: 'ai-vs-traditional', label: 'AI vs Traditional', icon: Globe2,
+    blurb: 'Which countries lean on AI-native data tools, and which still lean on traditional ones?' },
+  { id: 'per-tool', label: 'Per-Tool Breakdown', icon: Wrench,
+    blurb: 'How popular is one chosen tool in each country? Pick a tool below.' },
+  { id: 'archetype', label: 'Archetype Clusters', icon: Target,
+    blurb: 'A machine-learning model groups countries into four adoption patterns.' },
+  { id: 'growth', label: 'Growth Forecast', icon: TrendingUp,
+    blurb: 'Where AI adoption is heading over the next 30 days, projected from each country’s own history.' },
+  { id: 'career', label: 'Career Fit', icon: Briefcase,
+    blurb: 'Where AI adoption is growing fastest, shown next to typical salary and open jobs.' },
+]
+
+const SEQ = { light: [[230, 218, 254], [109, 40, 217]], dark: [[51, 65, 85], [139, 92, 246]] }
+function seqColor(ratio, dark) {
+  const t = Math.max(0, Math.min(1, ratio ?? 0))
+  const [a, b] = dark ? SEQ.dark : SEQ.light
+  return `rgb(${a.map((c, i) => Math.round(c + (b[i] - c) * t)).join(',')})`
 }
 
+const ISO3_TO_ISO2 = Object.fromEntries(Object.entries(ISO2_TO_ISO3).map(([k, v]) => [v, k]))
+const pct = (v, d = 1) => `${(v * 100).toFixed(d)}%`
+
 function GisAiMapSlide() {
+  const [features, setFeatures] = useState([])
   const [countryData, setCountryData] = useState([])
   const [archetypeData, setArchetypeData] = useState([])
   const [toolList, setToolList] = useState([])
   const [selectedTool, setSelectedTool] = useState('')
   const [toolData, setToolData] = useState([])
-  const [geoJson, setGeoJson] = useState(null)
-  const [activeLayer, setActiveLayer] = useState('ai-vs-traditional')
-  const [loading, setLoading] = useState(true)
-  const [theme, setTheme] = useState(document.documentElement.getAttribute('data-theme') || 'light')
-  const [growthStatus, setGrowthStatus] = useState(null)
   const [growthForecastData, setGrowthForecastData] = useState([])
   const [careerFitData, setCareerFitData] = useState([])
-
-  console.log('GisAiMapSlide theme:', theme)
-
-  useEffect(() => {
-    fetch(`${API_BASE}/api/growth-forecast-status/`).then((r) => r.json()).then(setGrowthStatus).catch(console.error)
-  }, [])
+  const [activeLayer, setActiveLayer] = useState('ai-vs-traditional')
+  const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
+  const [dark, setDark] = useState(document.documentElement.getAttribute('data-theme') === 'dark')
+  const [selected, setSelected] = useState(null)
+  const [focus, setFocus] = useState(null)
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      setTheme(document.documentElement.getAttribute('data-theme') || 'light')
+      setDark(document.documentElement.getAttribute('data-theme') === 'dark')
     })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
-    fetch('/world-countries.geo.json').then((res) => res.json()).then(setGeoJson)
+    fetch('/world-countries.geo.json').then((res) => res.json()).then((g) => setFeatures(prepareFeatures(g)))
       .catch((err) => console.error('Failed to load world boundaries:', err))
   }, [])
 
@@ -142,7 +143,7 @@ function GisAiMapSlide() {
     fetch(`${API_BASE}/api/country-ai-signal/`)
       .then((res) => res.json())
       .then((data) => { setCountryData(data); setLoading(false) })
-      .catch((err) => { console.error('Failed to load country AI signal:', err); setLoading(false) })
+      .catch((err) => { console.error('Failed to load country AI signal:', err); setFailed(true); setLoading(false) })
   }, [])
 
   useEffect(() => {
@@ -158,16 +159,13 @@ function GisAiMapSlide() {
       fetch(`${API_BASE}/api/career-fit/`).then((res) => res.json()).then(setCareerFitData)
         .catch((err) => console.error('Failed to load career fit data:', err))
     }
-  }, [activeLayer])
-
-  useEffect(() => {
     if (activeLayer === 'per-tool' && toolList.length === 0) {
       fetch(`${API_BASE}/api/tool-list/`)
         .then((res) => res.json())
         .then((data) => { setToolList(data); if (data.length > 0) setSelectedTool(data[0].repo_full_name) })
         .catch((err) => console.error('Failed to load tool list:', err))
     }
-  }, [activeLayer])
+  }, [activeLayer]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (activeLayer === 'per-tool' && selectedTool) {
@@ -178,369 +176,279 @@ function GisAiMapSlide() {
   }, [activeLayer, selectedTool])
 
   const totalCountries = countryData.length
-  const globalAiShare = countryData.length > 0
-    ? (countryData.reduce((sum, d) => sum + d.ai_stargazers, 0) /
-       countryData.reduce((sum, d) => sum + d.total_stargazers, 0) * 100).toFixed(1)
+  const totalStars = countryData.reduce((sum, d) => sum + d.total_stargazers, 0)
+  const globalAiShare = totalStars > 0
+    ? (countryData.reduce((sum, d) => sum + d.ai_stargazers, 0) / totalStars * 100).toFixed(1)
     : null
-  const topCountries = [...countryData].sort((a, b) => b.total_stargazers - a.total_stargazers).slice(0, 5)
-  const layers = LAYERS
-  const currentLayer = layers.find((l) => l.id === activeLayer)
-  const mapReady = currentLayer?.ready
-  const noDataColor = theme === 'dark' ? '#1E293B' : '#E2E8F0'
-  const oceanColor = theme === 'dark' ? '#0B1220' : '#EFF6FF'
+  const meta = LAYER_META.find((l) => l.id === activeLayer)
 
-  const dataByIso3 = {}
-  if (activeLayer === 'archetype') {
-    archetypeData.forEach((d) => { const iso3 = ISO2_TO_ISO3[d.country_code]; if (iso3) dataByIso3[iso3] = d })
-  } else if (activeLayer === 'per-tool') {
-    const maxToolStars = toolData.length > 0 ? Math.max(...toolData.map((t) => t.stargazers)) : 1
-    toolData.forEach((d) => { const iso3 = ISO2_TO_ISO3[d.country_code]; if (iso3) dataByIso3[iso3] = { ...d, ratio: d.stargazers / maxToolStars } })
-  } else if (activeLayer === 'growth') {
-    growthForecastData.filter((d) => d.status === 'ok').forEach((d) => {
-      const iso3 = ISO2_TO_ISO3[d.country_code]; if (iso3) dataByIso3[iso3] = d
-    })
-  } else if (activeLayer === 'career') {
-    const rates = careerFitData.map((d) => d.growth_rate_per_day)
-    const minRate = rates.length > 0 ? Math.min(...rates) : 0
-    const maxRate = rates.length > 0 ? Math.max(...rates) : 1
-    careerFitData.forEach((d) => {
-      const iso3 = ISO2_TO_ISO3[d.country_code]
-      if (iso3) dataByIso3[iso3] = { ...d, ratio: maxRate > minRate ? (d.growth_rate_per_day - minRate) / (maxRate - minRate) : 0.5 }
-    })
-  } else {
-    countryData.forEach((d) => { const iso3 = ISO2_TO_ISO3[d.country_code]; if (iso3) dataByIso3[iso3] = d })
-  }
+  // everything that depends on the active layer, in one place
+  const view = useMemo(() => {
+    const byIso3 = {}
+    const add = (list, f) => list.forEach((d) => { const iso3 = ISO2_TO_ISO3[d.country_code]; if (iso3) byIso3[iso3] = f ? f(d) : d })
+    let fillOf = (d) => aiShareColor(d.ai_share_pct)
+    let ranking = []
+    let rankTitle = 'Top countries by activity'
+    let legend = { kind: 'ramp', lo: 'Traditional-leaning', hi: 'AI-leaning', css: 'linear-gradient(90deg,#F59E0B,#8B5CF6)' }
+    let howto = [
+      ['#F59E0B', 'Amber: developers there mostly use traditional data engineering tools.'],
+      ['#8B5CF6', 'Violet: AI-native tools lead. Grey countries have no tracked data yet.'],
+      [null, 'AI share = the part of all tracked developer attention (GitHub stars) that goes to AI-native tools.'],
+    ]
+    const seqCss = `linear-gradient(90deg, rgb(${(dark ? SEQ.dark : SEQ.light)[0].join(',')}), rgb(${(dark ? SEQ.dark : SEQ.light)[1].join(',')}))`
 
-  function styleFeature(feature) {
-    const d = dataByIso3[feature.id]
-    let fillColor = noDataColor
-    if (d) {
-      if (activeLayer === 'archetype') fillColor = ARCHETYPE_COLORS[d.archetype] || noDataColor
-      else if (activeLayer === 'per-tool') fillColor = toolIntensityColor(d.ratio) || noDataColor
-      else if (activeLayer === 'growth') fillColor = aiShareColor(d.predicted_ai_share_pct_30d)
-      else if (activeLayer === 'career') fillColor = toolIntensityColor(d.ratio) || noDataColor
-      else fillColor = aiShareColor(d.ai_share_pct)
-    }
-    const borderColor = theme === 'dark' ? 'rgba(255,255,255,0.35)' : '#334155'
-    return { fillColor, weight: 0.7, color: borderColor, fillOpacity: d ? 0.9 : 0.4 }
-  }
-
-  function onEachFeature(feature, layer) {
-    const d = dataByIso3[feature.id]
-    const name = feature.properties.name
-    const flag = isoToFlag(Object.keys(ISO2_TO_ISO3).find((k) => ISO2_TO_ISO3[k] === feature.id))
-
-    let html
-    if (!d) {
-      html = `<div class="gis-popup-inner"><div class="gis-popup-title">${flag} ${name}</div><div class="gis-popup-empty">No tracked activity yet</div></div>`
-    } else if (activeLayer === 'archetype') {
-      html = `<div class="gis-popup-inner">
-        <div class="gis-popup-title">${flag} ${name}</div>
-        <div class="gis-popup-row"><span class="gis-popup-dot" style="background:${ARCHETYPE_COLORS[d.archetype]}"></span>${d.archetype}</div>
-        <div class="gis-popup-row">⭐ ${(d.ai_share_pct * 100).toFixed(1)}% AI-leaning share</div>
-      </div>`
-    } else if (activeLayer === 'per-tool') {
-      html = `<div class="gis-popup-inner">
-        <div class="gis-popup-title">${flag} ${name}</div>
-        <div class="gis-popup-row">🔧 ${getToolDisplayName(selectedTool)}</div>
-        <div class="gis-popup-row">⭐ ${d.stargazers.toLocaleString()} stars</div>
-        <div class="gis-popup-row">📊 ${(d.percentage * 100).toFixed(1)}% of this tool's global stars</div>
-      </div>`
-    } else if (activeLayer === 'growth') {
-      const growthArrow = d.growth_rate_per_day >= 0 ? '📈' : '📉'
-      html = `<div class="gis-popup-inner">
-        <div class="gis-popup-title">${flag} ${name}</div>
-        <div class="gis-popup-row">Now: ${(d.current_ai_share_pct * 100).toFixed(1)}% AI-leaning</div>
-        <div class="gis-popup-row">${growthArrow} Predicted in 30 days: ${(d.predicted_ai_share_pct_30d * 100).toFixed(1)}%</div>
-        <div class="gis-popup-row" style="font-size:10px;color:var(--muted)">${d.days_of_history} days of history, R²=${d.r_squared}</div>
-      </div>`
-    } else if (activeLayer === 'career') {
-      html = `<div class="gis-popup-inner">
-        <div class="gis-popup-title">${flag} ${name}</div>
-        <div class="gis-popup-row">📈 AI growth: ${(d.growth_rate_per_day * 100).toFixed(2)}%/day</div>
-        <div class="gis-popup-row">💰 Mid-level salary: $${d.mid_salary_usd.toLocaleString()}</div>
-        <div class="gis-popup-row">💼 ${d.job_count.toLocaleString()} tracked job postings</div>
-      </div>`
-    } else {
-      html = `<div class="gis-popup-inner">
-        <div class="gis-popup-title">${flag} ${name}</div>
-        <div class="gis-popup-row">⭐ ${d.total_stargazers.toLocaleString()} total tracked stars</div>
-        <div class="gis-popup-bar">
-          <div class="gis-popup-bar-traditional" style="width:${(100 - d.ai_share_pct * 100).toFixed(0)}%"></div>
-          <div class="gis-popup-bar-ai" style="width:${(d.ai_share_pct * 100).toFixed(0)}%"></div>
-        </div>
-        <div class="gis-popup-legend-mini"><span>Traditional</span><span>${(d.ai_share_pct * 100).toFixed(1)}% AI</span><span>AI</span></div>
-      </div>`
-    }
-    layer.bindPopup(html, { className: 'gis-popup' })
-    layer.on({
-      mouseover: (e) => e.target.setStyle({ weight: 2, color: theme === 'dark' ? '#fff' : '#0F172A' }),
-      mouseout: (e) => e.target.setStyle({ weight: 0.7, color: theme === 'dark' ? 'rgba(255,255,255,0.35)' : '#475569' }),
-    })
-  }
-
-  function renderSidePanel() {
     if (activeLayer === 'archetype') {
+      add(archetypeData)
+      fillOf = (d) => ARCHETYPE_COLORS[d.archetype]
       const counts = {}
       archetypeData.forEach((d) => { counts[d.archetype] = (counts[d.archetype] || 0) + 1 })
-      return (
-        <>
-          <div className="gis-side-card">
-            <div className="gis-side-title">{selectedTool ? getToolDisplayName(selectedTool) : 'Tool'}</div>
-            {Object.entries(ARCHETYPE_COLORS).map(([name, color]) => (
-              <div className="gis-rank-row" key={name}>
-                <span className="archetype-legend-dot" style={{ background: color }}></span>
-                <span className="gis-rank-name">{name}</span>
-                <span className="gis-rank-value">{counts[name] || 0} countries</span>
-              </div>
-            ))}
-          </div>
-          <div className="gis-side-card gis-side-card-note">
-            <div className="gis-side-title">What this means</div>
-            <p>Countries are grouped by a clustering model (k-means) into 4 patterns, based on how AI-leaning they are and how much total activity they have — not assigned by hand.</p>
-            {archetypeData.length > 0 && (
-              <p style={{ marginTop: 8 }}>{ARCHETYPE_DESCRIPTIONS[archetypeData[0].archetype]}</p>
-            )}
-          </div>
-        </>
-      )
+      ranking = Object.keys(ARCHETYPE_COLORS).map((name) => ({ key: name, name, color: ARCHETYPE_COLORS[name], value: `${counts[name] || 0} countries`, static: true }))
+      rankTitle = 'The four patterns'
+      legend = { kind: 'dots' }
+      howto = Object.keys(ARCHETYPE_COLORS).map((n) => [ARCHETYPE_COLORS[n], `${n}: ${ARCHETYPE_DESCRIPTIONS[n]}`])
+      howto.push([null, 'Groups are found by a clustering model (k-means), not assigned by hand.'])
+    } else if (activeLayer === 'per-tool') {
+      const max = toolData.length ? Math.max(...toolData.map((t) => t.stargazers)) : 1
+      add(toolData, (d) => ({ ...d, ratio: d.stargazers / max }))
+      fillOf = (d) => seqColor(d.ratio, dark)
+      ranking = [...toolData].sort((a, b) => b.stargazers - a.stargazers).slice(0, 8)
+        .map((c) => ({ key: c.country_code, iso3: ISO2_TO_ISO3[c.country_code], name: COUNTRY_NAMES[c.country_code] || c.country_code, value: c.stargazers.toLocaleString() }))
+      rankTitle = `Where ${selectedTool ? getToolDisplayName(selectedTool) : 'this tool'} is most popular`
+      legend = { kind: 'ramp', lo: 'Less popular', hi: 'Most popular', css: seqCss }
+      howto = [
+        [null, 'Colour shows how popular this one tool is in each country, compared with where it is most popular.'],
+        [null, 'Pick another tool from the list to compare. Grey countries have no stars for this tool.'],
+      ]
+    } else if (activeLayer === 'growth') {
+      add(growthForecastData.filter((d) => d.status === 'ok'))
+      fillOf = (d) => aiShareColor(d.predicted_ai_share_pct_30d)
+      ranking = growthForecastData.filter((d) => d.status === 'ok').sort((a, b) => b.growth_rate_per_day - a.growth_rate_per_day).slice(0, 8)
+        .map((c) => ({ key: c.country_code, iso3: ISO2_TO_ISO3[c.country_code], name: COUNTRY_NAMES[c.country_code] || c.country_code, value: pct(c.predicted_ai_share_pct_30d) }))
+      rankTitle = 'Fastest-rising (predicted in 30 days)'
+      legend = { kind: 'ramp', lo: 'Predicted traditional-leaning', hi: 'Predicted AI-leaning', css: 'linear-gradient(90deg,#F59E0B,#8B5CF6)' }
+      howto = [
+        [null, 'A straight-line trend (linear regression) fitted to each country’s real daily history and projected 30 days ahead.'],
+        [null, 'Only countries with 7+ days of real history are shown, so nothing is invented from too little data.'],
+      ]
+    } else if (activeLayer === 'career') {
+      const rates = careerFitData.map((d) => d.growth_rate_per_day)
+      const lo = rates.length ? Math.min(...rates) : 0
+      const hi = rates.length ? Math.max(...rates) : 1
+      add(careerFitData, (d) => ({ ...d, ratio: hi > lo ? (d.growth_rate_per_day - lo) / (hi - lo) : 0.5 }))
+      fillOf = (d) => seqColor(d.ratio, dark)
+      ranking = careerFitData.slice(0, 8).map((c) => ({ key: c.country_code, iso3: ISO2_TO_ISO3[c.country_code], name: c.country_name, value: `$${Math.round(c.mid_salary_usd / 1000)}K` }))
+      rankTitle = 'Fastest AI growth (with mid-level salary)'
+      legend = { kind: 'ramp', lo: 'Slower AI growth', hi: 'Faster AI growth', css: seqCss }
+      howto = [
+        [null, 'Real AI-growth trend shown next to real salary and job-posting data for countries that have both.'],
+        [null, 'This shows two signals side by side. It does not claim one causes the other.'],
+      ]
+    } else {
+      add(countryData)
+      ranking = [...countryData].sort((a, b) => b.total_stargazers - a.total_stargazers).slice(0, 8)
+        .map((c) => ({ key: c.country_code, iso3: ISO2_TO_ISO3[c.country_code], name: COUNTRY_NAMES[c.country_code] || c.country_code, value: c.total_stargazers.toLocaleString() }))
     }
+    const fills = {}
+    Object.entries(byIso3).forEach(([iso3, d]) => { const c = fillOf(d); if (c) fills[iso3] = c })
+    return { byIso3, fills, ranking, rankTitle, legend, howto }
+  }, [activeLayer, countryData, archetypeData, toolData, growthForecastData, careerFitData, selectedTool, dark])
 
-    if (activeLayer === 'per-tool') {
-      const sorted = [...toolData].sort((a, b) => b.stargazers - a.stargazers).slice(0, 5)
-      const total = toolData.reduce((sum, d) => sum + d.stargazers, 0)
-      return (
-        <>
-          <div className="gis-side-card">
-            <div className="gis-side-title">{selectedTool || 'Tool'}</div>
-            <div className="gis-tool-total">{total.toLocaleString()} <span>tracked stars worldwide</span></div>
-            {sorted.map((c, i) => (
-              <div className="gis-rank-row" key={c.country_code}>
-                <span className="gis-rank-num">#{i + 1}</span>
-                <span className="gis-rank-name">{COUNTRY_NAMES[c.country_code] || c.country_code}</span>
-                <span className="gis-rank-value">{c.stargazers.toLocaleString()}</span>
-              </div>
-            ))}
-          </div>
-          <div className="gis-side-card gis-side-card-note">
-            <div className="gis-side-title">How to read this</div>
-            <p>Color shows this tool's relative popularity by country — darker means less popular there, violet means most popular there. Pick a different tool from the dropdown above to compare.</p>
-          </div>
-        </>
-      )
-    }
+  const nameOf = (iso3) => {
+    const f = features.find((x) => x.id === iso3)
+    return COUNTRY_NAMES[ISO3_TO_ISO2[iso3]] || f?.properties?.name || iso3
+  }
+  const flagOf = (iso3) => isoToFlag(ISO3_TO_ISO2[iso3])
 
-    // default: ai-vs-traditional
-    if (activeLayer === 'growth') {
-      const okForecasts = growthForecastData.filter((d) => d.status === 'ok')
-      const topRising = [...okForecasts].sort((a, b) => b.growth_rate_per_day - a.growth_rate_per_day).slice(0, 5)
-      return (
-        <>
-          <div className="gis-side-card">
-            <div className="gis-side-title">Fastest-rising (predicted, 30 days)</div>
-            {topRising.map((c, i) => (
-              <div className="gis-rank-row" key={c.country_code}>
-                <span className="gis-rank-num">#{i + 1}</span>
-                <span className="gis-rank-name">{COUNTRY_NAMES[c.country_code] || c.country_code}</span>
-                <span className="gis-rank-value">{(c.predicted_ai_share_pct_30d * 100).toFixed(1)}%</span>
-              </div>
-            ))}
-          </div>
-          <div className="gis-side-card gis-side-card-note">
-            <div className="gis-side-title">What this means</div>
-            <p>A linear regression on each country's real daily AI-share history, projected 30 days forward. Only countries with 7+ days of real accumulated history are shown — no fabricated trends from too little data.</p>
-          </div>
-        </>
-      )
-    }
-    // default: ai-vs-traditional
-    if (activeLayer === 'career') {
-      return (
-        <>
-          <div className="gis-side-card">
-            <div className="gis-side-title">Ranked by AI growth trajectory</div>
-            {careerFitData.map((c, i) => (
-              <div className="gis-rank-row" key={c.country_code}>
-                <span className="gis-rank-num">#{i + 1}</span>
-                <span className="gis-rank-name">{c.country_name}</span>
-                <span className="gis-rank-value">${Math.round(c.mid_salary_usd / 1000)}K</span>
-              </div>
-            ))}
-          </div>
-          <div className="gis-side-card gis-side-card-note">
-            <div className="gis-side-title">What this means</div>
-            <p>Real AI-growth trajectory (from Growth Forecast) shown alongside real mid-level salary and job-posting data for the {careerFitData.length} countries where both exist. This shows correlation, not causation — it doesn't claim growing AI adoption causes higher pay, just shows both real signals side by side so you can judge for yourself.</p>
-          </div>
-        </>
-      )
-    }
-    // default: ai-vs-traditional
-    const sortedByShare = [...countryData].filter((d) => d.total_stargazers >= 500).sort((a, b) => b.ai_share_pct - a.ai_share_pct)
-    const mostAI = sortedByShare[0]
-    const mostTraditional = sortedByShare[sortedByShare.length - 1]
+  const pick = (iso3) => { if (!iso3) return; setSelected(iso3); setFocus({ id: iso3, n: Date.now() }) }
 
+  const headline = (iso3) => {
+    const d = view.byIso3[iso3]
+    if (!d) return 'No tracked activity yet'
+    if (activeLayer === 'archetype') return d.archetype
+    if (activeLayer === 'per-tool') return `${d.stargazers.toLocaleString()} stars`
+    if (activeLayer === 'growth') return `${pct(d.predicted_ai_share_pct_30d)} AI-leaning in 30 days`
+    if (activeLayer === 'career') return `$${d.mid_salary_usd.toLocaleString()} mid-level salary`
+    return `${pct(d.ai_share_pct, 0)} AI-leaning`
+  }
+
+  const tooltip = (f) => (
+    <>
+      <div className="gx-tip-title">{flagOf(f.id)} {nameOf(f.id)}</div>
+      <div className={view.byIso3[f.id] ? 'gx-tip-line' : 'gx-tip-line muted'}>{headline(f.id)}</div>
+    </>
+  )
+
+  function renderSelected() {
+    if (!selected) {
+      return (
+        <div className="gx-card gx-hintcard">
+          <MapPin size={18} />
+          <div>
+            <strong>Pick a country</strong>
+            <span>Click any country on the globe, or one in the list below, to see its numbers here.</span>
+          </div>
+        </div>
+      )
+    }
+    const d = view.byIso3[selected]
     return (
-      <>
-        <div className="gis-side-card">
-          <div className="gis-side-title">Extremes</div>
-          {mostAI && (
-            <div className="gis-highlight">
-              <span className="gis-highlight-icon">🟣</span>
-              <div>
-                <div className="gis-highlight-label">Most AI-leaning</div>
-                <div className="gis-highlight-value">{COUNTRY_NAMES[mostAI.country_code] || mostAI.country_code} — {(mostAI.ai_share_pct * 100).toFixed(1)}%</div>
-              </div>
+      <div className="gx-card gx-sel">
+        <button className="gx-sel-x" onClick={() => setSelected(null)} aria-label="Clear selection"><X size={14} /></button>
+        <div className="gx-sel-name"><span className="gx-flag">{flagOf(selected)}</span>{nameOf(selected)}</div>
+        {!d ? (
+          <p className="gx-sel-empty">No tracked activity for this view yet.</p>
+        ) : activeLayer === 'archetype' ? (
+          <>
+            <div className="gx-sel-pill" style={{ '--c': ARCHETYPE_COLORS[d.archetype] }}>{d.archetype}</div>
+            <p className="gx-sel-text">{ARCHETYPE_DESCRIPTIONS[d.archetype]}</p>
+            <div className="gx-sel-meta">AI share: <b>{pct(d.ai_share_pct)}</b></div>
+          </>
+        ) : activeLayer === 'per-tool' ? (
+          <>
+            <div className="gx-big">{d.stargazers.toLocaleString()} <span>stars for {getToolDisplayName(selectedTool)}</span></div>
+            <div className="gx-sel-meta"><b>{pct(d.percentage)}</b> of this tool’s worldwide stars come from here.</div>
+          </>
+        ) : activeLayer === 'growth' ? (
+          <>
+            <div className="gx-flow">
+              <div><span>Now</span><b>{pct(d.current_ai_share_pct)}</b></div>
+              <i>{d.growth_rate_per_day >= 0 ? '↗' : '↘'}</i>
+              <div><span>In 30 days</span><b>{pct(d.predicted_ai_share_pct_30d)}</b></div>
             </div>
-          )}
-          {mostTraditional && (
-            <div className="gis-highlight">
-              <span className="gis-highlight-icon">🟠</span>
-              <div>
-                <div className="gis-highlight-label">Most traditional-leaning</div>
-                <div className="gis-highlight-value">{COUNTRY_NAMES[mostTraditional.country_code] || mostTraditional.country_code} — {(mostTraditional.ai_share_pct * 100).toFixed(1)}%</div>
-              </div>
+            <div className="gx-sel-meta">AI-leaning share, from {d.days_of_history} days of history (fit quality R² {d.r_squared}).</div>
+          </>
+        ) : activeLayer === 'career' ? (
+          <>
+            <div className="gx-big">${d.mid_salary_usd.toLocaleString()} <span>mid-level salary</span></div>
+            <div className="gx-sel-meta"><b>{d.job_count.toLocaleString()}</b> tracked job postings · AI growth <b>{pct(d.growth_rate_per_day, 2)}</b> per day</div>
+          </>
+        ) : (
+          <>
+            <div className="gx-big">{pct(d.ai_share_pct, 0)} <span>AI-leaning</span></div>
+            <div className="gx-split" aria-hidden="true">
+              <i style={{ width: `${(100 - d.ai_share_pct * 100).toFixed(0)}%` }} />
+              <b style={{ width: `${(d.ai_share_pct * 100).toFixed(0)}%` }} />
             </div>
-          )}
-        </div>
-        <div className="gis-side-card">
-          <div className="gis-side-title">Top Countries by Activity</div>
-          {topCountries.map((c, i) => (
-            <div className="gis-rank-row" key={c.country_code}>
-              <span className="gis-rank-num">#{i + 1}</span>
-              <span className="gis-rank-name">{COUNTRY_NAMES[c.country_code] || c.country_code}</span>
-              <span className="gis-rank-value">{c.total_stargazers.toLocaleString()}</span>
-            </div>
-          ))}
-        </div>
-        <div className="gis-side-card gis-side-card-note">
-          <div className="gis-side-title">How to read this</div>
-          <p><span className="gis-legend-swatch" style={{ background: '#F59E0B' }}></span> Amber = traditional data engineering tools lead.</p>
-          <p><span className="gis-legend-swatch" style={{ background: '#8B5CF6' }}></span> Violet = AI-native tools lead. Unlit countries have no tracked data yet.</p>
-        </div>
-      </>
+            <div className="gx-split-lbl"><span>Traditional</span><span>AI-native</span></div>
+            <div className="gx-sel-meta"><b>{d.total_stargazers.toLocaleString()}</b> tracked stars in total</div>
+          </>
+        )}
+      </div>
     )
   }
 
+  const kpis = [
+    { icon: MapPin, value: totalCountries || '—', label: 'Countries tracked', help: 'Countries with enough GitHub activity to measure' },
+    { icon: Sparkles, value: globalAiShare ? `${globalAiShare}%` : '—', label: 'Global AI share', help: 'Share of developer attention going to AI-native tools' },
+    { icon: Github, value: 122, label: 'Repos analysed', help: 'Open-source data & AI projects followed' },
+  ]
+
   return (
-    <div className="gis-map-slide">
-      <section className="explorer-section">
-        <div className="eyebrow">🌐 AI Adoption Map · Where the Shift Is Happening</div>
-
-        <div className="gis-stat-bar">
-          <div className="gis-stat">
-            <div className="gis-stat-value">{totalCountries || '—'}</div>
-            <div className="gis-stat-label">Countries Tracked</div>
-          </div>
-          <div className="gis-stat">
-            <div className="gis-stat-value">{globalAiShare ? `${globalAiShare}%` : '—'}</div>
-            <div className="gis-stat-label">Global AI Share</div>
-          </div>
-          <div className="gis-stat">
-            <div className="gis-stat-value">122</div>
-            <div className="gis-stat-label">Repos Analyzed</div>
-          </div>
-          <div className="gis-stat gis-stat-live">
-            <span className="gis-live-dot"></span>
-            Updated daily via Airflow
-          </div>
+    <div className="gx-slide gx-gis">
+      <div className="gx-head">
+        <div>
+          <div className="eyebrow gx-eyebrow">AI Adoption Map · Where the shift is happening</div>
+          <p className="gx-sub">Each country is coloured by what its developers explore on GitHub: AI-native tools or traditional data engineering tools. Spin the globe and click a country.</p>
         </div>
+        <span className="gx-live"><i />Updated daily</span>
+      </div>
 
-        <div className="map-layer-toggle">
-          {layers.map((layer) => (
-            <button key={layer.id}
-                    className={`layer-pill ${activeLayer === layer.id ? 'active' : ''} ${!layer.ready ? 'pending' : ''}`}
-                    onClick={() => setActiveLayer(layer.id)}>
-              <span className="layer-pill-icon">{layer.icon}</span>
-              {layer.label}
-              {!layer.ready && (
-                <span className="layer-pill-badge">
-                  {(layer.id === 'growth' || layer.id === 'career') && growthStatus ? `${growthStatus.days_of_history}/${growthStatus.threshold}` : 'soon'}
-                </span>
-              )}
+      <div className="gx-kpis">
+        {kpis.map((k) => {
+          const Icon = k.icon
+          return (
+            <div className="gx-kpi" key={k.label} title={k.help}>
+              <span className="gx-kpi-ico"><Icon size={16} /></span>
+              <div><div className="gx-kpi-val">{k.value}</div><div className="gx-kpi-lbl">{k.label}</div></div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="gx-tabs" role="tablist" aria-label="Map views">
+        {LAYER_META.map((l) => {
+          const Icon = l.icon
+          return (
+            <button key={l.id} role="tab" aria-selected={activeLayer === l.id}
+              className={`gx-tab${activeLayer === l.id ? ' on' : ''}`} onClick={() => setActiveLayer(l.id)}>
+              <Icon size={15} /> <span>{l.label}</span>
             </button>
-          ))}
-        </div>
+          )
+        })}
+      </div>
 
+      <div className="gx-explain">
+        <p><Info size={14} /> {meta.blurb}</p>
         {activeLayer === 'per-tool' && toolList.length > 0 && (
-          <div className="tool-selector">
-            <label>Select a tool:</label>
+          <label className="gx-select">
+            <span>Tool</span>
             <select value={selectedTool} onChange={(e) => setSelectedTool(e.target.value)}>
               {toolList.map((t) => (
                 <option key={t.repo_full_name} value={t.repo_full_name}>{getToolDisplayName(t.repo_full_name)}</option>
               ))}
             </select>
-          </div>
+          </label>
         )}
+      </div>
 
-        <div className="gis-grid">
-          <div className="gis-map-panel">
-            {loading || !geoJson ? (
-              <div className="layer-pending">
-                <span className="layer-pending-icon">🌍</span>
-                <div className="layer-pending-title">Loading live data…</div>
+      <div className="gx-grid">
+        <div className="gx-card gx-globe-card">
+          {loading || features.length === 0 ? (
+            <div className="gx-globe-wrap gx-loading"><div className="gx-orb" /><span>Loading live data…</span></div>
+          ) : (
+            <Globe features={features} fills={view.fills} activeId={selected} focus={focus}
+              tooltip={tooltip} onPick={(f) => pick(f.id)} label="Globe of AI adoption by country" />
+          )}
+          {failed && <div className="gx-warn">Live data is unavailable right now. Please try again later.</div>}
+          <div className="gx-legend">
+            {view.legend.kind === 'dots' ? (
+              <div className="gx-dots">
+                {Object.entries(ARCHETYPE_COLORS).map(([name, color]) => (
+                  <span key={name}><i style={{ background: color }} />{name}</span>
+                ))}
               </div>
-            ) : mapReady ? (
-              <>
-                <MapContainer key={`map-${theme}`} center={[20, 10]} zoom={2} minZoom={2} maxBounds={[[-90, -180], [90, 180]]}
-                              style={{ height: '440px', width: '100%', borderRadius: '10px', background: oceanColor }}
-                              scrollWheelZoom={false}>
-                  <GeoJSON key={`${activeLayer}-${selectedTool}-${theme}-${archetypeData.length}-${toolData.length}-${countryData.length}-${growthForecastData.length}-${careerFitData.length}`} data={geoJson} style={styleFeature} onEachFeature={onEachFeature} />
-                </MapContainer>
-                {activeLayer === 'archetype' ? (
-                  <div className="archetype-legend">
-                    {Object.entries(ARCHETYPE_COLORS).map(([name, color]) => (
-                      <div className="archetype-legend-item" key={name}>
-                        <span className="archetype-legend-dot" style={{ background: color }}></span>
-                        {name}
-                      </div>
-                    ))}
-                  </div>
-                ) : activeLayer === 'per-tool' ? (
-                  <div className="gis-gradient-legend">
-                    <span>Less popular</span>
-                    <div className="gis-gradient-bar" style={{ background: 'linear-gradient(90deg, #1E293B, #8B5CF6)' }}></div>
-                    <span>Most popular</span>
-                  </div>
-                ) : activeLayer === 'growth' ? (
-                  <div className="gis-gradient-legend">
-                    <span>Predicted traditional-leaning</span>
-                    <div className="gis-gradient-bar"></div>
-                    <span>Predicted AI-leaning</span>
-                  </div>
-                ) : activeLayer === 'career' ? (
-                  <div className="gis-gradient-legend">
-                    <span>Slower AI growth</span>
-                    <div className="gis-gradient-bar" style={{ background: 'linear-gradient(90deg, #1E293B, #8B5CF6)' }}></div>
-                    <span>Faster AI growth</span>
-                  </div>
-                ) : (
-                  <div className="gis-gradient-legend">
-                    <span>Traditional-leaning</span>
-                    <div className="gis-gradient-bar"></div>
-                    <span>AI-leaning</span>
-                  </div>
-                )}
-              </>
             ) : (
-              <div className="layer-pending">
-                <span className="layer-pending-icon">⏳</span>
-                <div className="layer-pending-title">Building history for this layer</div>
-                <div className="layer-pending-sub">
-                  Needs several days of accumulated daily snapshots before it can show a genuine result — updates automatically every day.
-                </div>
+              <div className="gx-ramp">
+                <span>{view.legend.lo}</span>
+                <i style={{ background: view.legend.css }} />
+                <span>{view.legend.hi}</span>
               </div>
             )}
-          </div>
-
-          <div className="gis-side-panel">
-            {renderSidePanel()}
+            <div className="gx-hint">Drag to spin · click a country · grey = no data yet</div>
           </div>
         </div>
 
-        <div className="explorer-note">
-          🔧 Live data from GitHub via OSS Insight, refreshed daily via Apache Airflow.
+        <div className="gx-side">
+          {renderSelected()}
+          <div className="gx-card">
+            <div className="gx-card-title">{view.rankTitle}</div>
+            {view.ranking.length === 0 && <p className="gx-sel-empty">Loading…</p>}
+            {view.ranking.map((r, i) => (
+              r.static ? (
+                <div className="gx-rank static" key={r.key}>
+                  <i className="gx-dot" style={{ background: r.color }} />
+                  <span className="gx-rank-name">{r.name}</span>
+                  <span className="gx-rank-val">{r.value}</span>
+                </div>
+              ) : (
+                <button className={`gx-rank${selected === r.iso3 ? ' on' : ''}`} key={r.key} onClick={() => pick(r.iso3)}>
+                  <span className="gx-rank-n">{i + 1}</span>
+                  <span className="gx-rank-name">{flagOf(r.iso3)} {r.name}</span>
+                  <span className="gx-rank-val">{r.value}</span>
+                </button>
+              )
+            ))}
+          </div>
+          <details className="gx-card gx-how" open>
+            <summary>How to read this <ChevronDown size={15} /></summary>
+            {view.howto.map(([color, text], i) => (
+              <p key={i}>{color && <i className="gx-sw" style={{ background: color }} />}{text}</p>
+            ))}
+          </details>
         </div>
-      </section>
+      </div>
+
+      <div className="gx-foot">Live data from GitHub via OSS Insight, refreshed daily via Apache Airflow.</div>
     </div>
   )
 }
