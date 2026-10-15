@@ -1,18 +1,21 @@
 """
-Scores real sentiment for every article in silver_news_articles using a
-pretrained transformer, via Hugging Face's official InferenceClient with
-automatic provider routing - more robust than a hardcoded provider/URL,
-since HF's own infra migrated providers mid-build (the exact issue that
-broke a raw-requests version of this script).
+Scores sentiment for every article in silver_news_articles with a pretrained
+transformer (cardiffnlp/twitter-roberta-base-sentiment-latest), run locally
+on CPU inside the Django container.
+
+Running the model locally instead of the Hugging Face Inference API removes
+the external dependency: no API credits, no provider routing, no rate limits.
+The model weights are baked into the image at build time.
 """
 import os
-import time
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from huggingface_hub import InferenceClient
+import torch
+from transformers import pipeline
 
-client = InferenceClient(api_key=os.environ["HUGGINGFACE_API_KEY"], provider="auto")
+torch.set_num_threads(2)
 SENTIMENT_MODEL = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+BATCH_SIZE = 16
 
 conn = psycopg2.connect(
     host=os.environ.get("POSTGRES_HOST", "portfolio_postgres"),
@@ -45,39 +48,37 @@ cur.execute("""
     WHERE a.article_id NOT IN (SELECT article_id FROM dbt_dev_gold.news_article_sentiment)
 """)
 articles = cur.fetchall()
-print(f"Scoring {len(articles)} unscored articles...")
+print(f"Scoring {len(articles)} unscored articles locally...")
 
-def score_sentiment(text, max_retries=3):
-    for attempt in range(max_retries):
-        try:
-            result = client.text_classification(text[:512], model=SENTIMENT_MODEL)
-            top = max(result, key=lambda x: x.score)
-            return top.label, top.score
-        except Exception as e:
-            if "503" in str(e) and attempt < max_retries - 1:
-                print("  model warming up, retrying in 10s...")
-                time.sleep(10)
-                continue
-            raise
+if not articles:
+    print("Nothing to score.")
+    raise SystemExit(0)
 
-scored_count = 0
-for article in articles:
-    text = f"{article['title']} {article['description'] or ''}"
-    try:
-        label, score = score_sentiment(text)
+classifier = pipeline(
+    "text-classification",
+    model=SENTIMENT_MODEL,
+    truncation=True,
+    max_length=512,
+    device=-1,
+)
+
+scored = 0
+for i in range(0, len(articles), BATCH_SIZE):
+    batch = articles[i:i + BATCH_SIZE]
+    texts = [f"{a['title']} {a['description'] or ''}"[:2000] for a in batch]
+    results = classifier(texts, batch_size=BATCH_SIZE)
+    for a, r in zip(batch, results):
         cur.execute("""
             INSERT INTO dbt_dev_gold.news_article_sentiment
             (article_id, keyword_id, source_id, sentiment_label, sentiment_score, published_at)
             VALUES (%s, %s, %s, %s, %s, %s)
             ON CONFLICT (article_id) DO NOTHING
-        """, (article["article_id"], article["keyword_id"], article["source_id"],
-              label, score, article["published_at"]))
-        conn.commit()
-        scored_count += 1
-    except Exception as e:
-        print(f"  FAILED on article {article['article_id']}: {e}")
-    time.sleep(0.5)
+        """, (a["article_id"], a["keyword_id"], a["source_id"],
+              r["label"].lower(), float(r["score"]), a["published_at"]))
+    conn.commit()
+    scored += len(batch)
+    print(f"  scored {scored}/{len(articles)}")
 
-print(f"Scored {scored_count}/{len(articles)} articles")
 cur.close()
 conn.close()
+print(f"Done. Scored {scored} articles.")

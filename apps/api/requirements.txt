@@ -13,3 +13,5 @@ whitenoise
 huggingface_hub
 Pillow
 weasyprint
+
+transformers
