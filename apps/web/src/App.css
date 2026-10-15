@@ -6275,3 +6275,12 @@ a.cv-contact-chip:hover {
   .ar-link.live i, .ar-timer, .ar-panel, .ar-pl-detail { animation: none; }
   .ar-node, .ar-model, .ar-pl-item { transition: none; }
 }
+
+/* theme-toggle contrast */
+.theme-toggle { color: var(--text); transition: color 0.15s, border-color 0.15s, transform 0.15s; }
+.theme-toggle:hover { color: var(--accent1); border-color: var(--accent1); transform: rotate(14deg); }
+.theme-toggle:focus-visible { outline: 2px solid var(--accent1); outline-offset: 2px; }
+[data-theme="dark"] .theme-toggle { color: #FBBF24; }
+
+/* hero: pin the Now Building card to the bottom so it lines up with the action buttons */
+.hero-right .now-card { margin-top: auto; }
