@@ -1,90 +1,66 @@
-import { SlideSkeleton } from './SiteExtras'
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { hierarchy, pack } from 'd3-hierarchy'
+import { Search, X, ChevronDown, Info, RefreshCw, ExternalLink, Newspaper, Clock, Globe2, Hash, Radio } from 'lucide-react'
+import { SlideSkeleton } from './SiteExtras'
 import LineageExplorer from './LineageExplorer'
-import { Search } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+const PAGE = 10
 
-const SENTIMENT_COLORS = { positive: '#3B6D11', negative: '#D14545', neutral: '#8A8875' }
+const COLORS = { positive: '#3B6D11', negative: '#D14545', neutral: '#8A8875' }
+const sentimentColor = (s) => (s > 0.15 ? COLORS.positive : s < -0.15 ? COLORS.negative : COLORS.neutral)
+const sentimentWord = (s) => (s > 0.15 ? 'Positive' : s < -0.15 ? 'Negative' : 'Mixed')
+const isScored = (a) => a.sentiment_label != null && a.sentiment_label !== ''
+const okJson = (r) => { if (!r.ok) throw new Error(String(r.status)); return r.json() }
 
-function sentimentColor(score) {
-  if (score > 0.15) return SENTIMENT_COLORS.positive
-  if (score < -0.15) return SENTIMENT_COLORS.negative
-  return SENTIMENT_COLORS.neutral
-}
-function sentimentLabel(score) {
-  if (score > 0.15) return 'Leaning Positive'
-  if (score < -0.15) return 'Leaning Negative'
-  return 'Mixed / Neutral'
-}
-function sentimentWord(score) {
-  if (score > 0.15) return 'Positive'
-  if (score < -0.15) return 'Negative'
-  return 'Mixed'
-}
 function timeAgo(dateStr) {
-  const diffMs = Date.now() - new Date(dateStr).getTime()
-  const mins = Math.floor(diffMs / 60000)
+  const mins = Math.max(0, Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000))
   if (mins < 60) return `${mins}m ago`
   const hrs = Math.floor(mins / 60)
   if (hrs < 24) return `${hrs}h ago`
   return `${Math.floor(hrs / 24)}d ago`
 }
+
 function dedupeArticles(articles) {
-  const byTitle = {}
+  const by = {}
   for (const a of articles) {
-    if (!byTitle[a.title]) byTitle[a.title] = { ...a, sources: [a.source_domain] }
-    else byTitle[a.title].sources.push(a.source_domain)
+    if (!by[a.title]) by[a.title] = { ...a, sources: [a.source_domain] }
+    else if (!by[a.title].sources.includes(a.source_domain)) by[a.title].sources.push(a.source_domain)
   }
-  return Object.values(byTitle)
+  return Object.values(by)
 }
 
-// A 0-100% ring around a signed -1..+1 score reads to most visitors as "46% of
-// something good", when 46% here actually just means "a touch below neutral".
-// A word first ("Mixed"/"Positive"/"Negative") plus a labeled negative<->positive
-// bar with a marker is legible without knowing how the score is built.
 function SentimentBar({ score }) {
-  const safeScore = Number.isFinite(score) ? score : 0
-  const pct = Math.max(0, Math.min(100, ((safeScore + 1) / 2) * 100))
-  const color = sentimentColor(safeScore)
-  const word = sentimentWord(safeScore)
+  const pct = Math.max(0, Math.min(100, ((score + 1) / 2) * 100))
+  const color = sentimentColor(score)
   return (
-    <div className="sentiment-bar-wrap">
-      <div className="sentiment-bar-word" style={{ color }}>{word}</div>
-      <div className="sentiment-bar-track">
-        <span className="sentiment-bar-marker" style={{ left: `${pct}%`, background: color }} />
-      </div>
-      <div className="sentiment-bar-scale">
-        <span>Negative</span>
-        <span>Positive</span>
-      </div>
+    <div className="nx-sbar">
+      <b style={{ color }}>{sentimentWord(score)}</b>
+      <div className="nx-sbar-track"><span style={{ left: `${pct}%`, background: color }} /></div>
+      <div className="nx-sbar-scale"><span>Negative</span><span>Positive</span></div>
     </div>
   )
 }
 
-function BubbleChart({ data, width, height, onSelect, highlightNames = [] }) {
-  const validData = (data || []).filter(d => Number.isFinite(d.value) && d.value > 0)
-  if (validData.length === 0) return null
-  const root = hierarchy({ children: validData }).sum(d => d.value)
-  const packLayout = pack().size([width, height]).padding(5)
-  const leaves = packLayout(root).leaves().filter(leaf => Number.isFinite(leaf.r))
+function Bubbles({ data, width, height, active, onSelect }) {
+  const valid = data.filter((d) => d.count > 0)
+  if (!valid.length) return null
+  const leaves = pack().size([width, height]).padding(5)(hierarchy({ children: valid }).sum((d) => d.count)).leaves()
+  const max = Math.max(...valid.map((d) => d.count))
   return (
-    <svg width="100%" viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }}>
-      {leaves.map((leaf, i) => {
-        const showLabel = leaf.r > 22 || highlightNames.includes(leaf.data.name)
+    <svg className="nx-bubbles" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Topic bubbles sized by article count">
+      {leaves.map((l) => {
+        const t = l.data
+        const fill = t.scored ? sentimentColor(t.sentiment) : 'var(--accent1)'
+        const op = t.scored ? Math.max(0.5, Math.min(1, Math.abs(t.sentiment) + 0.4)) : 0.3 + 0.6 * (t.count / max)
+        const on = active === t.name
         return (
-          <g key={i} onClick={() => onSelect(leaf.data.name)} style={{ cursor: 'pointer' }}>
-            <circle
-              className="news-bubble-circle"
-              cx={leaf.x} cy={leaf.y} r={leaf.r}
-              fill={sentimentColor(leaf.data.sentiment)}
-              fillOpacity={Math.max(0.45, Math.min(1, Math.abs(leaf.data.sentiment)))}
-              stroke="var(--bg-alt)" strokeWidth={2.5}
-            />
-            {showLabel && (
-              <text x={leaf.x} y={leaf.y + 4} textAnchor="middle" fontSize={Math.min(leaf.r * 0.24, 12)} fill="#fff" fontWeight={700}>
-                {leaf.data.name.length > 14 ? leaf.data.name.slice(0, 12) + '…' : leaf.data.name}
+          <g key={t.name} onClick={() => onSelect(t.name)} style={{ cursor: 'pointer' }}>
+            <title>{`${t.name}: ${t.count} article${t.count === 1 ? '' : 's'}`}</title>
+            <circle cx={l.x} cy={l.y} r={l.r} fill={fill} fillOpacity={op} stroke={on ? 'var(--text)' : 'var(--bg-alt)'} strokeWidth={on ? 3 : 2.5} />
+            {l.r > 20 && (
+              <text x={l.x} y={l.y + 4} textAnchor="middle" fontSize={Math.min(l.r * 0.3, 12)} fill="#fff" fontWeight={700}>
+                {t.name.length > 13 ? `${t.name.slice(0, 11)}…` : t.name}
               </text>
             )}
           </g>
@@ -95,200 +71,303 @@ function BubbleChart({ data, width, height, onSelect, highlightNames = [] }) {
 }
 
 function NewsIntelligenceSlide() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 480)
-  const [traceModel, setTraceModel] = useState(null)
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth <= 480)
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
-  }, [])
-
   const [kpi, setKpi] = useState(null)
-  const [sentimentTrend, setSentimentTrend] = useState([])
-  const [articles, setArticles] = useState([])
-  const [selectedKeyword, setSelectedKeyword] = useState(null)
-  const [expandedIdx, setExpandedIdx] = useState(null)
+  const [trend, setTrend] = useState([])
+  const [base, setBase] = useState([])
+  const [error, setError] = useState(null)
+  const [keyword, setKeyword] = useState(null)
+  const [kwList, setKwList] = useState(null)
+  const [sent, setSent] = useState('all')
+  const [query, setQuery] = useState('')
+  const [shown, setShown] = useState(PAGE)
+  const [open, setOpen] = useState(null)
+  const [view, setView] = useState('bars')
+  const [trace, setTrace] = useState(null)
+  const [reloads, setReloads] = useState(0)
+  const [narrow, setNarrow] = useState(window.innerWidth <= 480)
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/news-kpi-summary/`).then(r => r.json()).then(setKpi).catch(console.error)
-    fetch(`${API_BASE}/api/news-sentiment-trend/`).then(r => r.json()).then(setSentimentTrend).catch(console.error)
+    const h = () => setNarrow(window.innerWidth <= 480)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
   }, [])
 
   useEffect(() => {
-    const url = selectedKeyword
-      ? `${API_BASE}/api/news-articles/?keyword=${encodeURIComponent(selectedKeyword)}`
-      : `${API_BASE}/api/news-articles/`
-    fetch(url).then(r => r.json()).then(a => setArticles(dedupeArticles(a))).catch(console.error)
-  }, [selectedKeyword])
+    let live = true
+    setError(null)
+    Promise.all([
+      fetch(`${API_BASE}/api/news-kpi-summary/`).then(okJson),
+      fetch(`${API_BASE}/api/news-sentiment-trend/`).then(okJson).catch(() => []),
+      fetch(`${API_BASE}/api/news-articles/`).then(okJson),
+    ]).then(([k, t, a]) => {
+      if (!live) return
+      setKpi(k)
+      setTrend(Array.isArray(t) ? t : [])
+      setBase(dedupeArticles(Array.isArray(a) ? a : []))
+    }).catch(() => { if (live) setError('We could not reach the news service just now.') })
+    return () => { live = false }
+  }, [reloads])
 
-  if (!kpi) {
+  // topic filter: ask the API for that topic's articles (can be more than the 50 in view)
+  useEffect(() => {
+    setKwList(null)
+    setShown(PAGE)
+    if (!keyword) return undefined
+    let live = true
+    fetch(`${API_BASE}/api/news-articles/?keyword=${encodeURIComponent(keyword)}`).then(okJson)
+      .then((a) => { if (live) setKwList(dedupeArticles(Array.isArray(a) ? a : [])) })
+      .catch(() => {})
+    return () => { live = false }
+  }, [keyword])
+
+  useEffect(() => { setShown(PAGE) }, [sent, query])
+
+  const anyScored = useMemo(() => base.some(isScored) || Number.isFinite(kpi?.overall_sentiment) || trend.length > 0, [base, kpi, trend])
+
+  // topics: prefer the warehouse trend table, otherwise count the articles themselves
+  const topics = useMemo(() => {
+    const latest = {}
+    trend.forEach((r) => { if (!latest[r.keyword] || r.sentiment_date > latest[r.keyword].sentiment_date) latest[r.keyword] = r })
+    const fromTrend = Object.values(latest).filter((r) => r.mention_count > 0)
+      .map((r) => ({ name: r.keyword, count: r.mention_count, sentiment: r.weighted_sentiment, scored: Number.isFinite(r.weighted_sentiment) }))
+    if (fromTrend.length) return fromTrend.sort((a, b) => b.count - a.count).slice(0, 12)
+    const m = {}
+    base.forEach((a) => {
+      const k = a.matched_keyword
+      if (!k) return
+      m[k] = m[k] || { name: k, count: 0, sum: 0, n: 0 }
+      m[k].count += 1
+      if (isScored(a)) { m[k].sum += a.sentiment_polarity || 0; m[k].n += 1 }
+    })
+    return Object.values(m).map((t) => ({ name: t.name, count: t.count, sentiment: t.n ? t.sum / t.n : 0, scored: t.n > 0 }))
+      .sort((a, b) => b.count - a.count).slice(0, 12)
+  }, [trend, base])
+
+  const sources = useMemo(() => {
+    const m = {}
+    base.forEach((a) => a.sources.forEach((s) => { m[s] = (m[s] || 0) + 1 }))
+    return Object.entries(m).sort((a, b) => b[1] - a[1])
+  }, [base])
+
+  const days = useMemo(() => {
+    const out = []
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i)
+      out.push({ key: d.toISOString().slice(0, 10), label: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), n: 0 })
+    }
+    base.forEach((a) => {
+      const k = new Date(a.published_at).toISOString().slice(0, 10)
+      const hit = out.find((d) => d.key === k)
+      if (hit) hit.n += 1
+    })
+    return out
+  }, [base])
+
+  const overall = useMemo(() => {
+    if (Number.isFinite(kpi?.overall_sentiment)) return kpi.overall_sentiment
+    const s = base.filter(isScored)
+    return s.length ? s.reduce((x, a) => x + (a.sentiment_polarity || 0), 0) / s.length : null
+  }, [kpi, base])
+
+  const freshest = base.length ? base.reduce((m, a) => (a.published_at > m ? a.published_at : m), base[0].published_at) : null
+
+  const pool = keyword ? (kwList || base.filter((a) => a.matched_keyword === keyword)) : base
+  const rows = pool.filter((a) => {
+    if (sent === 'unscored' ? isScored(a) : sent !== 'all' && (!isScored(a) || sentimentWord(a.sentiment_polarity || 0).toLowerCase() !== sent)) return false
+    const q = query.trim().toLowerCase()
+    return !q || `${a.title} ${a.matched_keyword} ${a.sources.join(' ')}`.toLowerCase().includes(q)
+  })
+  const filtersOn = !!keyword || sent !== 'all' || !!query.trim()
+  const clearAll = () => { setKeyword(null); setSent('all'); setQuery('') }
+
+  if (error) {
     return (
-      <div className="news-slide">
-        <SlideSkeleton label="Loading live intelligence…" />
+      <div className="gx-slide nx-slide">
+        <div className="sx-empty">
+          <Newspaper size={28} />
+          <p>{error} The wire usually refreshes within a few minutes.</p>
+          <button type="button" onClick={() => setReloads((n) => n + 1)}><RefreshCw size={13} /> Try again</button>
+        </div>
       </div>
     )
   }
+  if (!kpi) return <div className="gx-slide nx-slide"><SlideSkeleton label="Loading live intelligence…" /></div>
 
-  const byKeyword = {}
-  sentimentTrend.forEach(row => {
-    if (!byKeyword[row.keyword] || row.sentiment_date > byKeyword[row.keyword].sentiment_date) byKeyword[row.keyword] = row
-  })
-  const ranked = Object.values(byKeyword).filter(k => k.mention_count > 0)
-    .sort((a, b) => b.mention_count - a.mention_count).slice(0, isMobile ? 10 : 16)
-  const topSignals = ranked.slice(0, 6)
-  const bubbleData = ranked.map(k => ({ name: k.keyword, value: k.mention_count, sentiment: k.weighted_sentiment }))
-
-  const bySentiment = [...ranked].filter(k => k.mention_count >= 2)
-  const mostPositive = [...bySentiment].sort((a, b) => b.weighted_sentiment - a.weighted_sentiment)[0]
-  const mostNegative = [...bySentiment].sort((a, b) => a.weighted_sentiment - b.weighted_sentiment)[0]
-
-  const positiveCount = ranked.filter(k => k.weighted_sentiment > 0.15).length
-  const negativeCount = ranked.filter(k => k.weighted_sentiment < -0.15).length
-  const insightText = ranked.length > 0
-    ? `${ranked[0].keyword} leads this week's coverage with ${ranked[0].mention_count} mentions. Across the ${ranked.length} most-discussed topics, ${positiveCount} lean positive and ${negativeCount} lean negative — the rest read as mixed or neutral.`
-    : ''
+  const maxTopic = topics.length ? topics[0].count : 1
+  const topSource = sources[0]
+  const lead = topics[0]
+  const traceBtn = (model) => (
+    <button type="button" className="nx-trace" onClick={() => setTrace(model)} aria-label="Trace where this number comes from" title="Trace where this number comes from"><Search size={12} /></button>
+  )
+  const counts = { positive: 0, mixed: 0, negative: 0 }
+  base.filter(isScored).forEach((a) => { counts[sentimentWord(a.sentiment_polarity || 0).toLowerCase()] += 1 })
+  const maxDay = Math.max(1, ...days.map((d) => d.n))
 
   return (
-    <div className="news-slide">
-      <div className="news-signals-row">
-        <span className="news-signals-label">Top signals today</span>
-        <div className="news-signals-pills">
-          {topSignals.map((k, i) => (
-            <span key={i} className="news-signal-pill" style={{ borderColor: sentimentColor(k.weighted_sentiment) }}>
-              {k.keyword}
-            </span>
-          ))}
+    <div className="gx-slide nx-slide">
+      <div className="gx-head">
+        <div>
+          <div className="eyebrow gx-eyebrow">News &amp; Sentiment · What data engineers are reading</div>
+          <p className="gx-sub">A live wire of data-engineering news and discussion, matched to the tools and topics this site tracks. Pick a topic to filter the feed.</p>
+        </div>
+        <div className="nx-status">
+          {freshest && <span className="gx-live"><i />Latest story {timeAgo(freshest)}</span>}
+          <span className={`nx-chip ${anyScored ? 'ok' : 'warn'}`}>{anyScored ? 'Sentiment scored' : 'Sentiment pending'}</span>
         </div>
       </div>
 
-      <div className="news-kpi-row">
-        <div className="news-kpi-tile">
-          <span className="agent-kpi-trace news-kpi-trace">
-            <button className="agent-kpi-trace-icon" onClick={() => setTraceModel('silver_news_articles')} aria-label="Trace where this number comes from">
-              <Search size={13} />
-            </button>
-            <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
-          </span>
-          <span className="news-kpi-tile-label">Articles</span>
-          <span className="news-kpi-tile-value">{kpi.total_articles}</span>
+      <div className="gx-kpis nx-kpis">
+        <div className="gx-kpi">{traceBtn('silver_news_articles')}<span className="gx-kpi-ico"><Newspaper size={16} /></span><div><div className="gx-kpi-val">{kpi.total_articles}</div><div className="gx-kpi-lbl">Articles tracked</div></div></div>
+        <div className="gx-kpi">{traceBtn('fact_keyword_mention')}<span className="gx-kpi-ico"><Hash size={16} /></span><div><div className="gx-kpi-val">{kpi.top_keyword?.keyword || '—'}</div><div className="gx-kpi-lbl">Top topic{kpi.top_keyword ? ` · ${Math.round(kpi.top_keyword.total_mentions)} mentions` : ''}</div></div></div>
+        <div className="gx-kpi"><span className="gx-kpi-ico"><Globe2 size={16} /></span><div><div className="gx-kpi-val">{sources.length}</div><div className="gx-kpi-lbl">Sources in the latest {base.length}</div></div></div>
+        <div className="gx-kpi"><span className="gx-kpi-ico"><Clock size={16} /></span><div><div className="gx-kpi-val">{freshest ? timeAgo(freshest) : '—'}</div><div className="gx-kpi-lbl">Freshest story</div></div></div>
+        <div className="gx-kpi nx-kpi-sent">{traceBtn('fact_keyword_sentiment_trend')}
+          {overall !== null ? <div className="nx-kpi-bar"><SentimentBar score={overall} /></div>
+            : <><span className="gx-kpi-ico nx-ico-warn"><Radio size={16} /></span><div><div className="gx-kpi-val">Pending</div><div className="gx-kpi-lbl">Sentiment not scored yet</div></div></>}
         </div>
-        <div className="news-kpi-tile">
-          <span className="agent-kpi-trace news-kpi-trace">
-            <button className="agent-kpi-trace-icon" onClick={() => setTraceModel('fact_keyword_mention')} aria-label="Trace where this number comes from">
-              <Search size={13} />
-            </button>
-            <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
-          </span>
-          <span className="news-kpi-tile-label">Top Topic</span>
-          <span className="news-kpi-tile-value news-kpi-tile-value-text">{kpi.top_keyword?.keyword}</span>
-        </div>
-        <div className="news-kpi-tile news-kpi-tile-gauge">
-          <span className="agent-kpi-trace news-kpi-trace">
-            <button className="agent-kpi-trace-icon" onClick={() => setTraceModel('fact_keyword_sentiment_trend')} aria-label="Trace where this number comes from">
-              <Search size={13} />
-            </button>
-            <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
-          </span>
-          <span className="news-kpi-tile-label">Sentiment</span>
-          <SentimentBar score={kpi.overall_sentiment} />
-          <span className="news-kpi-tile-sublabel">how today's coverage leans, weighted by volume</span>
-        </div>
-        {mostPositive && (
-          <div className="news-kpi-tile">
-            <span className="agent-kpi-trace news-kpi-trace">
-              <button className="agent-kpi-trace-icon" onClick={() => setTraceModel('fact_keyword_sentiment_trend')} aria-label="Trace where this number comes from">
-                <Search size={13} />
-              </button>
-              <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
-            </span>
-            <span className="news-kpi-tile-label">Most Positive</span>
-            <span className="news-kpi-tile-value news-kpi-tile-value-text" style={{ color: SENTIMENT_COLORS.positive }}>
-              {mostPositive.keyword}
-            </span>
-            <span className="news-kpi-tile-sublabel">among topics with 2+ mentions</span>
-          </div>
-        )}
-        {mostNegative && (
-          <div className="news-kpi-tile">
-            <span className="agent-kpi-trace news-kpi-trace">
-              <button className="agent-kpi-trace-icon" onClick={() => setTraceModel('fact_keyword_sentiment_trend')} aria-label="Trace where this number comes from">
-                <Search size={13} />
-              </button>
-              <span className="agent-kpi-trace-tooltip">Trace where this number comes from</span>
-            </span>
-            <span className="news-kpi-tile-label">Most Negative</span>
-            <span className="news-kpi-tile-value news-kpi-tile-value-text" style={{ color: SENTIMENT_COLORS.negative }}>
-              {mostNegative.keyword}
-            </span>
-            <span className="news-kpi-tile-sublabel">among topics with 2+ mentions</span>
-          </div>
-        )}
       </div>
 
-      <div className="news-main-grid">
-        <div className="news-wire">
-          <div className="news-wire-header">
-            <span>Live Wire</span>
-            {selectedKeyword && <button className="news-wire-clear" onClick={() => setSelectedKeyword(null)}>× {selectedKeyword}</button>}
+      {!anyScored && (
+        <div className="nx-note" role="status">
+          <Info size={15} />
+          <span><b>Sentiment scoring hasn't produced results yet.</b> Rather than guess, the slide ranks topics by how often they are covered and leaves sentiment blank. Positive and negative colours will appear automatically once scores arrive.</span>
+        </div>
+      )}
+
+      <div className="gx-grid nx-grid">
+        <section className="gx-card nx-wire" aria-label="Live wire">
+          <div className="nx-wire-top">
+            <div><div className="gx-card-title">Live wire</div><p className="gx-card-sub">{rows.length} {rows.length === 1 ? 'story' : 'stories'}{filtersOn ? ' match your filters' : ' in the latest feed'}</p></div>
+            {filtersOn && <button type="button" className="nx-clear" onClick={clearAll}><X size={12} /> Clear filters</button>}
           </div>
-          <div className="news-wire-timeline">
-            {articles.length === 0 && (
-              <div className="news-wire-empty">
-                {selectedKeyword
-                  ? `No recent articles found for "${selectedKeyword}" in the last 30 days.`
-                  : 'No articles available right now.'}
+          <label className="nx-search">
+            <Search size={14} />
+            <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search headlines, topics or sources" aria-label="Search the news feed" />
+          </label>
+          <div className="nx-topic-chips" role="group" aria-label="Filter by topic">
+            {topics.slice(0, 8).map((t) => (
+              <button key={t.name} type="button" className={keyword === t.name ? 'on' : ''} onClick={() => setKeyword(keyword === t.name ? null : t.name)}>{t.name} <em>{t.count}</em></button>
+            ))}
+          </div>
+          {anyScored && (
+            <div className="nx-sent-filter" role="group" aria-label="Filter by sentiment">
+              {[['all', 'All'], ['positive', 'Positive'], ['mixed', 'Mixed'], ['negative', 'Negative'], ['unscored', 'Unscored']].map(([id, label]) => (
+                <button key={id} type="button" className={sent === id ? 'on' : ''} onClick={() => setSent(id)}>{label}</button>
+              ))}
+            </div>
+          )}
+          <div className="nx-timeline">
+            {rows.length === 0 && (
+              <div className="nx-empty">
+                <Newspaper size={22} />
+                <p>{keyword && !kwList ? `Loading stories about ${keyword}…` : filtersOn ? 'Nothing matches those filters in the last 30 days.' : 'No stories to show right now.'}</p>
+                {filtersOn && <button type="button" onClick={clearAll}>Clear filters</button>}
               </div>
             )}
-            {articles.map((a, i) => {
-              const isOpen = expandedIdx === i
-              // sentiment_score from the API is the model's confidence in its
-              // label (0-1), not a signed polarity - sentiment_polarity is the
-              // already-signed -1..+1 value derived from label + confidence.
-              const polarity = Number.isFinite(a.sentiment_polarity) ? a.sentiment_polarity : 0
+            {rows.slice(0, shown).map((a, i, arr) => {
+              const key = a.url || a.title
+              const isOpen = open === key
+              const pol = a.sentiment_polarity || 0
+              const scored = isScored(a)
               return (
-                <div key={i} className="news-wire-row">
-                  <div className="news-wire-rail">
-                    <span className="news-wire-dot" style={{ background: sentimentColor(polarity) }}></span>
-                    {i < articles.length - 1 && <span className="news-wire-line"></span>}
+                <div key={key} className="nx-row">
+                  <div className="nx-rail">
+                    <span className="nx-dot" style={{ background: scored ? sentimentColor(pol) : 'var(--border)' }} title={scored ? sentimentWord(pol) : 'Sentiment not scored'} />
+                    {i < arr.length - 1 && <span className="nx-line" />}
                   </div>
-                  <div className="news-wire-item" onClick={() => setExpandedIdx(isOpen ? null : i)}>
-                    <div className="news-wire-item-head">
-                      <span className="news-wire-title">{a.title}</span>
-                      <span className={`news-wire-caret ${isOpen ? 'news-wire-caret-open' : ''}`}>▾</span>
-                    </div>
-                    <div className="news-wire-meta">
-                      <span className="news-wire-keyword-pill">{a.matched_keyword}</span>
-                      <span className="news-wire-sentiment-tag" style={{ color: sentimentColor(polarity) }}>{sentimentWord(polarity)}</span>
+                  <div className="nx-item">
+                    <button type="button" className="nx-item-head" onClick={() => setOpen(isOpen ? null : key)} aria-expanded={isOpen}>
+                      <span className="nx-title">{a.title}</span>
+                      <ChevronDown size={14} className={isOpen ? 'open' : ''} />
+                    </button>
+                    <div className="nx-meta">
+                      {a.matched_keyword && <button type="button" className="nx-pill" onClick={() => setKeyword(a.matched_keyword)}>{a.matched_keyword}</button>}
+                      {scored && <span className="nx-tag" style={{ color: sentimentColor(pol) }}>{sentimentWord(pol)}</span>}
                       <span>{a.sources.length > 1 ? `${a.sources.length} sources` : a.source_domain} · {timeAgo(a.published_at)}</span>
                     </div>
                     {isOpen && (
-                      <div className="news-wire-expand">
-                        {a.description && <p className="news-wire-desc">{a.description}</p>}
-                        <a href={a.url} target="_blank" rel="noopener noreferrer" className="news-wire-readmore">
-                          Read full article →
-                        </a>
+                      <div className="nx-expand">
+                        {a.description && <p>{a.description}</p>}
+                        <a href={a.url} target="_blank" rel="noopener noreferrer">Read full article <ExternalLink size={12} /></a>
                       </div>
                     )}
                   </div>
                 </div>
               )
             })}
+            {rows.length > shown && (
+              <button type="button" className="nx-more" onClick={() => setShown(shown + PAGE)}>Show {Math.min(PAGE, rows.length - shown)} more <ChevronDown size={13} /></button>
+            )}
           </div>
-        </div>
+        </section>
 
-        <div className="news-bubble-panel">
-          <div className="news-bubble-header">Most-discussed topics</div>
-          <div className="news-bubble-desc">Circle size = article volume · color intensity = sentiment strength, last 7 days</div>
-          <BubbleChart data={bubbleData} width={isMobile ? 300 : 380} height={isMobile ? 220 : 260} onSelect={setSelectedKeyword} highlightNames={[mostPositive?.keyword, mostNegative?.keyword].filter(Boolean)} />
-          <div className="news-bubble-legend">
-            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: SENTIMENT_COLORS.positive }}></span>Positive coverage</span>
-            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: '#D14545' }}></span>Negative coverage</span>
-            <span className="news-bubble-legend-item"><span className="news-bubble-legend-dot" style={{ background: 'var(--muted)' }}></span>Mixed / no clear lean</span>
-          </div>
-          {insightText && <p className="news-bubble-insight">{insightText}</p>}
+        <div className="gx-col">
+          <section className="gx-card" aria-label="Most-discussed topics">
+            <div className="nx-card-top">
+              <div><div className="gx-card-title">Most-discussed topics</div><p className="gx-card-sub">{anyScored ? 'Sized by coverage, coloured by sentiment.' : 'Ranked by how often each topic is covered.'}</p></div>
+              <div className="nx-seg" role="group" aria-label="Chart style">
+                <button type="button" className={view === 'bars' ? 'on' : ''} onClick={() => setView('bars')}>Bars</button>
+                <button type="button" className={view === 'bubbles' ? 'on' : ''} onClick={() => setView('bubbles')}>Bubbles</button>
+              </div>
+            </div>
+            {topics.length === 0 && <div className="nx-empty"><p>No topics to rank yet.</p></div>}
+            {view === 'bars' && topics.length > 0 && (
+              <ul className="gx-bars nx-bars">
+                {topics.slice(0, 8).map((t) => (
+                  <li key={t.name}>
+                    <button type="button" className={`nx-bar-name${keyword === t.name ? ' on' : ''}`} onClick={() => setKeyword(keyword === t.name ? null : t.name)}>{t.name}</button>
+                    <span className="gx-bars-track"><i style={{ width: `${Math.max(6, (t.count / maxTopic) * 100)}%`, background: t.scored ? sentimentColor(t.sentiment) : undefined }} /></span>
+                    <b>{t.count}</b>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {view === 'bubbles' && topics.length > 0 && <Bubbles data={topics} width={narrow ? 300 : 380} height={narrow ? 220 : 250} active={keyword} onSelect={(n) => setKeyword(keyword === n ? null : n)} />}
+            {anyScored && (
+              <div className="nx-legend">
+                <span><i style={{ background: COLORS.positive }} />Positive</span>
+                <span><i style={{ background: COLORS.negative }} />Negative</span>
+                <span><i style={{ background: COLORS.neutral }} />Mixed</span>
+              </div>
+            )}
+            {lead && (
+              <p className="nx-insight">
+                <b>{lead.name}</b> leads the feed with {lead.count} {lead.count === 1 ? 'story' : 'stories'}
+                {topics[1] ? `, ahead of ${topics[1].name} (${topics[1].count})` : ''}.
+                {topSource ? ` ${topSource[0]} is the busiest source (${topSource[1]} of the latest ${base.length}).` : ''}
+              </p>
+            )}
+          </section>
+
+          <section className="gx-card" aria-label="Coverage over time and sources">
+            <div className="gx-card-title">Coverage and sources</div>
+            <p className="gx-card-sub">Stories per day over two weeks, from the latest {base.length} articles.</p>
+            <div className="nx-days" role="img" aria-label="Stories per day for the last 14 days">
+              {days.map((d) => (
+                <span key={d.key} className="nx-day" title={`${d.label}: ${d.n} ${d.n === 1 ? 'story' : 'stories'}`}>
+                  <i style={{ height: `${d.n ? Math.max(8, (d.n / maxDay) * 100) : 3}%` }} className={d.n ? '' : 'zero'} />
+                </span>
+              ))}
+            </div>
+            <div className="nx-days-axis"><span>{days[0].label}</span><span>Today</span></div>
+            {sources.length > 0 && (
+              <ul className="nx-sources">
+                {sources.slice(0, 4).map(([s, n]) => (
+                  <li key={s}><span>{s}</span><span className="nx-src-bar"><i style={{ width: `${(n / sources[0][1]) * 100}%` }} /></span><b>{n}</b></li>
+                ))}
+              </ul>
+            )}
+            {anyScored && base.some(isScored) && (
+              <div className="nx-split" aria-label="Sentiment split">
+                <span style={{ flex: counts.positive || 0.001, background: COLORS.positive }} title={`${counts.positive} positive`} />
+                <span style={{ flex: counts.mixed || 0.001, background: COLORS.neutral }} title={`${counts.mixed} mixed`} />
+                <span style={{ flex: counts.negative || 0.001, background: COLORS.negative }} title={`${counts.negative} negative`} />
+              </div>
+            )}
+          </section>
         </div>
       </div>
-      {traceModel && <LineageExplorer modelName={traceModel} onClose={() => setTraceModel(null)} />}
+      {trace && <LineageExplorer modelName={trace} onClose={() => setTrace(null)} />}
     </div>
   )
 }
