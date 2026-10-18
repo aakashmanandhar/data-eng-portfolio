@@ -8,6 +8,18 @@ const ICONS = {
   workflow: Workflow, cloud: Cloud, globe: Globe2, rocket: Rocket,
 }
 
+function PlatformIcon({ p, Fallback }) {
+  const [failed, setFailed] = useState(false)
+  const base = (p.url || '').replace(/\/+$/, '')
+  const src = p.icon_url || (base ? `${base}/favicon.svg` : '')
+  if (!src || failed) return <span className="platforms-item-icon"><Fallback size={18} /></span>
+  return (
+    <span className="platforms-item-icon has-logo">
+      <img src={src} alt="" width="34" height="34" loading="lazy" onError={() => setFailed(true)} />
+    </span>
+  )
+}
+
 function PlatformsMenu() {
   const [platforms, setPlatforms] = useState([])
   const [open, setOpen] = useState(false)
@@ -116,7 +128,7 @@ function PlatformsMenu() {
                 target={p.open_in_new_tab ? '_blank' : undefined}
                 rel={p.open_in_new_tab ? 'noopener noreferrer' : undefined}
               >
-                <span className="platforms-item-icon"><Icon size={18} /></span>
+                <PlatformIcon p={p} Fallback={Icon} />
                 <span className="platforms-item-text">
                   <span className="platforms-item-name">
                     {p.name}
