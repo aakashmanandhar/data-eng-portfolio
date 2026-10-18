@@ -11,7 +11,7 @@ const ICONS = {
 function PlatformIcon({ p, Fallback }) {
   const [failed, setFailed] = useState(false)
   const base = (p.url || '').replace(/\/+$/, '')
-  const src = p.icon_url || (base ? `${base}/favicon.svg` : '')
+  const src = p.icon_url || (base ? `${base}/favicon.svg?v=${Math.floor(Date.now() / 3600000)}` : '')
   if (!src || failed) return <span className="platforms-item-icon"><Fallback size={18} /></span>
   return (
     <span className="platforms-item-icon has-logo">
