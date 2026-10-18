@@ -204,7 +204,9 @@ function HomePage() {
     <>
       <SiteExtras />
       <nav className="nav">
-        <strong>Aakash Manandhar</strong>
+        <Link to="/" className="nav-logo" aria-label="Aakash Manandhar, home" title="Aakash Manandhar" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <img src="/favicon.svg" alt="" width="36" height="36" />
+        </Link>
         <div className="nav-links">
           <a href="#projects">Projects</a>
           <a href="#explorer" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('carousel-jump', { detail: { index: 2 } })) }}>Explorer</a>
