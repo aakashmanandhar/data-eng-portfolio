@@ -116,7 +116,7 @@ class Platform(models.Model):
     slug = models.SlugField(max_length=80, unique=True)
     tagline = models.CharField(max_length=140, help_text="One short line shown under the name in the nav dropdown")
     url = models.CharField(max_length=300, help_text="Full URL (https://...) or a site path like /aurora/")
-    icon = models.CharField(max_length=20, choices=ICON_CHOICES, default="layers")
+    icon = models.CharField(max_length=20, choices=ICON_CHOICES, default="layers", blank=True, help_text="Fallback only. The platform's own favicon.svg is shown automatically; this icon appears only if that file is missing.")
     badge = models.CharField(max_length=30, blank=True, help_text="Optional small label, e.g. Live, New, Beta")
     open_in_new_tab = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0, help_text="Lower numbers appear first")
